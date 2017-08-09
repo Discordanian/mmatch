@@ -1,16 +1,4 @@
 /*
-Nothing to see here from a CSS perspective.
-
-Developer Guidelines and assumptions
-- Tech Stack agnostic
-- - Assuming an ajax call to get the organizations data in JSON
-- - Using bootstrap "Twitter API" for UI look/feel
-- - Minimal js library (jquery only)
-- Can be served up from any static web server
-- Uses only HTML and Javascript
-- Minimal Viable Product defined as
-- - Dynamic table
-- - Single selection drop down
-- - Multiple selection drop down
-- - config object
+Insert any CSS over-ride as desired.
+Otherwise use default Bootstrap values.
 */
