@@ -50,10 +50,17 @@ $(document).ready(function(){
     });
 
 
-	//if ($("#general_alert_msg").hidden == false)
+	if ($("#general_alert_msg:visible"))
 	{
 		setTimeout(closeAlertMsg,3000);
 	}
+
+    /* automatically trim fields for all input fields */
+    $("input.form-control").blur(function(){
+        $(this).val($(this).val().trim());
+    });
+
+
 });
 
 
@@ -79,6 +86,7 @@ function validate_page1()
         $("#email_invalid_msg").show();
         return false;
     }
+
 
     if ($("#email").val().length > 128)
     {
