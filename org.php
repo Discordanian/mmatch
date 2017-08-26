@@ -2,20 +2,97 @@
 ini_set('display_errors', 'On');
 error_reporting(E_ALL | E_STRICT);
 
-$dbhostname = "localhost";
-$dbusername = "movem_usr";
-$dbpassword = "v97N8BOL";
-$csrf_salt = "9zZuoJqG5KlUSYjVjDRHg";
+require_once('include/secrets.php');
 
-$orgid = 0;
-$person_name = "";
-$org_name = "";
-$email_verified = "";
-$website = "";
-$money_url = "";
 
-try 
+/* There are basically 6 possible flows to this page */
+/* #1 Cold session, no incoming data, no data to retrieve, just show defaults on page */
+/* #2 Insert attempted, validation errors found, display form with data populated from POST, along with error message */
+/* #3 Insert attempted, no errors, insert successful, display form with data populated from DB, along with SUCCESS msg */
+/* #4 Update attempted, validation errors found, display form with data populated from POST, along with error message */
+/* #5 Update attempted, no errors, update successful, display form with data populated from DB, along with SUCCESS msg */ 
+/* #6 Retrieve only, display form with data populated from DB */
+
+
+
+if (isset($_POST["action"]))
 {
+    /* Flow #2, #3, #4, or #5 */
+    checkCsrfToken();
+    
+    if (!validatePostData())
+    {
+        /* #2 or #4 */
+        displayPostData();
+    } elseif ($_POST["action"] == "INSERT")
+    {
+        /* #3 */
+        initializeDb();
+        performInsert();
+        displayDbData();
+    }
+    elseif ($_POST["action"] == "UPDATE")
+    {
+        /* #5 */
+        initializeDb();
+        performUpdate();
+        displayDbData();
+    }
+}
+elseif (isset($_POST["orgid"]))
+{
+    /* #6 */
+    initializeDb();
+    displayDbData();
+}
+else
+{
+    /* #1 */
+    $orgid = 0;
+    $person_name = "";
+    $org_name = "";
+    $email_verified = "";
+    //$email_msg = "";
+    $website = "";
+    $money_url = "";
+    $action = "INSERT";
+	$goto_page = 1;
+    buildCsrfToken();
+}
+/* end of global section, now fall through to HTML */
+
+function buildCsrfToken()
+{
+    /* for csrf protection, the nonce will be formed from a hash of several variables that
+        that make up the session, concatenated, along with some random salt (defined above) */
+    global $csrf_nonce, $csrf_salt, $action;
+    $token = $action . ".org.php." . $csrf_salt;
+    $csrf_nonce = hash("sha256", $token);
+}
+
+
+function checkCsrfToken()
+{
+    global $csrf_salt;
+
+    $token = $_POST["action"] . ".org.php." . $csrf_salt;
+	
+	//echo "<!-- Token = $token -->\n";
+    if (hash("sha256", $token) != $_POST["nonce"])
+    {
+        die("CSRF token mismatch. Just kill me now...");
+    }
+	/* else
+	{
+		echo "<!-- CSRF passed -->\n";
+	} */
+}
+
+
+function validatePostData()
+{
+    global $email_msg, $orgid, $goto_page, $website_msg;
+    $orgid = $_POST["orgid"];
 
     /* first do basic validations before opening the database */
     if (isset($_POST["email"])) 
@@ -26,53 +103,115 @@ try
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) 
         {
             $email_msg = "The email address does not appear to follow the proper form.";
-            $error_out = true;
+			$goto_page = 1;
+            return false;
         }
 
         if (strlen($email) > 128)
         {
             $email_msg = "Email address should not exceed 128 characters in length.";
-            $error_out = true;
+			$goto_page = 1;
+            return false;
         }
 
         if (strlen($email) < 1) 
         {
             $email_msg = "A valid email address is required.";
-            $error_out = true;
+			$goto_page = 1;
+            return false;
         }
-
-
     }
 
+	if (isset($_POST["org_website"]))
+	{
+		$website = $_POST["org_website"];
+		
+		if (strlen($website) > 0) /* web site is optional so skip check if its blank */
+		{
+			
+			//echo "<!-- web site = $website -->\n"; 
+			if (!filter_var($website, FILTER_VALIDATE_URL))
+			{
+				$website_msg = "The website URL does not follow the proper pattern for a valid URL.";
+				$goto_page = 2;
+				//echo "<!-- URL failed validation -->\n"; 
+				return false;
+			}
+
+			if (strlen($website) > 255)
+			{
+				$website_msg = "Web site address should not exceed 255 characters in length.";
+				$goto_page = 2;
+				return false;
+			}
+		}
+	}
+
+	if (isset($_POST["money_url"]))
+	{
+		$money_url = $_POST["money_url"];
+		//echo "<!-- money url = $money_url -->\n"; 
+		if (strlen($money_url) > 0) /* web site is optional so skip check if its blank */
+		{
+			
+			if (!filter_var($money_url, FILTER_VALIDATE_URL))
+			{
+				$donations_msg = "The website URL does not follow the proper pattern for a valid URL.";
+				$goto_page = 2;
+				//echo "<!-- failed validation -->\n"; 
+				return false;
+			}
+
+			if (strlen($money_url) > 255)
+			{
+				$donations_msg = "Web site address should not exceed 255 characters in length.";
+				$goto_page = 2;
+				return false;
+			}
+		}
+	}
+	//echo "<!-- validatePost passed -->\n";
+    return true;
+}
 
 
-    $dbh = new PDO("mysql:dbname=MoveM;host={$dbhostname}" , $dbusername, $dbpassword);
+function initializeDb()
+{
 
-    if (!isset($_REQUEST["action"]))
+    try 
     {
-        /* if this is not set, then this is a cold session, all we need to do is
-            to display the form ready for filling out */
-
-        $action = "INSERT";
-        
-        /* for csrf protection, the nonce will be formed from a hash of several variables that
-            that make up the session, concatenated, along with some random salt (defined above) */
-        $token = $action . "org.php" . $csrf_salt;
-        $csrf_nonce = hash("sha256", $token);
+        if (!isset($dbh))
+        {
+            global $dbh, $dbhostname, $dbusername, $dbpassword;
+            $dbh = new PDO("mysql:dbname=MoveM;host={$dbhostname}" , $dbusername, $dbpassword);
+        }
     }
-    else if (($_POST["action"] == "UPDATE") && !isset($error_out))
+    catch (PDOException $e)
     {
-        $orgid = $_POST["orgid"];
+        die("Database Query Error: " . $e->getMessage());
+        /* TODO: much better/cleaner handling of errors */
+    }
+    catch(Exception $e)
+    {
+        die($e->getMessage());
+        /* TODO: much better/cleaner handling of errors */
+    }
 
+}
+
+
+function performUpdate()
+{
+    try
+    {
         /* this is an update, so must do a save */
-        $action = "UPDATE";
-
+        global $dbh, $orgid, $goto_page;
         $stmt = $dbh->prepare("UPDATE org SET name = :org_name, person_name = :person_name, website = :website, money_url = :money_url WHERE orgid = :orgid; " .
             "UPDATE org SET email_unverified = :email WHERE orgid = :orgid AND email_verified IS NOT NULL AND email_verified != :email; " . 
             "UPDATE org SET email_unverified = :email WHERE orgid = :orgid AND email_verified IS NULL AND email_unverified != :email; " );
             /* first query doesn't update email because it might get updated in a different window/browser/device */
             /* if email is changed, and it was previously verified, then set it to unverified */
-            /* OR if email is changed, and it was not previouly verified, then changed it and keep it unverified */
+            /* OR if email is changed, and it was not previously verified, then changed it and keep it unverified */
         $stmt->bindParam(':org_name', $_POST["org_name"]);
         $stmt->bindParam(':person_name', $_POST["person_name"]);
         $stmt->bindParam(':email', $_POST["email"]);
@@ -80,7 +219,12 @@ try
         $stmt->bindParam(':website', $_POST["org_website"]);
         $stmt->bindParam(':money_url', $_POST["money_url"]);
         $stmt->bindParam(':orgid', $orgid);
-		$stmt->execute();
+		
+		//echo "<!-- ";
+		//$stmt->debugDumpParams();
+		//echo " -->\n";
+		
+	    $stmt->execute();
 
         if ($stmt->errorCode() != "00000") 
         {
@@ -88,19 +232,43 @@ try
             $erinf = $stmt->errorInfo();
             die("Insert failed<br>" . $erinf[2]); /* the error message in the returned error info */
         }
+		else
+		{
+			global $success_msg;
+			$success_msg = "Record successfully updated.";
+			$goto_page = 3;
+		}
+		
 
         /* TODO: detect email change and add verification email */
-    }
-    else if (!isset($error_out))
-    {
-        //$action = "INSERT";
 
+    }
+    catch (PDOException $e)
+    {
+        die("Database Query Error: " . $e->getMessage());
+        /* TODO: much better/cleaner handling of errors */
+    }
+    catch(Exception $e)
+    {
+        die($e->getMessage());
+        /* TODO: much better/cleaner handling of errors */
+    }
+
+}
+
+
+function performInsert()
+{
+
+    try
+    {
         /* TODO: first check to see if a record under this email address already exists */
 
         /* this is a new record, so do the insert */
+        global $dbh, $orgid, $goto_page;
         $stmt = $dbh->prepare("INSERT INTO org (name, person_name, email_unverified, pwhash, website, money_url)" 
             . " VALUES (:org_name, :person_name, :email, 'asdf', :website, :money_url);");
-        
+
         $stmt->bindParam(':org_name', $_POST["org_name"]);
         $stmt->bindParam(':person_name', $_POST["person_name"]);
         $stmt->bindParam(':email', $_POST["email"]);
@@ -110,7 +278,7 @@ try
 
         //$stmt->debugDumpParams();
 
-		$stmt->execute();
+        $stmt->execute();
 
         if ($stmt->errorCode() != "00000") 
         {
@@ -118,8 +286,17 @@ try
             $erinf = $stmt->errorInfo();
             die("Insert failed<br>" . $erinf[2]); /* the error message in the returned error info */
         }
+		else
+		{
+			global $success_msg;
+			$success_msg = "Record successfully inserted.";
+			$goto_page = 3;
+		}
+		
 
-
+        /* change the action to update, now that the record was successfully inserted */
+        global $action;
+        $action = "UPDATE";
         $orgid = $dbh->lastInsertId();
 
         if (!isset($orgid)) 
@@ -128,72 +305,91 @@ try
             /* TODO: much better/cleaner handling of errors */
         }
 
-        /* TODO: add verification email */
-
     }
-
-    if (($orgid != 0) && (!isset($error_out)))  /* fall through either from a retrieve or from an insert or an update
-        to populate the fields in the form */
+    catch (PDOException $e)
     {
-
-        $stmt = $dbh->prepare("SELECT orgid, name, person_name, email_verified, email_unverified, website, money_url FROM org WHERE orgid = :orgid ;");
-        $stmt->bindParam(':orgid', $orgid);
-
-        $stmt->execute();
-
-        $row = $stmt->fetch(PDO::FETCH_ASSOC);
-
-
-        if (isset($row))
-        {
-            $org_name = $row["name"];
-            $person_name = $row["person_name"];
-            
-
-            $email_verified = $row["email_verified"];
-            $email_unverified = $row["email_unverified"];
-            
-
-            $website = $row["website"];
-            $money_url = $row["money_url"];
-            $action = "UPDATE";
-
-            $token = $action . "org.php" . $csrf_salt;
-            $csrf_nonce = hash("sha256", $token);
-        }
-        else
-        {
-            die("Oops, no organization found with that Id.");
-            /* TODO: much better/cleaner handling of errors */
-        }
+        die("Database Connection Error: " . $e->getMessage());
+        /* TODO: much better/cleaner handling of errors */
     }
-    else if (isset($error_out))
+    catch(Exception $e)
     {
-        /* an error was encountered, so repopulate the fields from the POST */
-        $email_verified = $_POST["email"]; /* TODO: don't know if the email is verified or not yet */
-        $person_name = $_POST["person_name"];
-        $org_name = $_POST["org_name"];
+        die($e->getMessage());
+        /* TODO: much better/cleaner handling of errors */
+    }
+    
+    /* TODO: add verification email */
+
+}
+
+
+function displayDbData()
+{
+
+    global $dbh, $orgid;
+    $stmt = $dbh->prepare("SELECT orgid, name, person_name, email_verified, email_unverified, website, money_url FROM org WHERE orgid = :orgid ;");
+    $stmt->bindParam(':orgid', $orgid);
+
+    $stmt->execute();
+
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+
+    if (isset($row))
+    {
+        global $org_name;
+        global $person_name;
         
 
-        $website = $_POST["org_website"];
-        $money_url = $_POST["money_url"];
+        global $email_verified;
+        global $email_unverified;
+        
+
+        global $website;
+        global $money_url;
+        global $action;
+
+        $org_name = $row["name"];
+        $person_name = $row["person_name"];
+        
+
+        $email_verified = $row["email_verified"];
+        $email_unverified = $row["email_unverified"];
+        
+
+        $website = $row["website"];
+        $money_url = $row["money_url"];
         $action = "UPDATE";
-
-        $token = $action . "org.php" . $csrf_salt;
-        $csrf_nonce = hash("sha256", $token);
-
+        buildCsrfToken();
     }
-
- }
-catch (PDOException $e)
-{
-    die("Database Connection Error: " . $e->getMessage());
-    /* TODO: much better/cleaner handling of errors */
+    else
+    {
+        die("Oops, no organization found with that Id.");
+        /* TODO: much better/cleaner handling of errors */
+    }
 }
-catch(Exception $e)
+
+
+function displayPostData()
+
 {
-    die($e->getMessage());
-    /* TODO: much better/cleaner handling of errors */
+    /* an error was encountered, so repopulate the fields from the POST */
+    global $email_verified; 
+    global $person_name;
+    global $org_name;
+    global $website;
+    global $money_url;
+    global $action; 
+
+    $email_verified = $_POST["email"]; /* TODO: don't know if the email is verified or not yet */
+    $person_name = $_POST["person_name"];
+    $org_name = $_POST["org_name"];
+    
+
+    $website = $_POST["org_website"];
+    $money_url = $_POST["money_url"];
+    $action = $_POST["action"]; /* on error, always retain the same action that was posted */
+
+    buildCsrfToken();
 }
 
 ?>
@@ -228,12 +424,10 @@ catch(Exception $e)
 <input type="hidden" id="action" name="action" value="<?php echo $action ?>" />
 <input type="hidden" id="orgid" name="orgid" value="<?php echo $orgid ?>" />
 
-<div id="page1">
+<div id="page1" <?php if ($goto_page != 1) echo "hidden='true'"; ?> >
     <center>
         <h3 id="header">Tell us a bit about yourself first</h3>
     </center>
-
-    <div class="alert alert-success" hidden="true" id="general_alert_msg" ></div>
 
     <div class="form-group">
         <label for="person_name">Name:</label>
@@ -247,29 +441,28 @@ catch(Exception $e)
     <div class="form-group">
         <label for="email">Email address:</label>
         <?php 
-            echo "<input class='form-control' type='email' id='email' maxlength='128' name='email' value='";
             if (isset($email_verified))
             {
-                echo $email_verified; 
-                echo "' />\n";
+                echo "<input class='form-control' type='email' id='email' maxlength='128' name='email' value='$email_verified' />\n";
             }
-            else if (isset($email_unverified))
+            elseif (isset($email_unverified))
             {
-                echo $email_unverified; 
-                echo "' />\n";
+                echo "<input class='form-control' type='email' id='email' maxlength='128' name='email' value='$email_unverified' />\n";
+            }
+            else
+            {
+                echo "<input class='form-control' type='email' id='email' maxlength='128' name='email' value='' />\n";
             }
 
             if (isset($email_unverified))
             {
-                echo "<div class='alert alert-info' id='email_unverified_msg' >The email address: ";
-                echo $email_unverified;
-                echo " has not been verified yet.</div>\n";
+                echo "<div class='alert alert-info' id='email_unverified_msg' >The email address: $email_unverified has not been verified yet.</div>\n";
             }
         ?>
     </div> <!-- form-group -->
  
     <div class="alert alert-danger" <?php if (!isset($email_msg)) echo "hidden='true'"; ?> id="email_invalid_msg" >
-        <?php echo $email_msg; ?>
+        <?php if (isset($email_msg)) echo $email_msg; ?>
     </div>
 
     <ul class="pager">
@@ -279,7 +472,7 @@ catch(Exception $e)
 
 </div> <!-- page 1 -->
 
-<div id="page2" hidden="true" >
+<div id="page2" <?php if ($goto_page != 2) echo "hidden='true'"; ?> >
     <center><h3 id="header">Tell us about the organization</h3></center>
 
     <div class="form-group">
@@ -296,8 +489,8 @@ catch(Exception $e)
         <input class="form-control" type="url" id="org_website" maxlength="255"  name="org_website" value="<?php echo $website ?>" />
     </div> <!-- form-group -->
 
-    <div class="alert alert-danger" hidden="true" id="website_invalid_msg" >
-        The web site does not look like a valid URL.
+    <div class="alert alert-danger" <?php if (!isset($website_msg)) echo "hidden='true'"; ?> id="website_invalid_msg" >
+        <?php if (isset($website_msg)) echo $website_msg; ?>
     </div>
 
     <div class="form-group">
@@ -305,9 +498,10 @@ catch(Exception $e)
         <input class="form-control" type="url" id="money_url" maxlength="255" name="money_url" value="<?php echo $money_url ?>" />
     </div> <!-- form-group -->
 
-    <div class="alert alert-danger" hidden="true" id="donations_invalid_msg" >
-        The donations site does not look like a valid URL.
+    <div class="alert alert-danger" <?php if (!isset($donations_msg)) echo "hidden='true'"; ?> id="donations_invalid_msg" >
+        <?php if (isset($donations_msg)) echo $donations_msg; ?>
     </div>
+
 
 
     <ul class="pager">
@@ -317,13 +511,23 @@ catch(Exception $e)
 
 </div> <!-- page 2 -->
 
-<div id="page3" hidden="true" >
+<div id="page3" <?php if ($goto_page != 3) echo "hidden='true'"; ?> >
     <center><h3 id="header">Tell us about the types of people you are looking for</h3></center>
+
+    <p>Here is where the several pages of questions will go.</p>
 
     <ul class="pager">
         <li><a href="#" id="p3_goto_p2" >Previous</a></li>
         <li><a id="save_data" href="#">Save data</a></li>
     </ul> 
+
+	<?php if (isset($success_msg))
+	{
+		echo "<div class='alert alert-success alert-dismissable' id='general_alert_msg' >\n";
+		echo "<a href='#' class='close' data-dismiss='alert' aria-label='close'>×</a>\n";
+		echo "$success_msg\n</div>";
+	}
+	?>
 
 
 </div> <!-- Page 3 -->

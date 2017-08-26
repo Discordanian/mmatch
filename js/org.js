@@ -6,11 +6,11 @@ $(document).ready(function(){
 
         /* all the client side validation has been passed for page 1 */
 
-        //if (validate_page1())
-        //{
+        if (validate_page1())
+        {
 		    $("div#page1").hide();
 		    $("div#page2").show();
-	    //}
+	    }
 
 	});
 
@@ -50,6 +50,10 @@ $(document).ready(function(){
     });
 
 
+	//if ($("#general_alert_msg").hidden == false)
+	{
+		setTimeout(closeAlertMsg,3000);
+	}
 });
 
 
@@ -204,3 +208,7 @@ function isValidURL(theUrl)
 
 }
 
+function closeAlertMsg()
+{
+	$("#general_alert_msg").hide("fast");
+}
