@@ -13,7 +13,9 @@ require_once('include/secrets.php');
 /* #5 Update attempted, no errors, update successful, display form with data populated from DB, along with SUCCESS msg */ 
 /* #6 Retrieve only, display form with data populated from DB */
 
-
+/* TODO: This code is very vulnerable to XSS 
+and probably a bunch of other attacks
+Needs serious security review */
 
 if (isset($_POST["action"]))
 {
@@ -48,11 +50,11 @@ elseif (isset($_POST["orgid"]))
 else
 {
     /* #1 */
+    /* Build default screen data */
     $orgid = 0;
     $person_name = "";
     $org_name = "";
     $email_verified = "";
-    //$email_msg = "";
     $website = "";
     $money_url = "";
     $action = "INSERT";
@@ -64,9 +66,11 @@ else
 function buildCsrfToken()
 {
     /* for csrf protection, the nonce will be formed from a hash of several variables that
-        that make up the session, concatenated, along with some random salt (defined above) */
+        that make up the session, concatenated, but should be stable between requests,
+        along with some random salt (defined above) */
     global $csrf_nonce, $csrf_salt, $action;
-    $token = $action . ".org.php." . $csrf_salt;
+    $token = $action . '-' . $_SERVER['SERVER_SIGNATURE'] . '-' . $_SERVER['PHP_SELF'] . '-' . $csrf_salt;
+    //echo "<!-- DEBUG token = $token -->\n";
     $csrf_nonce = hash("sha256", $token);
 }
 
@@ -75,9 +79,9 @@ function checkCsrfToken()
 {
     global $csrf_salt;
 
-    $token = $_POST["action"] . ".org.php." . $csrf_salt;
+    $token = $_POST["action"] . '-' . $_SERVER['SERVER_SIGNATURE'] . '-' . $_SERVER['PHP_SELF'] . '-' . $csrf_salt;
 	
-	//echo "<!-- Token = $token -->\n";
+	//echo "<!-- DEBUG Check Token = $token -->\n";
     if (hash("sha256", $token) != $_POST["nonce"])
     {
         die("CSRF token mismatch. Just kill me now...");
@@ -92,9 +96,9 @@ function checkCsrfToken()
 function validatePostData()
 {
     global $email_msg, $orgid, $goto_page, $website_msg;
-    $orgid = $_POST["orgid"];
+    $orgid = $_REQUEST["orgid"];
 
-    /* first do basic validations before opening the database */
+    /* first do basic validations before accessing the database */
     if (isset($_POST["email"])) 
     {
         $email = $_POST["email"];
@@ -151,7 +155,7 @@ function validatePostData()
 	{
 		$money_url = $_POST["money_url"];
 		//echo "<!-- money url = $money_url -->\n"; 
-		if (strlen($money_url) > 0) /* web site is optional so skip check if its blank */
+		if (strlen($money_url) > 0) /* donations site is optional so skip check if its blank */
 		{
 			
 			if (!filter_var($money_url, FILTER_VALIDATE_URL))
@@ -188,7 +192,7 @@ function initializeDb()
     }
     catch (PDOException $e)
     {
-        die("Database Query Error: " . $e->getMessage());
+        die("Database Connection Error: " . $e->getMessage());
         /* TODO: much better/cleaner handling of errors */
     }
     catch(Exception $e)
@@ -206,16 +210,19 @@ function performUpdate()
     {
         /* this is an update, so must do a save */
         global $dbh, $orgid, $goto_page;
+
+        assert(isset($dbh));
         $stmt = $dbh->prepare("UPDATE org SET name = :org_name, person_name = :person_name, website = :website, money_url = :money_url WHERE orgid = :orgid; " .
             "UPDATE org SET email_unverified = :email WHERE orgid = :orgid AND email_verified IS NOT NULL AND email_verified != :email; " . 
             "UPDATE org SET email_unverified = :email WHERE orgid = :orgid AND email_verified IS NULL AND email_unverified != :email; " );
             /* first query doesn't update email because it might get updated in a different window/browser/device */
             /* if email is changed, and it was previously verified, then set it to unverified */
             /* OR if email is changed, and it was not previously verified, then changed it and keep it unverified */
+            /* should this query be moved to a stored procedure? */
         $stmt->bindParam(':org_name', $_POST["org_name"]);
         $stmt->bindParam(':person_name', $_POST["person_name"]);
         $stmt->bindParam(':email', $_POST["email"]);
-        //$stmt->bindParam(':pwhash', "asdf");
+        //$stmt->bindParam(':pwhash', "asdf"); /* TODO: Create the password create/change interface */
         $stmt->bindParam(':website', $_POST["org_website"]);
         $stmt->bindParam(':money_url', $_POST["money_url"]);
         $stmt->bindParam(':orgid', $orgid);
@@ -228,7 +235,7 @@ function performUpdate()
 
         if ($stmt->errorCode() != "00000") 
         {
-            echo "Error code:<br>";
+            echo "<!-- Error code: $stmt->errorCode() -->\n"; /* I am not sure if this syntax will work, need to trigger a DB error to check */
             $erinf = $stmt->errorInfo();
             die("Insert failed<br>" . $erinf[2]); /* the error message in the returned error info */
         }
@@ -301,14 +308,14 @@ function performInsert()
 
         if (!isset($orgid)) 
         {
-            die("Oops...failed to get the insert Id.");
+            die("Oops...failed to get the insert Id. That sucks...");
             /* TODO: much better/cleaner handling of errors */
         }
 
     }
     catch (PDOException $e)
     {
-        die("Database Connection Error: " . $e->getMessage());
+        die("Database Query Error: " . $e->getMessage());
         /* TODO: much better/cleaner handling of errors */
     }
     catch(Exception $e)
@@ -325,47 +332,61 @@ function performInsert()
 function displayDbData()
 {
 
-    global $dbh, $orgid;
-    $stmt = $dbh->prepare("SELECT orgid, name, person_name, email_verified, email_unverified, website, money_url FROM org WHERE orgid = :orgid ;");
-    $stmt->bindParam(':orgid', $orgid);
+    try {
 
-    $stmt->execute();
+        global $dbh, $orgid;
+        $stmt = $dbh->prepare("SELECT orgid, name, person_name, email_verified, email_unverified, website, money_url FROM org WHERE orgid = :orgid ;");
+        $stmt->bindParam(':orgid', $orgid);
 
-    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        $stmt->execute();
+
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
 
-    if (isset($row))
-    {
-        global $org_name;
-        global $person_name;
-        
+        if (isset($row))
+        {
+            global $org_name;
+            global $person_name;
+            
 
-        global $email_verified;
-        global $email_unverified;
-        
+            global $email_verified;
+            global $email_unverified;
+            
 
-        global $website;
-        global $money_url;
-        global $action;
+            global $website;
+            global $money_url;
+            global $action;
 
-        $org_name = $row["name"];
-        $person_name = $row["person_name"];
-        
+            $org_name = $row["name"];
+            $person_name = $row["person_name"];
+            
 
-        $email_verified = $row["email_verified"];
-        $email_unverified = $row["email_unverified"];
-        
+            $email_verified = $row["email_verified"];
+            $email_unverified = $row["email_unverified"];
+            
 
-        $website = $row["website"];
-        $money_url = $row["money_url"];
-        $action = "UPDATE";
-        buildCsrfToken();
+            $website = $row["website"];
+            $money_url = $row["money_url"];
+            $action = "UPDATE";
+            buildCsrfToken();
+        }
+        else
+        {
+            die("Oops, no organization found with that Id.");
+            /* TODO: much better/cleaner handling of errors */
+        }
     }
-    else
+    catch (PDOException $e)
     {
-        die("Oops, no organization found with that Id.");
+        die("Database Connection Error: " . $e->getMessage());
         /* TODO: much better/cleaner handling of errors */
     }
+    catch(Exception $e)
+    {
+        die($e->getMessage());
+        /* TODO: much better/cleaner handling of errors */
+    }
+
 }
 
 
@@ -380,7 +401,8 @@ function displayPostData()
     global $money_url;
     global $action; 
 
-    $email_verified = $_POST["email"]; /* TODO: don't know if the email is verified or not yet */
+    $email_verified = $_POST["email"]; /* TODO: don't know if the email is verified or not yet
+                                        not sure how to handle this */
     $person_name = $_POST["person_name"];
     $org_name = $_POST["org_name"];
     
