@@ -41,7 +41,7 @@ if (isset($_POST["action"]))
         displayDbData();
     }
 }
-elseif (isset($_POST["orgid"]))
+elseif (isset($_REQUEST["orgid"]))
 {
     /* #6 */
     initializeDb();
@@ -65,7 +65,7 @@ else
 
 function buildCsrfToken()
 {
-    /* for csrf protection, the nonce will be formed from a hash of several variables that
+    /* for csrf protection, the nonce will be formed from a hash of several variables 
         that make up the session, concatenated, but should be stable between requests,
         along with some random salt (defined above) */
     global $csrf_nonce, $csrf_salt, $action;
@@ -96,7 +96,9 @@ function checkCsrfToken()
 function validatePostData()
 {
     global $email_msg, $orgid, $goto_page, $website_msg;
-    $orgid = $_REQUEST["orgid"];
+    $orgid = FILTER_VAR($_REQUEST["orgid"], FILTER_VALIDATE_INT);
+
+    assert($orgid != false); /* more error handling needed */
 
     /* first do basic validations before accessing the database */
     if (isset($_POST["email"])) 
@@ -235,9 +237,8 @@ function performUpdate()
 
         if ($stmt->errorCode() != "00000") 
         {
-            echo "<!-- Error code: $stmt->errorCode() -->\n"; /* I am not sure if this syntax will work, need to trigger a DB error to check */
             $erinf = $stmt->errorInfo();
-            die("Insert failed<br>" . $erinf[2]); /* the error message in the returned error info */
+            die("Update failed<br>Error code:" . $stmt->errorCode() . "<br>" . $erinf[2]); /* the error message in the returned error info */
         }
 		else
 		{
@@ -291,7 +292,7 @@ function performInsert()
         {
             echo "Error code:<br>";
             $erinf = $stmt->errorInfo();
-            die("Insert failed<br>" . $erinf[2]); /* the error message in the returned error info */
+            die("Insert failed<br>Error code:" . $stmt->errorCode() . "<br>" . $erinf[2]); /* the error message in the returned error info */
         }
 		else
 		{
@@ -308,7 +309,7 @@ function performInsert()
 
         if (!isset($orgid)) 
         {
-            die("Oops...failed to get the insert Id. That sucks...");
+            die("Oops...failed to get the insert Id. That sucks big time...");
             /* TODO: much better/cleaner handling of errors */
         }
 
@@ -335,10 +336,23 @@ function displayDbData()
     try {
 
         global $dbh, $orgid;
+
+        $orgid = FILTER_VAR($_REQUEST["orgid"], FILTER_VALIDATE_INT);
+
+        assert($orgid != false); /* more error handling needed */
+
         $stmt = $dbh->prepare("SELECT orgid, name, person_name, email_verified, email_unverified, website, money_url FROM org WHERE orgid = :orgid ;");
         $stmt->bindParam(':orgid', $orgid);
 
         $stmt->execute();
+
+        if ($stmt->errorCode() != "00000") 
+        {
+            echo "Error code:<br>";
+            $erinf = $stmt->errorInfo();
+            die("Insert failed<br>Error code:" . $stmt->errorCode() . "<br>" . $erinf[2]); /* the error message in the returned error info */
+        }
+		
 
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -347,7 +361,7 @@ function displayDbData()
         {
             global $org_name;
             global $person_name;
-            
+            global $goto_page;
 
             global $email_verified;
             global $email_unverified;
@@ -359,7 +373,7 @@ function displayDbData()
 
             $org_name = $row["name"];
             $person_name = $row["person_name"];
-            
+            $goto_page = 1;            
 
             $email_verified = $row["email_verified"];
             $email_unverified = $row["email_unverified"];
