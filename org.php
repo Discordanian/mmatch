@@ -3,6 +3,7 @@ ini_set('display_errors', 'On');
 error_reporting(E_ALL | E_STRICT);
 
 require_once('include/secrets.php');
+require_once('include/pwhashfx.php');
 
 
 /* There are basically 6 possible flows to this page */
@@ -230,19 +231,33 @@ function performUpdate()
         }
 
         $stmt = $dbh->prepare("UPDATE org SET name = :org_name, person_name = :person_name, website = :website, money_url = :money_url WHERE orgid = :orgid; " .
+            "UPDATE org SET pwhash = :pwhash WHERE orgid = :orgid AND :pwhash IS NOT NULL; " .
             "UPDATE org SET email_unverified = :email WHERE orgid = :orgid AND email_verified IS NOT NULL AND email_verified != :email; " . 
             "UPDATE org SET email_unverified = :email WHERE orgid = :orgid AND email_verified IS NULL AND email_unverified != :email; " );
             /* first query doesn't update email because it might get updated in a different window/browser/device */
+            /* next query only updates password if a new one was entered */
             /* if email is changed, and it was previously verified, then set it to unverified */
             /* OR if email is changed, and it was not previously verified, then changed it and keep it unverified */
             /* should this query be moved to a stored procedure? */
         $stmt->bindParam(':org_name', $_POST["org_name"]);
         $stmt->bindParam(':person_name', $_POST["person_name"]);
         $stmt->bindParam(':email', $_POST["email"]);
-        //$stmt->bindParam(':pwhash', "asdf"); /* TODO: Create the password create/change interface */
         $stmt->bindParam(':website', $_POST["org_website"]);
         $stmt->bindParam(':money_url', $_POST["money_url"]);
         $stmt->bindParam(':orgid', $orgid);
+
+
+        /* udpate password if a new one specified */
+        if (strlen($_POST["password1"]) > 0)
+        {
+            $pwhash = password_hash($_POST["password1"], PASSWORD_BCRYPT);
+        }
+        else
+        {
+            $pwhash = null;
+        }
+
+        $stmt->bindParam(':pwhash', $pwhash);
 		
 		//echo "<!-- ";
 		//$stmt->debugDumpParams();
@@ -290,14 +305,15 @@ function performInsert()
         /* this is a new record, so do the insert */
         global $dbh, $orgid, $goto_page;
         $stmt = $dbh->prepare("INSERT INTO org (name, person_name, email_unverified, pwhash, website, money_url)" 
-            . " VALUES (:org_name, :person_name, :email, 'asdf', :website, :money_url);");
+            . " VALUES (:org_name, :person_name, :email, :pwhash, :website, :money_url);");
 
         $stmt->bindParam(':org_name', $_POST["org_name"]);
         $stmt->bindParam(':person_name', $_POST["person_name"]);
         $stmt->bindParam(':email', $_POST["email"]);
-        //$stmt->bindParam(':pwhash', "asdf");
         $stmt->bindParam(':website', $_POST["org_website"]);
         $stmt->bindParam(':money_url', $_POST["money_url"]);
+        $pwhash = password_hash($_POST["password1"], PASSWORD_BCRYPT);
+        $stmt->bindParam(':pwhash', $pwhash);
 
         //$stmt->debugDumpParams();
 
@@ -520,6 +536,16 @@ function displayPostData()
     <div class="alert alert-danger" <?php if (!isset($email_msg)) echo "hidden='true'"; ?> id="email_invalid_msg" >
         <?php if (isset($email_msg)) echo $email_msg; ?>
     </div>
+
+   <div class="form-group">
+        <label for="password1"><?php if ($action == "UPDATE") { echo "Update Password:"; } else { echo "Set Password:"; } ?></label>
+        <input class="form-control" type="password" id="password1" maxlength="128" name="password1" value="" />
+    </div> <!-- form-group -->
+
+   <div class="form-group">
+        <label for="password2">Verify Password:</label>
+        <input class="form-control" type="password" id="password2" maxlength="128" name="password2" value="" />
+    </div> <!-- form-group -->
 
     <ul class="pager">
         <!-- <li><a href="#" id="" >Save data</a></li> -->
