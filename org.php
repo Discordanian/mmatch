@@ -17,6 +17,14 @@ require_once('include/secrets.php');
 and probably a bunch of other attacks
 Needs serious security review */
 
+$goto_page = 1;
+session_start();
+//echo "<!-- ";
+//var_dump($_SESSION);
+//echo " -->\n";
+
+
+
 if (isset($_POST["action"]))
 {
     /* Flow #2, #3, #4, or #5 */
@@ -44,6 +52,7 @@ if (isset($_POST["action"]))
 elseif (isset($_REQUEST["orgid"]))
 {
     /* #6 */
+    $orgid = FILTER_VAR($_REQUEST["orgid"], FILTER_VALIDATE_INT);
     initializeDb();
     displayDbData();
 }
@@ -58,7 +67,6 @@ else
     $website = "";
     $money_url = "";
     $action = "INSERT";
-	$goto_page = 1;
     buildCsrfToken();
 }
 /* end of global section, now fall through to HTML */
@@ -90,6 +98,8 @@ function checkCsrfToken()
 	{
 		echo "<!-- CSRF passed -->\n";
 	} */
+
+
 }
 
 
@@ -97,8 +107,6 @@ function validatePostData()
 {
     global $email_msg, $orgid, $goto_page, $website_msg;
     $orgid = FILTER_VAR($_REQUEST["orgid"], FILTER_VALIDATE_INT);
-
-    assert($orgid != false); /* more error handling needed */
 
     /* first do basic validations before accessing the database */
     if (isset($_POST["email"])) 
@@ -214,6 +222,13 @@ function performUpdate()
         global $dbh, $orgid, $goto_page;
 
         assert(isset($dbh));
+
+        /* make sure orgid from session matches org ID requested */
+        if ($_SESSION["orgid"] != $orgid)
+        {
+            die("Parameter tampering detected. Requested org ID which is not authorized.");
+        }
+
         $stmt = $dbh->prepare("UPDATE org SET name = :org_name, person_name = :person_name, website = :website, money_url = :money_url WHERE orgid = :orgid; " .
             "UPDATE org SET email_unverified = :email WHERE orgid = :orgid AND email_verified IS NOT NULL AND email_verified != :email; " . 
             "UPDATE org SET email_unverified = :email WHERE orgid = :orgid AND email_verified IS NULL AND email_unverified != :email; " );
@@ -313,6 +328,9 @@ function performInsert()
             /* TODO: much better/cleaner handling of errors */
         }
 
+        /* place the org ID into session */
+        $_SESSION["orgid"] = $orgid;
+
     }
     catch (PDOException $e)
     {
@@ -337,9 +355,13 @@ function displayDbData()
 
         global $dbh, $orgid;
 
-        $orgid = FILTER_VAR($_REQUEST["orgid"], FILTER_VALIDATE_INT);
-
         assert($orgid != false); /* more error handling needed */
+
+        /* make sure orgid from session matches org ID requested */
+        if ($_SESSION["orgid"] != $orgid)
+        {
+            die("Parameter tampering detected. Requested org ID which is not authorized.");
+        }
 
         $stmt = $dbh->prepare("SELECT orgid, name, person_name, email_verified, email_unverified, website, money_url FROM org WHERE orgid = :orgid ;");
         $stmt->bindParam(':orgid', $orgid);
@@ -361,7 +383,6 @@ function displayDbData()
         {
             global $org_name;
             global $person_name;
-            global $goto_page;
 
             global $email_verified;
             global $email_unverified;
@@ -373,7 +394,6 @@ function displayDbData()
 
             $org_name = $row["name"];
             $person_name = $row["person_name"];
-            $goto_page = 1;            
 
             $email_verified = $row["email_verified"];
             $email_unverified = $row["email_unverified"];

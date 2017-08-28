@@ -13,22 +13,31 @@ require_once('include/pwhashfx.php');
 and probably a bunch of other attacks
 Needs serious security review */
 
-if (isset($_POST["password"]))
+if (isset($_POST["password"])) /* credentials were submitted */
 {
-    /* Flow #2, #3, #4, or #5 */
     checkCsrfToken();
     
     if (validatePostData())
     {
         if (authenticateCredentials())
         {
+            /* flow #3 */
             redirectToPage();
+        }
+        else
+        {
+            /* set the auth error message */
+            $auth_fail_msg = "Those credentials are not valid. Please try again.";
         }
     }
 
 }
-else
+
+if ((!isset($_POST["password"])) || (isset($auth_fail_msg)))
+
 {
+    /* Flow #1, or #2, display blank form */
+
     clearSession();
     buildCsrfToken();
 }
@@ -44,7 +53,7 @@ function buildCsrfToken()
         along with some random salt (defined above) */
     global $csrf_nonce, $csrf_salt;
     $token = $_SERVER['SERVER_SIGNATURE'] . '-' . $_SERVER['PHP_SELF'] . '-' . $csrf_salt;
-    //echo "<!-- DEBUG token = $token -->\n";
+    //echo "<!-- DEBUG build token = $token -->\n";
     $csrf_nonce = hash("sha256", $token);
 }
 
@@ -134,9 +143,9 @@ function authenticateCredentials()
 		{
             $pwhash = $row["pwhash"];
 
-            echo "<!-- Password hash from db = $pwhash -->\n";
-            echo "<!-- Password entered = " . $_POST["password"] . "-->\n";
-            echo "<!-- Password hash calculated = " . password_hash($_POST["password"], PASSWORD_BCRYPT) . " -->\n";
+            //echo "<!-- Password hash from db = $pwhash -->\n";
+            //echo "<!-- Password entered = " . $_POST["password"] . "-->\n";
+            //echo "<!-- Password hash calculated = " . password_hash($_POST["password"], PASSWORD_BCRYPT) . " -->\n";
 
             if (password_hash($_POST["password"], PASSWORD_BCRYPT) == $pwhash)
             {
@@ -164,11 +173,13 @@ function authenticateCredentials()
 function clearSession()
 {
     /* The following was copied from php.net */
+    /* The goal is to clear all cookies when the login page is shown
+        which mitigates against some session hijacking threats */
     // Initialize the session.
     // If you are using session_name("something"), don't forget it now!
     session_start();
 
-    // Unset all of the session variables.
+    // Unset all of the session variables. (server side)
     $_SESSION = array();
 
     // If it's desired to kill the session, also delete the session cookie.
@@ -210,7 +221,7 @@ function redirectToPage()
     <link rel="stylesheet" href="css/style.css">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
-    <!-- <script src="js/login.js"></script> -->
+    <script src="js/login.js"></script>
   
 </head>
 
@@ -244,7 +255,7 @@ function redirectToPage()
         <?php if (isset($auth_fail_msg)) echo $auth_fail_msg; ?>
     </div>
 
-    <button type="submit" class="btn btn-default">Submit</button>
+    <button type="submit" class="btn btn-default" id="submit">Submit</button>
 
 
 </form>
