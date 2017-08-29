@@ -106,7 +106,7 @@ function checkCsrfToken()
 
 function validatePostData()
 {
-    global $email_msg, $orgid, $goto_page, $website_msg;
+    global $email_msg, $orgid, $goto_page, $website_msg, $pwd_msg;
     $orgid = FILTER_VAR($_REQUEST["orgid"], FILTER_VALIDATE_INT);
 
     /* first do basic validations before accessing the database */
@@ -136,7 +136,40 @@ function validatePostData()
             return false;
         }
     }
+	else
+	{
+		/* Weird situation because this data field was not even posted.
+		Should probably log it. */
+		$email_msg = "A valid email address is required.";
+		$goto_page = 1;
+		return false;
+	}
 
+	if ((isset($_POST["password1"]) && (isset($_POST["password2"]))))
+	{
+		if ($_POST["password1"] != $_POST["password2"])
+		{
+			$pwd_msg = "Passwords must match.";
+			$goto_page = 1;
+			return false;
+		}
+		
+		if (strlen($_POST["password1"]) > 128)
+		{
+			$pwd_msg = "Password exceeds the maximum length of 128.";
+			$goto_page = 1;
+			return false;
+		}
+	}
+	else
+	{
+		/* Weird situation because this data field was not even posted.
+		Should probably log it. */
+		$pwd_msg = "Passwords must match.";
+		$goto_page = 1;
+		return false;
+	}
+	
 	if (isset($_POST["org_website"]))
 	{
 		$website = $_POST["org_website"];
@@ -160,6 +193,14 @@ function validatePostData()
 				return false;
 			}
 		}
+	}
+	else
+	{
+		/* Weird situation because this data field was not even posted.
+		Should probably log it. */
+		$website_msg = "An unknown error occurred. Please try again.";
+		$goto_page = 2;
+		return false;
 	}
 
 	if (isset($_POST["money_url"]))
@@ -185,6 +226,15 @@ function validatePostData()
 			}
 		}
 	}
+	else
+	{
+		/* Weird situation because this data field was not even posted.
+		Should probably log it. */
+		$donations_msg = "An unknown error occurred. Please try again.";
+		$goto_page = 2;
+		return false;
+	}
+
 	//echo "<!-- validatePost passed -->\n";
     return true;
 }
@@ -328,7 +378,7 @@ function performInsert()
 		else
 		{
 			global $success_msg;
-			$success_msg = "Record successfully inserted.";
+			$success_msg = "Record successfully inserted. An email has been sent to validate the email.";
 			$goto_page = 3;
 		}
 		
@@ -547,6 +597,10 @@ function displayPostData()
         <input class="form-control" type="password" id="password2" maxlength="128" name="password2" value="" />
     </div> <!-- form-group -->
 
+    <div class="alert alert-danger" <?php if (!isset($pwd_msg)) echo "hidden='true'"; ?> id="pwd_msg" >
+        <?php if (isset($pwd_msg)) echo $pwd_msg; ?>
+    </div>
+	
     <ul class="pager">
         <!-- <li><a href="#" id="" >Save data</a></li> -->
         <li><a href="#" id="p1_goto_p2" >Next</a></li>
