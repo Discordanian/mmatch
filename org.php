@@ -40,16 +40,22 @@ if (isset($_POST["action"]))
         /* #3 */
         initializeDb();
         performInsert();
+        buildEmptyArray();
+        translatePostIntoArray();
+        updateQuestionnaireData();
         displayDbData();
-        buildArray();
+        populateArray();
     }
     elseif ($_POST["action"] == "UPDATE")
     {
         /* #5 */
         initializeDb();
         performUpdate();
+        buildEmptyArray();
+        translatePostIntoArray();
+        updateQuestionnaireData();
         displayDbData();
-        buildArray();
+        populateArray();
     }
 }
 elseif (isset($_REQUEST["orgid"]))
@@ -58,7 +64,8 @@ elseif (isset($_REQUEST["orgid"]))
     $orgid = FILTER_VAR($_REQUEST["orgid"], FILTER_VALIDATE_INT);
     initializeDb();
     displayDbData();
-    buildArray();
+    buildEmptyArray();
+    populateArray();
 }
 else
 {
@@ -72,7 +79,7 @@ else
     $money_url = "";
     $action = "INSERT";
     initializeDb();
-    buildArray();
+    buildEmptyArray();
     buildCsrfToken();
 }
 /* end of global section, now fall through to HTML */
@@ -480,6 +487,7 @@ function displayDbData()
             die("Oops, no organization found with that Id.");
             /* TODO: much better/cleaner handling of errors */
         }
+        $stmt->closeCursor();
     }
     catch (PDOException $e)
     {
@@ -520,15 +528,61 @@ function displayPostData()
 }
 
 
-function buildArray()
+
+function buildEmptyArray()
+{
+    try {
+
+        global $dbh, $qu_aire;
+
+
+        $stmt = $dbh->prepare("SELECT gg.page_num, qq.question_id, qq.question_text, " .
+        " qq.org_multi_select, qc.choice_id, qc.choice_text, NULL AS org_id " .
+        " FROM question_group gg INNER JOIN question qq " .
+        " ON gg.group_id = qq.question_group_id " .
+        " INNER JOIN question_choice qc " .
+        " ON qc.question_id = qq.question_id " .
+        " ORDER BY gg.group_id, gg.page_num, qq.question_id, qq.sort_order, qc.choice_id, qc.sort_order;");
+
+        $stmt->execute();
+
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC))
+        {
+
+            /* construct an array of pages, which is an array of questions, which is an array of choices */
+            /* this is a little hacky, but it is a pretty convenient way to automatically sort these */
+            /* rows into their respective pages, questions, etc. without doing a */ 
+            /* bunch of repetitive queries or complicated matching logic */
+
+            $qu_aire[$row["page_num"]][$row["question_id"]][$row["choice_id"]] = $row;  
+
+        }
+
+        $stmt->closeCursor();
+
+    }
+    catch (PDOException $e)
+    {
+        die("Database Connection Error: " . $e->getMessage());
+        /* TODO: much better/cleaner handling of errors */
+    }
+    catch(Exception $e)
+    {
+        die($e->getMessage());
+        /* TODO: much better/cleaner handling of errors */
+    }
+
+}
+
+function populateArray()
 {
     try {
 
         global $dbh, $orgid, $qu_aire;
 
 
-        $stmt = $dbh->prepare("SELECT gg.group_id, gg.group_text, gg.page_num, qq.question_id, qq.question_text, " .
-        " qq.org_multi_select, qq.sort_order, qc.choice_id, qc.choice_text, qc.sort_order, res.org_id " .
+        $stmt = $dbh->prepare("SELECT gg.page_num, qq.question_id, qq.question_text, " .
+        " qq.org_multi_select, qc.choice_id, qc.choice_text, res.org_id " .
         " FROM question_group gg INNER JOIN question qq " .
         " ON gg.group_id = qq.question_group_id " .
         " INNER JOIN question_choice qc " .
@@ -550,12 +604,9 @@ function buildArray()
 
             $qu_aire[$row["page_num"]][$row["question_id"]][$row["choice_id"]] = $row;  
 
-          
         }
 
-        echo "<!-- " . count($qu_aire) . " -->\n";
-
-
+        $stmt->closeCursor();
     }
     catch (PDOException $e)
     {
@@ -585,21 +636,214 @@ function arrayToHtml($pagenum)
         echo $row["question_text"];
         echo "</label>\n";
 
-        echo "\t<select name='question-$question_id' id='question-$question_id' class='form-control' >\n";
+        if ($row["org_multi_select"])
+        {
+            $multi = sprintf(" multiple name='question-%d[]'", $question_id); /* add the brackets which force the browser to send an array */
+        }
+        else
+        {
+            $multi = sprintf(" name='question-%d'", $question_id);
+        }
+        echo "\t<select $multi id='question-$question_id' class='form-control' >\n";
+        /* Must include the "<no selection>" value because otherwise user has no way to remove a previously selected option */
         echo "\t\t<option value='NULL'>&lt;No selection&gt;</option>\n";
         foreach($question as $choice_id => $choice)
         {
-            echo "\t\t<option value='choice-" . $choice["choice_id"] . "' >" . $choice["choice_text"] . "</option>\n";
+            if ($choice["org_id"] > 0)
+            {
+                $selected = " selected ";
+            }
+            else
+            {
+                $selected = "";
+            }
+            printf("\t\t<option value='choice-%d' %s >%s</option>\n", $choice["choice_id"], $selected, $choice["choice_text"]) ;
         }
         
-        echo "\t</select>\n\t</div>\n";
+        echo "\t</select>\n\t</div>\n\n";
     }
     
-    echo "\n";
+    echo "\n"; /* this may be stupid but the tabs and LFs are for visually readable HTML source. Invisible Aesthetics FTW! */
 }
 
+function translatePostIntoArray()
+{
+
+    global $qu_aire, $orgid;
+    //echo "<!-- ";
+    //var_dump($orgid);
+    //echo " -->\n";
+
+    foreach($qu_aire as $page_num => $page)
+    {
+        foreach($page as $question_num => $question)
+        {
+            /* loop through each question that is in the database (array),
+            look in the post for that question and any selections
+            set the appropriate values in the array */
+            $row = current($question);
+
+            $question_id = sprintf("question-%d", $question_num);
+
+            /* This method assumes that buildEmptyArray has already been called
+                to construct the skeleton of the questionnaire array
+                having questions and choices but no answers */
+
+            /* there are 4 possible ways the $postval can be populated */
+
+            /* 1) if the question was not answered, that means there will be
+                nothing in the POST for that question ID
+                nothing to do in that case because the value
+                in the array is already null */
+
+            /* 2) if the question was a single selection but the first, default
+                "no selection" was chosen, then also nothing to do,
+                because nothing to put into the array */
+
+            /* 3) if the question was a single selection, then
+                $postval will contain the choice # of the selection
+                formatted as "choice-#'. In this case, look up the choice #
+                in the array, and set it selected by putting the Org ID in */
+
+            /* 4) if the question was a multiple selection, then
+                $postval will contain an array of the choice #'s.
+                Same action as #3, just must do it multiple times. */
 
 
+            if (array_key_exists($question_id, $_POST)) /* check for a response to this question in the POST */
+            {
+                $postval = $_POST[$question_id];
+                
+                /* have to do a little weirdness here because of the way that http sends multiple select lists */
+
+                if ($row["org_multi_select"])
+                {
+                    foreach($postval as $choice_str)
+                    {
+                        /* It's a multiple select, so http sent an array (even if only 1 selected) */
+                        //printf("<!-- Question ID %s has the array response of choice id %s -->\n", $question_num, $choice_str);
+                        if ($choice_str != "NULL") /* Don't have to do anything if "no selection" */
+                        {
+                            sscanf($choice_str, "choice-%d", $choice_id);
+                            if (!filter_var($choice_id, FILTER_VALIDATE_INT)) /* untrusted data */
+                            {
+                                /* This should not fail unless the POST was manipulated, it's just a sanity check */
+                                die("Parameter tampering detected in translatePostIntoArray!");
+                            }
+                            /* pull the correct choice out of the question array, and set the org ID in $qu_aire, 
+                                which will cause a row to be inserted with that ID later */
+                            //printf("<!-- Before P# %d Qid %d ChID %d OrgID %d -->\n", $page_num, $question_num, $choice_id, 
+                            //    $qu_aire[$page_num][$question_num][$choice_id]["org_id"]);
+                            //var_dump($qu_aire);
+                            $qu_aire[$page_num][$question_num][$choice_id]["org_id"] = $orgid;
+                            //printf("<!-- After P# %d Qid %d ChID %d OrgID %d -->\n", $page_num, $question_num, $choice_id, 
+                            //    $qu_aire[$page_num][$question_num][$choice_id]["org_id"]);
+                        }
+                    }
+                }
+                else
+                {
+                    /* It's a single selection drop down, so the $postval is just the value of the "choice" (if any) */   
+                    if ($postval != "NULL") /* Don't have to do anything if "no selection" */
+                    {
+                        sscanf($postval, "choice-%d", $choice_id);
+                        if (!filter_var($choice_id, FILTER_VALIDATE_INT)) /* untrusted data */
+                        {
+                            /* This should not fail unless the POST was manipulated, it's just a sanity check */
+                            die("Parameter tampering detected in translatePostIntoArray!");
+                        }
+                        /* pull the correct choice out of the question array, and set the org ID in the $qu_aire, 
+                            which will cause a row to be inserted with that ID later */
+                        //printf("<!-- Before P# %d Qid %d ChID %d OrgID %d -->\n", $page_num, $question_num, $choice_id, 
+                        //    $qu_aire[$page_num][$question_num][$choice_id]["org_id"]);
+                        //var_dump($qu_aire);
+                        $qu_aire[$page_num][$question_num][$choice_id]["org_id"] = $orgid;
+                        //printf("<!-- After P# %d Qid %d ChID %d OrgID %d -->\n", $page_num, $question_num, $choice_id, 
+                        //    $qu_aire[$page_num][$question_num][$choice_id]["org_id"]);
+                    }
+                }
+            }
+            //else
+            //{
+            //printf("<!-- Question ID = %s was not found in POST -->\n", $question_id);
+
+            //}
+
+            /* foreach($question as $choice_id => $choice)
+            {
+
+
+            } */
+            
+        }    
+    }
+
+}
+
+function updateQuestionnaireData()
+{
+    global $qu_aire, $orgid, $dbh;
+
+    $sql = sprintf("DELETE FROM org_response WHERE org_id = %d ; ", $orgid);
+
+    foreach($qu_aire as $page_num => $page)
+    {
+        foreach($page as $question_id => $question)
+        {
+            foreach($question as $choice_id => $choice)
+            {
+                //echo "<!-- \n";
+                //var_dump($choice);
+                //printf("<!-- QuestionID %d ChoiceID %d Selection %d -->\n", $choice["question_id"], $choice["choice_id"], $choice["org_id"]);
+                //echo "--> \n";
+                
+                if ($choice["org_id"] > 0)
+                {
+                    $sql = sprintf("%s INSERT INTO org_response (choice_id, org_id) VALUES (%d, %d) ; ", $sql, $choice_id, $orgid);
+                }
+
+            }
+        }
+    }
+
+    //echo "<!-- \n";
+    //echo strtr($sql, ";", "\n");        
+    //echo "--> \n";
+
+    try
+    {
+
+        $dbh->beginTransaction();
+
+        $stmt = $dbh->prepare($sql);
+        //$stmt->bindParam(':orgid', $orgid);
+
+        $stmt->execute();
+        
+        if ($stmt->errorCode() != "00000") 
+        {
+            $dbh->rollBack();
+            echo "Error code:<br>";
+            $erinf = $stmt->errorInfo();
+            die("Statement failed<br>Error code:" . $stmt->errorCode() . "<br>" . $erinf[2]); /* the error message in the returned error info */
+        }
+		
+        $dbh->commit();
+
+        
+    }
+    catch (PDOException $e)
+    {
+        $dbh->rollBack();
+        die("Database Connection Error: " . $e->getMessage());
+        /* TODO: much better/cleaner handling of errors */
+    }
+    catch(Exception $e)
+    {
+        die($e->getMessage());
+        /* TODO: much better/cleaner handling of errors */
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="en" >
