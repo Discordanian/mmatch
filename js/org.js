@@ -44,6 +44,98 @@ $(document).ready(function(){
 	
 	});
 
+	
+	$("a#p3_goto_p4").click(function(){
+
+		$("div#page3").hide();
+		$("div#page4").show();
+	
+	});
+
+	$("a#p4_goto_p3").click(function(){
+
+		$("div#page4").hide();
+		$("div#page3").show();
+	
+	});
+
+
+	$("a#p4_goto_p5").click(function(){
+
+		$("div#page4").hide();
+		$("div#page5").show();
+	
+	});
+
+	$("a#p5_goto_p4").click(function(){
+
+		$("div#page5").hide();
+		$("div#page4").show();
+	
+	});
+
+
+	$("a#p5_goto_p6").click(function(){
+
+		$("div#page5").hide();
+		$("div#page6").show();
+	
+	});
+	
+
+	$("a#p5_goto_p4").click(function(){
+
+		$("div#page5").hide();
+		$("div#page4").show();
+	
+	});
+
+
+	$("a#p5_goto_p6").click(function(){
+
+		$("div#page5").hide();
+		$("div#page6").show();
+	
+	});
+
+	$("a#p6_goto_p5").click(function(){
+
+		$("div#page6").hide();
+		$("div#page5").show();
+	
+	});
+
+
+	$("a#p6_goto_p7").click(function(){
+
+		$("div#page6").hide();
+		$("div#page7").show();
+	
+	});
+
+	$("a#p7_goto_p6").click(function(){
+
+		$("div#page7").hide();
+		$("div#page6").show();
+	
+	});
+
+
+	$("a#p7_goto_p8").click(function(){
+
+		$("div#page7").hide();
+		$("div#page8").show();
+	
+	});
+
+	$("a#p8_goto_p7").click(function(){
+
+		$("div#page8").hide();
+		$("div#page7").show();
+	
+	});
+
+
     $("a#save_data").click(function(){
         $("form#org_save_form").submit();
         
@@ -102,8 +194,23 @@ function validate_page1()
         return false;
     }
 
+	if ($("#password1").val() != $("#password2").val())
+	{
+        $("#pwd_msg").text("Passwords must match.");
+        $("#pwd_msg").show();
+        return false;
+	}
+	
+	if ($("#password1").val().length > 128)
+	{
+        $("#pwd_msg").text("The password exceeds the maximum length of 128 characters.");
+        $("#pwd_msg").show();
+        return false;
+	}
+	
     
     $("#email_invalid_msg").hide();
+	$("#pwd_msg").hide();
     return true;
 }
 

@@ -41,6 +41,7 @@ if (isset($_POST["action"]))
         initializeDb();
         performInsert();
         displayDbData();
+        buildArray();
     }
     elseif ($_POST["action"] == "UPDATE")
     {
@@ -48,6 +49,7 @@ if (isset($_POST["action"]))
         initializeDb();
         performUpdate();
         displayDbData();
+        buildArray();
     }
 }
 elseif (isset($_REQUEST["orgid"]))
@@ -56,6 +58,7 @@ elseif (isset($_REQUEST["orgid"]))
     $orgid = FILTER_VAR($_REQUEST["orgid"], FILTER_VALIDATE_INT);
     initializeDb();
     displayDbData();
+    buildArray();
 }
 else
 {
@@ -68,6 +71,8 @@ else
     $website = "";
     $money_url = "";
     $action = "INSERT";
+    initializeDb();
+    buildArray();
     buildCsrfToken();
 }
 /* end of global section, now fall through to HTML */
@@ -156,7 +161,7 @@ function validatePostData()
 		
 		if (strlen($_POST["password1"]) > 128)
 		{
-			$pwd_msg = "Password exceeds the maximum length of 128.";
+			$pwd_msg = "Password exceeds the maximum length of 128 characters.";
 			$goto_page = 1;
 			return false;
 		}
@@ -324,7 +329,7 @@ function performUpdate()
 		{
 			global $success_msg;
 			$success_msg = "Record successfully updated.";
-			$goto_page = 3;
+			$goto_page = 8;
 		}
 		
 
@@ -379,7 +384,7 @@ function performInsert()
 		{
 			global $success_msg;
 			$success_msg = "Record successfully inserted. An email has been sent to validate the email.";
-			$goto_page = 3;
+			$goto_page = 8;
 		}
 		
 
@@ -421,7 +426,7 @@ function displayDbData()
 
         global $dbh, $orgid;
 
-        assert($orgid != false); /* more error handling needed */
+        assert($orgid != false); /* TODO: more error handling needed */
 
         /* make sure orgid from session matches org ID requested */
         if ($_SESSION["orgid"] != $orgid)
@@ -513,6 +518,87 @@ function displayPostData()
 
     buildCsrfToken();
 }
+
+
+function buildArray()
+{
+    try {
+
+        global $dbh, $orgid, $qu_aire;
+
+
+        $stmt = $dbh->prepare("SELECT gg.group_id, gg.group_text, gg.page_num, qq.question_id, qq.question_text, " .
+        " qq.org_multi_select, qq.sort_order, qc.choice_id, qc.choice_text, qc.sort_order, res.org_id " .
+        " FROM question_group gg INNER JOIN question qq " .
+        " ON gg.group_id = qq.question_group_id " .
+        " INNER JOIN question_choice qc " .
+        " ON qc.question_id = qq.question_id " .
+        " LEFT OUTER JOIN org_response res " .
+        " ON res.choice_id = qc.choice_id " .
+        " WHERE res.org_id IS NULL OR res.org_id = :orgid " .
+        " ORDER BY gg.group_id, gg.page_num, qq.question_id, qq.sort_order, qc.choice_id, qc.sort_order;");
+        $stmt->bindParam(':orgid', $orgid);
+
+        $stmt->execute();
+
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC))
+        {
+
+            /* construct an array of pages, which is an array of questions, which is an array of choices */
+            /* this is a little hacky, but it is a pretty convenient way to automatically sort these */
+            /* rows into their respective pages, questions, etc. without doing a bunch of repetitive queries or complicated matching logic */
+
+            $qu_aire[$row["page_num"]][$row["question_id"]][$row["choice_id"]] = $row;  
+
+          
+        }
+
+        echo "<!-- " . count($qu_aire) . " -->\n";
+
+
+    }
+    catch (PDOException $e)
+    {
+        die("Database Connection Error: " . $e->getMessage());
+        /* TODO: much better/cleaner handling of errors */
+    }
+    catch(Exception $e)
+    {
+        die($e->getMessage());
+        /* TODO: much better/cleaner handling of errors */
+    }
+
+}
+
+function arrayToHtml($pagenum)
+{
+    global $qu_aire;
+
+    $page = $qu_aire[$pagenum];
+
+
+    foreach($page as $question_id => $question)
+    {
+
+        echo "\t<div class='form-group'>\n\t\t<label for='question-$question_id'>";
+        $row = current($question);
+        echo $row["question_text"];
+        echo "</label>\n";
+
+        echo "\t<select name='question-$question_id' id='question-$question_id' class='form-control' >\n";
+        echo "\t\t<option value='NULL'>&lt;No selection&gt;</option>\n";
+        foreach($question as $choice_id => $choice)
+        {
+            echo "\t\t<option value='choice-" . $choice["choice_id"] . "' >" . $choice["choice_text"] . "</option>\n";
+        }
+        
+        echo "\t</select>\n\t</div>\n";
+    }
+    
+    echo "\n";
+}
+
+
 
 ?>
 <!DOCTYPE html>
@@ -609,7 +695,7 @@ function displayPostData()
 </div> <!-- page 1 -->
 
 <div id="page2" <?php if ($goto_page != 2) echo "hidden='true'"; ?> >
-    <center><h3 id="header">Tell us about the organization</h3></center>
+    <center><h3 id="header">Tell us identifying information about the organization</h3></center>
 
     <div class="form-group">
         <label for="org_name">Organization Name:</label>
@@ -648,12 +734,94 @@ function displayPostData()
 </div> <!-- page 2 -->
 
 <div id="page3" <?php if ($goto_page != 3) echo "hidden='true'"; ?> >
+    <center><h3 id="header">Tell us about the issues you are working on</h3></center>
+
+<?php
+    arrayToHtml(1);
+?>
+
+	<ul class="pager">
+        <li><a href="#" id="p3_goto_p2" >Previous</a></li>
+        <li><a href="#" id="p3_goto_p4" >Next</a></li>
+    </ul> 
+
+
+</div> <!-- Page 3 -->
+
+<div id="page4" <?php if ($goto_page != 4) echo "hidden='true'"; ?> >
+    <center><h3 id="header">Tell us about the type of organization this is</h3></center>
+
+
+<?php
+    arrayToHtml(2);
+?>
+	
+	
+    <ul class="pager">
+        <li><a href="#" id="p4_goto_p3" >Previous</a></li>
+        <li><a href="#" id="p4_goto_p5" >Next</a></li>
+    </ul> 
+
+
+</div> <!-- Page 4 -->
+
+<div id="page5" <?php if ($goto_page != 5) echo "hidden='true'"; ?> >
     <center><h3 id="header">Tell us about the types of people you are looking for</h3></center>
 
-    <p>Here is where the several pages of questions will go.</p>
+
+<?php
+    arrayToHtml(3);
+?>
+	
+    <ul class="pager">
+        <li><a href="#" id="p5_goto_p4" >Previous</a></li>
+        <li><a href="#" id="p5_goto_p6" >Next</a></li>
+    </ul> 
+
+
+</div> <!-- Page 5 -->
+
+<div id="page6" <?php if ($goto_page != 6) echo "hidden='true'"; ?> >
+    <center><h3 id="header">Tell us about the skills you need</h3></center>
+
+
+<?php
+    arrayToHtml(4);
+?>
 
     <ul class="pager">
-        <li><a href="#" id="p3_goto_p2" >Previous</a></li>
+        <li><a href="#" id="p6_goto_p5" >Previous</a></li>
+        <li><a href="#" id="p6_goto_p7" >Next</a></li>
+    </ul> 
+
+
+</div> <!-- Page 6 -->
+
+<div id="page7" <?php if ($goto_page != 7) echo "hidden='true'"; ?> >
+    <center><h3 id="header">Tell us about the benefits you may offer</h3></center>
+
+
+    <div class="form-group">
+        <label for="benefit-1">What benefits might a volunteer see from working for you:</label>
+		<select name="benefit-1" id="benefit-1" class="form-control">
+			<option value="NULL">&lt;No selection&gt;</option>
+		</select>
+    </div> <!-- form-group -->
+
+	
+    <ul class="pager">
+        <li><a href="#" id="p7_goto_p6" >Previous</a></li>
+        <li><a href="#" id="p7_goto_p8" >Next</a></li>
+    </ul> 
+
+
+</div> <!-- Page 7 -->
+
+<div id="page8" <?php if ($goto_page != 8) echo "hidden='true'"; ?> >
+    <center><h3 id="header">Summary</h3></center>
+
+    <ul class="pager">
+        <li><a href="#" id="p8_goto_p7" >Previous</a></li>
         <li><a id="save_data" href="#">Save data</a></li>
     </ul> 
 
@@ -664,10 +832,8 @@ function displayPostData()
 		echo "$success_msg\n</div>";
 	}
 	?>
-
-
-</div> <!-- Page 3 -->
-
+	
+</div> <!-- Page 8 -->
 
 </form>
 
