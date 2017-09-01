@@ -121,7 +121,7 @@ function validatePostData()
     /* first do basic validations before accessing the database */
     if (isset($_POST["email"])) 
     {
-        $email = $_POST["email"];
+        $email = filter_var($_POST["email"], FILTER_SANITIZE_EMAIL); /* first strip out chars which are invalid in emails */
         // check if e-mail address is well-formed
 
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) 
@@ -183,7 +183,7 @@ function validatePostData()
 	
 	if (isset($_POST["org_website"]))
 	{
-		$website = $_POST["org_website"];
+		$website = filter_var($_POST["org_website"], FILTER_SANITIZE_URL);
 		
 		if (strlen($website) > 0) /* web site is optional so skip check if its blank */
 		{
@@ -217,7 +217,7 @@ function validatePostData()
 
 	if (isset($_POST["money_url"]))
 	{
-		$money_url = $_POST["money_url"];
+		$money_url = filter_var($_POST["money_url"], FILTER_SANITIZE_URL);
 		//echo "<!-- money url = $money_url -->\n"; 
 		if (strlen($money_url) > 0) /* donations site is optional so skip check if its blank */
 		{
@@ -473,15 +473,15 @@ function displayDbData()
             global $money_url;
             global $action;
 
-            $org_name = $row["org_name"];
-            $person_name = $row["person_name"];
+            $org_name = htmlentities($row["org_name"]);
+            $person_name = htmlentities($row["person_name"]);
 
             $email_verified = $row["email_verified"];
             $email_unverified = $row["email_unverified"];
             
 
-            $website = $row["website"];
-            $money_url = $row["money_url"];
+            $website = htmlentities($row["website"]);
+            $money_url = htmlentities($row["money_url"]);
             $action = "U";
             buildCsrfToken();
         }
@@ -519,12 +519,12 @@ function displayPostData()
 
     $email_verified = $_POST["email"]; /* TODO: don't know if the email is verified or not yet
                                         not sure how to handle this */
-    $person_name = $_POST["person_name"];
-    $org_name = $_POST["org_name"];
+    $person_name = htmlentities($_POST["person_name"]);
+    $org_name = htmlentities($_POST["org_name"]);
     
 
-    $website = $_POST["org_website"];
-    $money_url = $_POST["money_url"];
+    $website = htmlentities($_POST["org_website"]);
+    $money_url = htmlentities($_POST["money_url"]);
     $action = strtoupper(substr($_POST["action"], 0, 1)); /* on error, always retain the same action that was posted */
 
     buildCsrfToken();
@@ -634,9 +634,9 @@ function arrayToHtml($pagenum)
     foreach($page as $question_id => $question)
     {
 
-        echo "\t<div class='form-group'>\n\t\t<label for='question-$question_id'>";
+        printf("\t<div class='form-group'>\n\t\t<label for='question-%u'>", $question_id);
         $row = current($question);
-        echo $row["question_text"];
+        echo htmlentities($row["question_text"]);
         echo "</label>\n";
 
         if ($row["org_multi_select"])
@@ -647,11 +647,12 @@ function arrayToHtml($pagenum)
         {
             $multi = sprintf(" name='question-%d'", $question_id);
         }
-        echo "\t<select $multi id='question-$question_id' class='form-control' >\n";
+        printf("\t<select $multi id='question-%u' class='form-control' >\n", $question_id);
         /* Must include the "<no selection>" value because otherwise user has no way to remove a previously selected option */
         echo "\t\t<option value='NULL'>&lt;No selection&gt;</option>\n";
         foreach($question as $choice_id => $choice)
         {
+
             if ($choice["org_id"] > 0)
             {
                 $selected = " selected ";
@@ -660,7 +661,7 @@ function arrayToHtml($pagenum)
             {
                 $selected = "";
             }
-            printf("\t\t<option value='choice-%d' %s >%s</option>\n", $choice["choice_id"], $selected, $choice["choice_text"]) ;
+            printf("\t\t<option value='choice-%u' %s >%s</option>\n", $choice["choice_id"], $selected, htmlentities($choice["choice_text"])) ;
         }
         
         echo "\t</select>\n\t</div>\n\n";
@@ -679,14 +680,14 @@ function translatePostIntoArray()
 
     foreach($qu_aire as $page_num => $page)
     {
-        foreach($page as $question_num => $question)
+        foreach($page as $question_id => $question)
         {
             /* loop through each question that is in the database (array),
             look in the post for that question and any selections
             set the appropriate values in the array */
             $row = current($question);
 
-            $question_id = sprintf("question-%d", $question_num);
+            $question_name = sprintf("question-%u", $question_id);
 
             /* This method assumes that buildEmptyArray has already been called
                 to construct the skeleton of the questionnaire array
@@ -713,9 +714,9 @@ function translatePostIntoArray()
                 Same action as #3, just must do it multiple times. */
 
 
-            if (array_key_exists($question_id, $_POST)) /* check for a response to this question in the POST */
+            if (array_key_exists($question_name, $_POST)) /* check for a response to this question in the POST */
             {
-                $postval = $_POST[$question_id];
+                $postval = $_POST[$question_name];
                 
                 /* have to do a little weirdness here because of the way that http sends multiple select lists */
 
@@ -724,24 +725,19 @@ function translatePostIntoArray()
                     foreach($postval as $choice_str)
                     {
                         /* It's a multiple select, so http sent an array (even if only 1 selected) */
-                        //printf("<!-- Question ID %s has the array response of choice id %s -->\n", $question_num, $choice_str);
+                        //printf("<!-- Question ID %s has the array response of choice id %s -->\n", $question_id, $choice_str);
                         if ($choice_str != "NULL") /* Don't have to do anything if "no selection" */
                         {
-                            sscanf($choice_str, "choice-%d", $choice_id);
-                            if (!filter_var($choice_id, FILTER_VALIDATE_INT)) /* untrusted data */
-                            {
-                                /* This should not fail unless the POST was manipulated, it's just a sanity check */
-                                error_log("Parameter tampering detected in translatePostIntoArray! Name of choice not an INT.");
-                                header("Location: login.php?errmsg");
-                            }
+                            sscanf($choice_str, "choice-%u", $choice_id); /* scanf will only allow an integer to be returned */
+
                             /* pull the correct choice out of the question array, and set the org ID in $qu_aire, 
                                 which will cause a row to be inserted with that ID later */
-                            //printf("<!-- Before P# %d Qid %d ChID %d OrgID %d -->\n", $page_num, $question_num, $choice_id, 
-                            //    $qu_aire[$page_num][$question_num][$choice_id]["org_id"]);
+                            //printf("<!-- Before P# %d Qid %d ChID %d OrgID %d -->\n", $page_num, $question_id, $choice_id, 
+                            //    $qu_aire[$page_num][$question_id][$choice_id]["org_id"]);
                             //var_dump($qu_aire);
-                            $qu_aire[$page_num][$question_num][$choice_id]["org_id"] = $orgid;
-                            //printf("<!-- After P# %d Qid %d ChID %d OrgID %d -->\n", $page_num, $question_num, $choice_id, 
-                            //    $qu_aire[$page_num][$question_num][$choice_id]["org_id"]);
+                            $qu_aire[$page_num][$question_id][$choice_id]["org_id"] = $orgid;
+                            //printf("<!-- After P# %d Qid %d ChID %d OrgID %d -->\n", $page_num, $question_id, $choice_id, 
+                            //    $qu_aire[$page_num][$question_id][$choice_id]["org_id"]);
                         }
                     }
                 }
@@ -750,27 +746,22 @@ function translatePostIntoArray()
                     /* It's a single selection drop down, so the $postval is just the value of the "choice" (if any) */   
                     if ($postval != "NULL") /* Don't have to do anything if "no selection" */
                     {
-                        sscanf($postval, "choice-%d", $choice_id);
-                        if (!filter_var($choice_id, FILTER_VALIDATE_INT)) /* untrusted data */
-                        {
-                            /* This should not fail unless the POST was manipulated, it's just a sanity check */
-                            error_log("Parameter tampering detected in translatePostIntoArray! Name of choice not an INT.");
-                            header("Location: login.php?errmsg");
-                        }
+                        sscanf($postval, "choice-%u", $choice_id); /* scanf will only allow an integer to be returned */
+
                         /* pull the correct choice out of the question array, and set the org ID in the $qu_aire, 
                             which will cause a row to be inserted with that ID later */
-                        //printf("<!-- Before P# %d Qid %d ChID %d OrgID %d -->\n", $page_num, $question_num, $choice_id, 
-                        //    $qu_aire[$page_num][$question_num][$choice_id]["org_id"]);
+                        //printf("<!-- Before P# %d Qid %d ChID %d OrgID %d -->\n", $page_num, $question_id, $choice_id, 
+                        //    $qu_aire[$page_num][$question_id][$choice_id]["org_id"]);
                         //var_dump($qu_aire);
-                        $qu_aire[$page_num][$question_num][$choice_id]["org_id"] = $orgid;
-                        //printf("<!-- After P# %d Qid %d ChID %d OrgID %d -->\n", $page_num, $question_num, $choice_id, 
-                        //    $qu_aire[$page_num][$question_num][$choice_id]["org_id"]);
+                        $qu_aire[$page_num][$question_id][$choice_id]["org_id"] = $orgid;
+                        //printf("<!-- After P# %d Qid %d ChID %d OrgID %d -->\n", $page_num, $question_id, $choice_id, 
+                        //    $qu_aire[$page_num][$question_id][$choice_id]["org_id"]);
                     }
                 }
             }
             //else
             //{
-            //printf("<!-- Question ID = %s was not found in POST -->\n", $question_id);
+            //printf("<!-- Question ID = %s was not found in POST -->\n", $question_name);
 
             //}
 
@@ -789,7 +780,7 @@ function updateQuestionnaireData()
 {
     global $qu_aire, $orgid, $dbh;
 
-    $sql = sprintf("DELETE FROM org_response WHERE org_id = %d ; ", $orgid);
+    $sql = sprintf("DELETE FROM org_response WHERE org_id = %u ; ", $orgid);
 
     foreach($qu_aire as $page_num => $page)
     {
@@ -804,7 +795,7 @@ function updateQuestionnaireData()
                 
                 if ($choice["org_id"] > 0)
                 {
-                    $sql = sprintf("%s INSERT INTO org_response (choice_id, org_id) VALUES (%d, %d) ; ", $sql, $choice_id, $orgid);
+                    $sql = sprintf("%s INSERT INTO org_response (choice_id, org_id) VALUES (%u, %u) ; ", $sql, $choice_id, $orgid);
                 }
 
             }

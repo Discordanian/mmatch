@@ -87,7 +87,8 @@ function validatePostData()
     global $email;
 
     $email = $_POST["email"];
-    return true;
+
+    return filter_var($email, FILTER_VALIDATE_EMAIL);
 }
 
 
@@ -156,7 +157,7 @@ function authenticateCredentials()
             {
                 $orgid = $row["orgid"];
                 //$email = $row["email_verified"];
-                return true;
+                return filter_var($orgid, FILTER_VALIDATE_INT); /* just double check the org ID is a valid int */
             }
         }
 
