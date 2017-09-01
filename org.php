@@ -105,12 +105,9 @@ function checkCsrfToken()
 	//echo "<!-- DEBUG Check Token = $token -->\n";
     if (hash("sha256", $token) != $_POST["nonce"])
     {
-        die("CSRF token mismatch. Just kill me now...");
+        error_log("CSRF token mismatch in org.php. Just kill me now...");
+        header("Location: login.php?errmsg");
     }
-	/* else
-	{
-		echo "<!-- CSRF passed -->\n";
-	} */
 
 
 }
@@ -154,6 +151,7 @@ function validatePostData()
 		Should probably log it. */
 		$email_msg = "A valid email address is required.";
 		$goto_page = 1;
+        error_log("Email not posted. Possible parameter tampering.");
 		return false;
 	}
 
@@ -179,6 +177,7 @@ function validatePostData()
 		Should probably log it. */
 		$pwd_msg = "Passwords must match.";
 		$goto_page = 1;
+        error_log("Password not posted. Possible parameter tampering.");
 		return false;
 	}
 	
@@ -212,6 +211,7 @@ function validatePostData()
 		Should probably log it. */
 		$website_msg = "An unknown error occurred. Please try again.";
 		$goto_page = 2;
+        error_log("Website not posted. Possible parameter tampering.");
 		return false;
 	}
 
@@ -244,6 +244,7 @@ function validatePostData()
 		Should probably log it. */
 		$donations_msg = "An unknown error occurred. Please try again.";
 		$goto_page = 2;
+        error_log("Donations URL not posted. Possible parameter tampering.");
 		return false;
 	}
 
@@ -289,7 +290,8 @@ function performUpdate()
         /* make sure orgid from session matches org ID requested */
         if ($_SESSION["orgid"] != $orgid)
         {
-            die("Parameter tampering detected. Requested org ID which is not authorized.");
+            error_log("Unauthorized org ID requested. Possible parameter tampering.");
+            header("Location: login.php?errmsg");
         }
 
         $stmt = $dbh->prepare("UPDATE org SET org_name = :org_name, person_name = :person_name, website = :website, money_url = :money_url WHERE orgid = :orgid; " .
@@ -438,7 +440,8 @@ function displayDbData()
         /* make sure orgid from session matches org ID requested */
         if ($_SESSION["orgid"] != $orgid)
         {
-            die("Parameter tampering detected. Requested org ID which is not authorized.");
+            error_log("Parameter tampering detected. Requested org ID which is not authorized.");
+            header("Location: login.php?errmsg");
         }
 
         $stmt = $dbh->prepare("SELECT orgid, org_name, person_name, email_verified, email_unverified, website, money_url FROM org WHERE orgid = :orgid ;");
@@ -728,7 +731,8 @@ function translatePostIntoArray()
                             if (!filter_var($choice_id, FILTER_VALIDATE_INT)) /* untrusted data */
                             {
                                 /* This should not fail unless the POST was manipulated, it's just a sanity check */
-                                die("Parameter tampering detected in translatePostIntoArray!");
+                                error_log("Parameter tampering detected in translatePostIntoArray! Name of choice not an INT.");
+                                header("Location: login.php?errmsg");
                             }
                             /* pull the correct choice out of the question array, and set the org ID in $qu_aire, 
                                 which will cause a row to be inserted with that ID later */
@@ -750,7 +754,8 @@ function translatePostIntoArray()
                         if (!filter_var($choice_id, FILTER_VALIDATE_INT)) /* untrusted data */
                         {
                             /* This should not fail unless the POST was manipulated, it's just a sanity check */
-                            die("Parameter tampering detected in translatePostIntoArray!");
+                            error_log("Parameter tampering detected in translatePostIntoArray! Name of choice not an INT.");
+                            header("Location: login.php?errmsg");
                         }
                         /* pull the correct choice out of the question array, and set the org ID in the $qu_aire, 
                             which will cause a row to be inserted with that ID later */
