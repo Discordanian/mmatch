@@ -303,12 +303,12 @@ function performUpdate()
             /* if email is changed, and it was previously verified, then set it to unverified */
             /* OR if email is changed, and it was not previously verified, then changed it and keep it unverified */
             /* should this query be moved to a stored procedure? */
-        $stmt->bindParam(':org_name', $_POST["org_name"]);
-        $stmt->bindParam(':person_name', $_POST["person_name"]);
-        $stmt->bindParam(':email', $_POST["email"]);
-        $stmt->bindParam(':website', $_POST["org_website"]);
-        $stmt->bindParam(':money_url', $_POST["money_url"]);
-        $stmt->bindParam(':orgid', $orgid);
+        $stmt->bindValue(':org_name', $_POST["org_name"]);
+        $stmt->bindValue(':person_name', $_POST["person_name"]);
+        $stmt->bindValue(':email', $_POST["email"]);
+        $stmt->bindValue(':website', $_POST["org_website"]);
+        $stmt->bindValue(':money_url', $_POST["money_url"]);
+        $stmt->bindValue(':orgid', $orgid);
 
 
         /* udpate password if a new one specified */
@@ -321,7 +321,7 @@ function performUpdate()
             $pwhash = null;
         }
 
-        $stmt->bindParam(':pwhash', $pwhash);
+        $stmt->bindValue(':pwhash', $pwhash);
 		
 		//echo "<!-- ";
 		//$stmt->debugDumpParams();
@@ -371,13 +371,13 @@ function performInsert()
         $stmt = $dbh->prepare("INSERT INTO org (org_name, person_name, email_unverified, pwhash, website, money_url)" 
             . " VALUES (:org_name, :person_name, :email, :pwhash, :website, :money_url);");
 
-        $stmt->bindParam(':org_name', $_POST["org_name"]);
-        $stmt->bindParam(':person_name', $_POST["person_name"]);
-        $stmt->bindParam(':email', $_POST["email"]);
-        $stmt->bindParam(':website', $_POST["org_website"]);
-        $stmt->bindParam(':money_url', $_POST["money_url"]);
+        $stmt->bindValue(':org_name', $_POST["org_name"]);
+        $stmt->bindValue(':person_name', $_POST["person_name"]);
+        $stmt->bindValue(':email', $_POST["email"]);
+        $stmt->bindValue(':website', $_POST["org_website"]);
+        $stmt->bindValue(':money_url', $_POST["money_url"]);
         $pwhash = password_hash($_POST["password1"], PASSWORD_BCRYPT);
-        $stmt->bindParam(':pwhash', $pwhash);
+        $stmt->bindValue(':pwhash', $pwhash);
 
         //$stmt->debugDumpParams();
 
@@ -445,7 +445,7 @@ function displayDbData()
         }
 
         $stmt = $dbh->prepare("SELECT orgid, org_name, person_name, email_verified, email_unverified, website, money_url FROM org WHERE orgid = :orgid ;");
-        $stmt->bindParam(':orgid', $orgid);
+        $stmt->bindValue(':orgid', $orgid);
 
         $stmt->execute();
 
@@ -594,7 +594,7 @@ function populateArray()
         " ON res.choice_id = qc.choice_id " .
         " WHERE res.org_id IS NULL OR res.org_id = :orgid " .
         " ORDER BY gg.group_id, gg.page_num, qq.question_id, qq.sort_order, qc.choice_id, qc.sort_order;");
-        $stmt->bindParam(':orgid', $orgid);
+        $stmt->bindValue(':orgid', $orgid);
 
         $stmt->execute();
 
@@ -821,7 +821,7 @@ function updateQuestionnaireData()
         $dbh->beginTransaction();
 
         $stmt = $dbh->prepare($sql);
-        //$stmt->bindParam(':orgid', $orgid);
+        //$stmt->bindValue(':orgid', $orgid);
 
         $stmt->execute();
         
