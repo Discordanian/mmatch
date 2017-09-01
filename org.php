@@ -121,7 +121,7 @@ function validatePostData()
     /* first do basic validations before accessing the database */
     if (isset($_POST["email"])) 
     {
-        $email = filter_var($_POST["email"], FILTER_SANITIZE_EMAIL); /* first strip out chars which are invalid in emails */
+        $email = strtolower(filter_var($_POST["email"], FILTER_SANITIZE_EMAIL)); /* first strip out chars which are invalid in emails */
         // check if e-mail address is well-formed
 
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) 
@@ -303,9 +303,11 @@ function performUpdate()
             /* if email is changed, and it was previously verified, then set it to unverified */
             /* OR if email is changed, and it was not previously verified, then changed it and keep it unverified */
             /* should this query be moved to a stored procedure? */
-        $stmt->bindValue(':org_name', $_POST["org_name"]);
-        $stmt->bindValue(':person_name', $_POST["person_name"]);
-        $stmt->bindValue(':email', $_POST["email"]);
+        $stmt->bindValue(':org_name', filter_var($_POST["org_name"], FILTER_SANITIZE_STRING, FILTER_FLAG_NO_ENCODE_QUOTES + 
+            FILTER_FLAG_STRIP_LOW + FILTER_FLAG_STRIP_HIGH + FILTER_FLAG_STRIP_BACKTICK));
+        $stmt->bindValue(':person_name', filter_var($_POST["person_name"], FILTER_SANITIZE_STRING, FILTER_FLAG_NO_ENCODE_QUOTES + 
+            FILTER_FLAG_STRIP_LOW + FILTER_FLAG_STRIP_HIGH + FILTER_FLAG_STRIP_BACKTICK));
+        $stmt->bindValue(':email', strtolower($_POST["email"]));
         $stmt->bindValue(':website', $_POST["org_website"]);
         $stmt->bindValue(':money_url', $_POST["money_url"]);
         $stmt->bindValue(':orgid', $orgid);
@@ -371,9 +373,11 @@ function performInsert()
         $stmt = $dbh->prepare("INSERT INTO org (org_name, person_name, email_unverified, pwhash, website, money_url)" 
             . " VALUES (:org_name, :person_name, :email, :pwhash, :website, :money_url);");
 
-        $stmt->bindValue(':org_name', $_POST["org_name"]);
-        $stmt->bindValue(':person_name', $_POST["person_name"]);
-        $stmt->bindValue(':email', $_POST["email"]);
+        $stmt->bindValue(':org_name', filter_var($_POST["org_name"], FILTER_SANITIZE_STRING, FILTER_FLAG_NO_ENCODE_QUOTES + 
+            FILTER_FLAG_STRIP_LOW + FILTER_FLAG_STRIP_HIGH + FILTER_FLAG_STRIP_BACKTICK));
+        $stmt->bindValue(':person_name', filter_var($_POST["person_name"], FILTER_SANITIZE_STRING, FILTER_FLAG_NO_ENCODE_QUOTES + 
+            FILTER_FLAG_STRIP_LOW + FILTER_FLAG_STRIP_HIGH + FILTER_FLAG_STRIP_BACKTICK));
+        $stmt->bindValue(':email', strtolower($_POST["email"]));
         $stmt->bindValue(':website', $_POST["org_website"]);
         $stmt->bindValue(':money_url', $_POST["money_url"]);
         $pwhash = password_hash($_POST["password1"], PASSWORD_BCRYPT);
@@ -519,8 +523,10 @@ function displayPostData()
 
     $email_verified = $_POST["email"]; /* TODO: don't know if the email is verified or not yet
                                         not sure how to handle this */
-    $person_name = htmlentities($_POST["person_name"]);
-    $org_name = htmlentities($_POST["org_name"]);
+    $person_name = htmlentities(filter_var($_POST["person_name"], FILTER_SANITIZE_STRING, FILTER_FLAG_NO_ENCODE_QUOTES + 
+            FILTER_FLAG_STRIP_LOW + FILTER_FLAG_STRIP_HIGH + FILTER_FLAG_STRIP_BACKTICK));
+    $org_name = htmlentities(filter_var($_POST["org_name"], FILTER_SANITIZE_STRING, FILTER_FLAG_NO_ENCODE_QUOTES + 
+            FILTER_FLAG_STRIP_LOW + FILTER_FLAG_STRIP_HIGH + FILTER_FLAG_STRIP_BACKTICK));
     
 
     $website = htmlentities($_POST["org_website"]);

@@ -171,6 +171,8 @@ function validate_page1()
         $("#person_name_msg").hide();
     }
 
+    /* lowercase the email */
+    $("#email").val($("#email").val().toLowerCase());
 
     if ($("#email").val().length < 1)
     {

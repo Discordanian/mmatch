@@ -86,7 +86,7 @@ function validatePostData()
 
     global $email;
 
-    $email = $_POST["email"];
+    $email = strtolower($_POST["email"]);
 
     return filter_var($email, FILTER_VALIDATE_EMAIL);
 }

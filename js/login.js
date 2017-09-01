@@ -20,6 +20,9 @@ $(document).ready(function(){
 function validate() 
 {
 
+    /* lowercase the email */
+    $("#email").val($("#email").val().toLowerCase());
+
 
     if ($("#email").val().length < 1)
     {
