@@ -40,6 +40,11 @@ if ((!isset($_POST["password"])) || (isset($auth_fail_msg)))
 
     clearSession();
     buildCsrfToken();
+
+    if (isset($_GET["errmsg"]))
+    {
+        $auth_fail_msg = "An unknown error occurred. Please attempt to authenticate again.";
+    }
 }
 
 
@@ -52,7 +57,7 @@ function buildCsrfToken()
         that make up the session, concatenated, but should be stable between requests,
         along with some random salt (defined above) */
     global $csrf_nonce, $csrf_salt;
-    $token = $_SERVER['SERVER_SIGNATURE'] . '-' . $_SERVER['PHP_SELF'] . '-' . $csrf_salt;
+    $token = $_SERVER['SERVER_SIGNATURE'] . $_SERVER['SCRIPT_FILENAME'] . $csrf_salt;
     //echo "<!-- DEBUG build token = $token -->\n";
     $csrf_nonce = hash("sha256", $token);
 }
@@ -62,7 +67,7 @@ function checkCsrfToken()
 {
     global $csrf_salt;
 
-    $token = $_SERVER['SERVER_SIGNATURE'] . '-' . $_SERVER['PHP_SELF'] . '-' . $csrf_salt;
+    $token = $_SERVER['SERVER_SIGNATURE'] . $_SERVER['SCRIPT_FILENAME'] . $csrf_salt;
 	
 	//echo "<!-- DEBUG Check Token = $token -->\n";
     if (hash("sha256", $token) != $_POST["nonce"])

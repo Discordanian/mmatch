@@ -35,7 +35,7 @@ if (isset($_POST["action"]))
     {
         /* #2 or #4 */
         displayPostData();
-    } elseif ($_POST["action"] == "INSERT")
+    } elseif ($_POST["action"] == "I")
     {
         /* #3 */
         initializeDb();
@@ -46,7 +46,7 @@ if (isset($_POST["action"]))
         displayDbData();
         populateArray();
     }
-    elseif ($_POST["action"] == "UPDATE")
+    elseif ($_POST["action"] == "U")
     {
         /* #5 */
         initializeDb();
@@ -77,7 +77,7 @@ else
     $email_verified = "";
     $website = "";
     $money_url = "";
-    $action = "INSERT";
+    $action = "I"; /* Insert */
     initializeDb();
     buildEmptyArray();
     buildCsrfToken();
@@ -90,7 +90,7 @@ function buildCsrfToken()
         that make up the session, concatenated, but should be stable between requests,
         along with some random salt (defined above) */
     global $csrf_nonce, $csrf_salt, $action;
-    $token = $action . '-' . $_SERVER['SERVER_SIGNATURE'] . '-' . $_SERVER['PHP_SELF'] . '-' . $csrf_salt;
+    $token = $action . $_SERVER['SERVER_SIGNATURE'] . $_SERVER['SCRIPT_FILENAME'] . $_COOKIE['PHPSESSID'] . $csrf_salt;
     //echo "<!-- DEBUG token = $token -->\n";
     $csrf_nonce = hash("sha256", $token);
 }
@@ -100,7 +100,7 @@ function checkCsrfToken()
 {
     global $csrf_salt;
 
-    $token = $_POST["action"] . '-' . $_SERVER['SERVER_SIGNATURE'] . '-' . $_SERVER['PHP_SELF'] . '-' . $csrf_salt;
+    $token = $_POST["action"] . $_SERVER['SERVER_SIGNATURE'] . $_SERVER['SCRIPT_FILENAME'] . $_COOKIE['PHPSESSID'] . $csrf_salt;
 	
 	//echo "<!-- DEBUG Check Token = $token -->\n";
     if (hash("sha256", $token) != $_POST["nonce"])
@@ -292,7 +292,7 @@ function performUpdate()
             die("Parameter tampering detected. Requested org ID which is not authorized.");
         }
 
-        $stmt = $dbh->prepare("UPDATE org SET name = :org_name, person_name = :person_name, website = :website, money_url = :money_url WHERE orgid = :orgid; " .
+        $stmt = $dbh->prepare("UPDATE org SET org_name = :org_name, person_name = :person_name, website = :website, money_url = :money_url WHERE orgid = :orgid; " .
             "UPDATE org SET pwhash = :pwhash WHERE orgid = :orgid AND :pwhash IS NOT NULL; " .
             "UPDATE org SET email_unverified = :email WHERE orgid = :orgid AND email_verified IS NOT NULL AND email_verified != :email; " . 
             "UPDATE org SET email_unverified = :email WHERE orgid = :orgid AND email_verified IS NULL AND email_unverified != :email; " );
@@ -366,7 +366,7 @@ function performInsert()
 
         /* this is a new record, so do the insert */
         global $dbh, $orgid, $goto_page;
-        $stmt = $dbh->prepare("INSERT INTO org (name, person_name, email_unverified, pwhash, website, money_url)" 
+        $stmt = $dbh->prepare("INSERT INTO org (org_name, person_name, email_unverified, pwhash, website, money_url)" 
             . " VALUES (:org_name, :person_name, :email, :pwhash, :website, :money_url);");
 
         $stmt->bindParam(':org_name', $_POST["org_name"]);
@@ -397,7 +397,7 @@ function performInsert()
 
         /* change the action to update, now that the record was successfully inserted */
         global $action;
-        $action = "UPDATE";
+        $action = "U";
         $orgid = $dbh->lastInsertId();
 
         if (!isset($orgid)) 
@@ -441,7 +441,7 @@ function displayDbData()
             die("Parameter tampering detected. Requested org ID which is not authorized.");
         }
 
-        $stmt = $dbh->prepare("SELECT orgid, name, person_name, email_verified, email_unverified, website, money_url FROM org WHERE orgid = :orgid ;");
+        $stmt = $dbh->prepare("SELECT orgid, org_name, person_name, email_verified, email_unverified, website, money_url FROM org WHERE orgid = :orgid ;");
         $stmt->bindParam(':orgid', $orgid);
 
         $stmt->execute();
@@ -470,7 +470,7 @@ function displayDbData()
             global $money_url;
             global $action;
 
-            $org_name = $row["name"];
+            $org_name = $row["org_name"];
             $person_name = $row["person_name"];
 
             $email_verified = $row["email_verified"];
@@ -479,7 +479,7 @@ function displayDbData()
 
             $website = $row["website"];
             $money_url = $row["money_url"];
-            $action = "UPDATE";
+            $action = "U";
             buildCsrfToken();
         }
         else
@@ -522,7 +522,7 @@ function displayPostData()
 
     $website = $_POST["org_website"];
     $money_url = $_POST["money_url"];
-    $action = $_POST["action"]; /* on error, always retain the same action that was posted */
+    $action = strtoupper(substr($_POST["action"], 0, 1)); /* on error, always retain the same action that was posted */
 
     buildCsrfToken();
 }
@@ -918,7 +918,7 @@ function updateQuestionnaireData()
     </div>
 
    <div class="form-group">
-        <label for="password1"><?php if ($action == "UPDATE") { echo "Update Password:"; } else { echo "Set Password:"; } ?></label>
+        <label for="password1"><?php if ($action == "U") { echo "Update Password:"; } else { echo "Set Password:"; } ?></label>
         <input class="form-control" type="password" id="password1" maxlength="128" name="password1" value="" />
     </div> <!-- form-group -->
 
