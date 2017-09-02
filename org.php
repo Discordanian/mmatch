@@ -114,7 +114,7 @@ function checkCsrfToken()
 
 function validatePostData()
 {
-    global $email_msg, $orgid, $goto_page, $org_website_msg, $pwd_msg;
+    global $email_msg, $orgid, $goto_page, $org_website_msg, $money_url_msg, $pwd_msg;
     $orgid = FILTER_VAR($_REQUEST["orgid"], FILTER_VALIDATE_INT);
 
     /* first do basic validations before accessing the database */
@@ -223,7 +223,7 @@ function validatePostData()
 			
 			if (!filter_var($money_url, FILTER_VALIDATE_URL))
 			{
-				$donations_msg = "The website URL does not follow the proper pattern for a valid URL.";
+				$money_url_msg = "The website URL does not follow the proper pattern for a valid URL.";
 				$goto_page = 2;
 				//echo "<!-- failed validation -->\n"; 
 				return false;
@@ -231,7 +231,7 @@ function validatePostData()
 
 			if (strlen($money_url) > 255)
 			{
-				$donations_msg = "Web site address should not exceed 255 characters in length.";
+				$money_url_msg = "Web site address should not exceed 255 characters in length.";
 				$goto_page = 2;
 				return false;
 			}
@@ -241,7 +241,7 @@ function validatePostData()
 	{
 		/* Weird situation because this data field was not even posted.
 		Should probably log it. */
-		$donations_msg = "An unknown error occurred. Please try again.";
+		$money_url_msg = "An unknown error occurred. Please try again.";
 		$goto_page = 2;
         error_log("Donations URL not posted. Possible parameter tampering.");
 		return false;
@@ -963,8 +963,8 @@ function updateQuestionnaireData()
         <input class="form-control" type="url" id="money_url" maxlength="255" name="money_url" value="<?php echo $money_url ?>" />
     </div> <!-- form-group -->
 
-    <div class="alert alert-danger" <?php if (!isset($donations_msg)) echo "hidden='true'"; ?> id="donations_invalid_msg" >
-        <?php if (isset($donations_msg)) echo $donations_msg; ?>
+    <div class="alert alert-danger" <?php if (!isset($money_url_msg)) echo "hidden='true'"; ?> id="money_url_msg" >
+        <?php if (isset($money_url_msg)) echo $money_url_msg; ?>
     </div>
 
 

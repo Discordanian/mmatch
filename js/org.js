@@ -277,8 +277,8 @@ function validate_page2()
 
     if ($("#money_url").val().length > 255)
     {
-        $("#donations_invalid_msg").text("The donations URL should not exceed 255 characters in length.");
-        $("#donations_invalid_msg").show();
+        $("#money_url_msg").text("The donations URL should not exceed 255 characters in length.");
+        $("#money_url_msg").show();
         return false;
     }
 
@@ -287,18 +287,18 @@ function validate_page2()
     {
         if (!isValidURL($("#money_url").val()))
         {
-            $("#donations_invalid_msg").text("The donations URL does not follow the proper pattern for a valid URL.");
-            $("#donations_invalid_msg").show();
+            $("#money_url_msg").text("The donations URL does not follow the proper pattern for a valid URL.");
+            $("#money_url_msg").show();
             return false;
         }
         else
         {
-                $("#donations_invalid_msg").hide();        
+                $("#money_url_msg").hide();        
         }
     }
     else
     {
-            $("#donations_invalid_msg").hide();        
+            $("#money_url_msg").hide();        
     }
     
     return true;
