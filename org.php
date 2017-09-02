@@ -1,5 +1,7 @@
 <?php
 ini_set('display_errors', 'On');
+ini_set('session.cookie_httponly', '1');
+ini_set('session.cookie_lifetime', 7200);
 error_reporting(E_ALL | E_STRICT);
 
 require_once('include/secrets.php');
@@ -24,6 +26,13 @@ session_start();
 //var_dump($_SESSION);
 //echo " -->\n";
 
+/* first thing, require a cookie to be set no matter what */
+//if (!array_key_exists("PHPSESSID", $_COOKIE))
+//{
+//    /* reload the page to set the cookie */
+ //   header("Location: org.php");
+ //   die();
+//}
 
 
 if (isset($_POST["action"]))
@@ -89,8 +98,8 @@ function buildCsrfToken()
     /* for csrf protection, the nonce will be formed from a hash of several variables 
         that make up the session, concatenated, but should be stable between requests,
         along with some random salt (defined above) */
-    global $csrf_nonce, $csrf_salt, $action;
-    $token = $action . $_SERVER['SERVER_SIGNATURE'] . $_SERVER['SCRIPT_FILENAME'] . $_COOKIE['PHPSESSID'] . $csrf_salt;
+    global $csrf_nonce, $csrf_salt, $action, $orgid;
+    $token = $orgid . $action . $_SERVER['SERVER_SIGNATURE'] . $_SERVER['SCRIPT_FILENAME'] . session_id() . $csrf_salt;
     //echo "<!-- DEBUG token = $token -->\n";
     $csrf_nonce = hash("sha256", $token);
 }
@@ -100,7 +109,7 @@ function checkCsrfToken()
 {
     global $csrf_salt;
 
-    $token = $_POST["action"] . $_SERVER['SERVER_SIGNATURE'] . $_SERVER['SCRIPT_FILENAME'] . $_COOKIE['PHPSESSID'] . $csrf_salt;
+    $token = $_REQUEST["orgid"] . $_POST["action"] . $_SERVER['SERVER_SIGNATURE'] . $_SERVER['SCRIPT_FILENAME'] . session_id() . $csrf_salt;
 	
 	//echo "<!-- DEBUG Check Token = $token -->\n";
     if (hash("sha256", $token) != $_POST["nonce"])
@@ -121,7 +130,7 @@ function validatePostData()
     /* first do basic validations before accessing the database */
     if (isset($_POST["email"])) 
     {
-        $email = strtolower(filter_var($_POST["email"], FILTER_SANITIZE_EMAIL)); /* first strip out chars which are invalid in emails */
+        $email = $_POST["email"]; 
         // check if e-mail address is well-formed
 
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) 
@@ -288,7 +297,7 @@ function performUpdate()
         assert(isset($dbh));
 
         /* make sure orgid from session matches org ID requested */
-        if ($_SESSION["orgid"] != $orgid)
+        if (($_SESSION["orgid"] != $orgid) || !array_key_exists("orgid", $_SESSION))
         {
             error_log("Unauthorized org ID requested. Possible parameter tampering.");
             header("Location: login.php?errmsg");
@@ -307,9 +316,9 @@ function performUpdate()
             FILTER_FLAG_STRIP_LOW + FILTER_FLAG_STRIP_HIGH + FILTER_FLAG_STRIP_BACKTICK));
         $stmt->bindValue(':person_name', filter_var($_POST["person_name"], FILTER_SANITIZE_STRING, FILTER_FLAG_NO_ENCODE_QUOTES + 
             FILTER_FLAG_STRIP_LOW + FILTER_FLAG_STRIP_HIGH + FILTER_FLAG_STRIP_BACKTICK));
-        $stmt->bindValue(':email', strtolower($_POST["email"]));
-        $stmt->bindValue(':website', $_POST["org_website"]);
-        $stmt->bindValue(':money_url', $_POST["money_url"]);
+        $stmt->bindValue(':email', filter_var(strtolower($_POST["email"]), FILTER_SANITIZE_EMAIL));
+        $stmt->bindValue(':website', filter_var($_POST["org_website"], FILTER_SANITIZE_URL));
+        $stmt->bindValue(':money_url', filter_var($_POST["money_url"], FILTER_SANITIZE_URL));
         $stmt->bindValue(':orgid', $orgid);
 
 
@@ -366,10 +375,10 @@ function performInsert()
 
     try
     {
-        /* TODO: first check to see if a record under this email address already exists */
+        /* TODO: first check to see if a record under this email address already exists? */
 
         /* this is a new record, so do the insert */
-        global $dbh, $orgid, $goto_page;
+        global $dbh, $orgid, $goto_page,$action, $success_msg;
         $stmt = $dbh->prepare("INSERT INTO org (org_name, person_name, email_unverified, pwhash, website, money_url)" 
             . " VALUES (:org_name, :person_name, :email, :pwhash, :website, :money_url);");
 
@@ -377,9 +386,9 @@ function performInsert()
             FILTER_FLAG_STRIP_LOW + FILTER_FLAG_STRIP_HIGH + FILTER_FLAG_STRIP_BACKTICK));
         $stmt->bindValue(':person_name', filter_var($_POST["person_name"], FILTER_SANITIZE_STRING, FILTER_FLAG_NO_ENCODE_QUOTES + 
             FILTER_FLAG_STRIP_LOW + FILTER_FLAG_STRIP_HIGH + FILTER_FLAG_STRIP_BACKTICK));
-        $stmt->bindValue(':email', strtolower($_POST["email"]));
-        $stmt->bindValue(':website', $_POST["org_website"]);
-        $stmt->bindValue(':money_url', $_POST["money_url"]);
+        $stmt->bindValue(':email', FILTER_VAR(strtolower($_POST["email"]), FILTER_SANITIZE_EMAIL));
+        $stmt->bindValue(':website', FILTER_VAR($_POST["org_website"], FILTER_SANITIZE_URL));
+        $stmt->bindValue(':money_url', FILTER_VAR($_POST["money_url"], FILTER_SANITIZE_URL));
         $pwhash = password_hash($_POST["password1"], PASSWORD_BCRYPT);
         $stmt->bindValue(':pwhash', $pwhash);
 
@@ -395,14 +404,11 @@ function performInsert()
         }
 		else
 		{
-			global $success_msg;
 			$success_msg = "Record successfully inserted. An email has been sent to validate the email.";
 			$goto_page = 8;
 		}
 		
-
         /* change the action to update, now that the record was successfully inserted */
-        global $action;
         $action = "U";
         $orgid = $dbh->lastInsertId();
 
@@ -414,6 +420,8 @@ function performInsert()
 
         /* place the org ID into session */
         $_SESSION["orgid"] = $orgid;
+
+        $stmt->closeCursor();
 
     }
     catch (PDOException $e)
@@ -442,7 +450,7 @@ function displayDbData()
         assert($orgid != false); /* TODO: more error handling needed */
 
         /* make sure orgid from session matches org ID requested */
-        if ($_SESSION["orgid"] != $orgid)
+        if (($_SESSION["orgid"] != $orgid) || !array_key_exists("orgid", $_SESSION))
         {
             error_log("Parameter tampering detected. Requested org ID which is not authorized.");
             header("Location: login.php?errmsg");
@@ -477,15 +485,15 @@ function displayDbData()
             global $money_url;
             global $action;
 
-            $org_name = htmlentities($row["org_name"]);
-            $person_name = htmlentities($row["person_name"]);
+            $org_name = htmlspecialchars($row["org_name"]);
+            $person_name = htmlspecialchars($row["person_name"]);
 
-            $email_verified = $row["email_verified"];
-            $email_unverified = $row["email_unverified"];
+            $email_verified = htmlspecialchars($row["email_verified"]);
+            $email_unverified = htmlspecialchars($row["email_unverified"]);
             
 
-            $website = htmlentities($row["website"]);
-            $money_url = htmlentities($row["money_url"]);
+            $website = htmlspecialchars($row["website"]);
+            $money_url = htmlspecialchars($row["money_url"]);
             $action = "U";
             buildCsrfToken();
         }
@@ -523,14 +531,14 @@ function displayPostData()
 
     $email_verified = $_POST["email"]; /* TODO: don't know if the email is verified or not yet
                                         not sure how to handle this */
-    $person_name = htmlentities(filter_var($_POST["person_name"], FILTER_SANITIZE_STRING, FILTER_FLAG_NO_ENCODE_QUOTES + 
+    $person_name = htmlspecialchars(filter_var($_POST["person_name"], FILTER_SANITIZE_STRING, FILTER_FLAG_NO_ENCODE_QUOTES + 
             FILTER_FLAG_STRIP_LOW + FILTER_FLAG_STRIP_HIGH + FILTER_FLAG_STRIP_BACKTICK));
-    $org_name = htmlentities(filter_var($_POST["org_name"], FILTER_SANITIZE_STRING, FILTER_FLAG_NO_ENCODE_QUOTES + 
+    $org_name = htmlspecialchars(filter_var($_POST["org_name"], FILTER_SANITIZE_STRING, FILTER_FLAG_NO_ENCODE_QUOTES + 
             FILTER_FLAG_STRIP_LOW + FILTER_FLAG_STRIP_HIGH + FILTER_FLAG_STRIP_BACKTICK));
     
 
-    $website = htmlentities($_POST["org_website"]);
-    $money_url = htmlentities($_POST["money_url"]);
+    $website = htmlspecialchars($_POST["org_website"]);
+    $money_url = htmlspecialchars($_POST["money_url"]);
     $action = strtoupper(substr($_POST["action"], 0, 1)); /* on error, always retain the same action that was posted */
 
     buildCsrfToken();
@@ -642,7 +650,7 @@ function arrayToHtml($pagenum)
 
         printf("\t<div class='form-group'>\n\t\t<label for='question-%u'>", $question_id);
         $row = current($question);
-        echo htmlentities($row["question_text"]);
+        echo htmlspecialchars($row["question_text"]);
         echo "</label>\n";
 
         if ($row["org_multi_select"])
@@ -667,7 +675,7 @@ function arrayToHtml($pagenum)
             {
                 $selected = "";
             }
-            printf("\t\t<option value='choice-%u' %s >%s</option>\n", $choice["choice_id"], $selected, htmlentities($choice["choice_text"])) ;
+            printf("\t\t<option value='choice-%u' %s >%s</option>\n", $choice["choice_id"], $selected, htmlspecialchars($choice["choice_text"])) ;
         }
         
         echo "\t</select>\n\t</div>\n\n";
@@ -895,11 +903,11 @@ function updateQuestionnaireData()
     <div class="form-group">
         <label for="email">Email address:</label>
         <?php 
-            if (isset($email_verified))
+            if (strlen($email_verified) > 0)
             {
                 echo "<input class='form-control' type='email' id='email' maxlength='128' name='email' value='$email_verified' />\n";
             }
-            elseif (isset($email_unverified))
+            elseif (strlen($email_unverified) > 0)
             {
                 echo "<input class='form-control' type='email' id='email' maxlength='128' name='email' value='$email_unverified' />\n";
             }
@@ -908,7 +916,7 @@ function updateQuestionnaireData()
                 echo "<input class='form-control' type='email' id='email' maxlength='128' name='email' value='' />\n";
             }
 
-            if (isset($email_unverified))
+            if (strlen($email_unverified) > 0)
             {
                 echo "<div class='alert alert-info' id='email_unverified_msg' >The email address: $email_unverified has not been verified yet.</div>\n";
             }
