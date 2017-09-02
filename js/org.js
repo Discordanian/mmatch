@@ -123,6 +123,7 @@ $(document).ready(function(){
 
 	$("a#p7_goto_p8").click(function(){
 
+        showSummary();
 		$("div#page7").hide();
 		$("div#page8").show();
 	
@@ -242,12 +243,12 @@ function validate_page2()
         $("#org_name_msg").hide();
     }
 
-    $("#website_msg").hide();
+    $("#org_website_msg").hide();
 
     if ($("#org_website").val().length > 255)
     {
-        $("#website_invalid_msg").text("The website URL should not exceed 255 characters in length.");
-        $("#website_invalid_msg").show();
+        $("#org_website_msg").text("The website URL should not exceed 255 characters in length.");
+        $("#org_website_msg").show();
         return false;
     }
 
@@ -256,19 +257,19 @@ function validate_page2()
     {
         if (!isValidURL($("#org_website").val()))
         {
-            $("#website_invalid_msg").text("The website URL does not follow the proper pattern for a valid URL.");
-            $("#website_invalid_msg").show();
+            $("#org_website_msg").text("The website URL does not follow the proper pattern for a valid URL.");
+            $("#org_website_msg").show();
             return false;
         }
         else
         {
-                $("#website_invalid_msg").hide();        
+                $("#org_website_msg").hide();        
         }
         
     }
     else
     {
-            $("#website_invalid_msg").hide();        
+            $("#org_website_msg").hide();        
     }
 
 
@@ -329,3 +330,15 @@ function closeAlertMsg()
 {
 	$("#general_alert_msg").hide("fast");
 }
+
+function showSummary()
+{
+
+    $("#person_name_summary").text($("#person_name").val());
+    $("#email_summary").text($("#email").val());
+    $("#org_name_summary").text($("#org_name").val());
+    $("#org_website_summary").text($("#org_website").val());
+    $("#money_url_summary").text($("#money_url").val());
+
+}
+

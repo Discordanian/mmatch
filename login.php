@@ -1,7 +1,6 @@
 <?php
-ini_set('display_errors', 'On');
-error_reporting(E_ALL | E_STRICT);
 
+require_once('include/inisets.php');
 require_once('include/secrets.php');
 require_once('include/pwhashfx.php');
 

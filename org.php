@@ -1,12 +1,6 @@
 <?php
-ini_set('display_errors', 'On');
-ini_set('session.cookie_httponly', '1');
-ini_set('session.cookie_lifetime', '7200');
-ini_set('session.gc_maxlifetime', '86400');
-ini_set('session.gc_probability', '1');
 
-error_reporting(E_ALL | E_STRICT);
-
+require_once('include/inisets.php');
 require_once('include/secrets.php');
 require_once('include/pwhashfx.php');
 
@@ -19,23 +13,16 @@ require_once('include/pwhashfx.php');
 /* #5 Update attempted, no errors, update successful, display form with data populated from DB, along with SUCCESS msg */ 
 /* #6 Retrieve only, display form with data populated from DB */
 
-/* TODO: This code is very vulnerable to XSS 
+/* TODO: This code may be vulnerable to XSS 
 and probably a bunch of other attacks
 Needs serious security review */
 
-$goto_page = 1;
 session_start();
+$goto_page = 1;
 //echo "<!-- ";
 //var_dump($_SESSION);
 //echo " -->\n";
 
-/* first thing, require a cookie to be set no matter what */
-//if (!array_key_exists("PHPSESSID", $_COOKIE))
-//{
-//    /* reload the page to set the cookie */
- //   header("Location: org.php");
- //   die();
-//}
 
 
 if (isset($_POST["action"]))
@@ -87,7 +74,7 @@ else
     $person_name = "";
     $org_name = "";
     $email_verified = "";
-    $website = "";
+    $org_website = "";
     $money_url = "";
     $action = "I"; /* Insert */
     initializeDb();
@@ -127,7 +114,7 @@ function checkCsrfToken()
 
 function validatePostData()
 {
-    global $email_msg, $orgid, $goto_page, $website_msg, $pwd_msg;
+    global $email_msg, $orgid, $goto_page, $org_website_msg, $pwd_msg;
     $orgid = FILTER_VAR($_REQUEST["orgid"], FILTER_VALIDATE_INT);
 
     /* first do basic validations before accessing the database */
@@ -195,23 +182,23 @@ function validatePostData()
 	
 	if (isset($_POST["org_website"]))
 	{
-		$website = filter_var($_POST["org_website"], FILTER_SANITIZE_URL);
+		$org_website = filter_var($_POST["org_website"], FILTER_SANITIZE_URL);
 		
-		if (strlen($website) > 0) /* web site is optional so skip check if its blank */
+		if (strlen($org_website) > 0) /* web site is optional so skip check if its blank */
 		{
 			
 			//echo "<!-- web site = $website -->\n"; 
-			if (!filter_var($website, FILTER_VALIDATE_URL))
+			if (!filter_var($org_website, FILTER_VALIDATE_URL))
 			{
-				$website_msg = "The website URL does not follow the proper pattern for a valid URL.";
+				$org_website_msg = "The website URL does not follow the proper pattern for a valid URL.";
 				$goto_page = 2;
 				//echo "<!-- URL failed validation -->\n"; 
 				return false;
 			}
 
-			if (strlen($website) > 255)
+			if (strlen($org_website) > 255)
 			{
-				$website_msg = "Web site address should not exceed 255 characters in length.";
+				$org_website_msg = "Web site address should not exceed 255 characters in length.";
 				$goto_page = 2;
 				return false;
 			}
@@ -221,7 +208,7 @@ function validatePostData()
 	{
 		/* Weird situation because this data field was not even posted.
 		Should probably log it. */
-		$website_msg = "An unknown error occurred. Please try again.";
+		$org_website_msg = "An unknown error occurred. Please try again.";
 		$goto_page = 2;
         error_log("Website not posted. Possible parameter tampering.");
 		return false;
@@ -322,6 +309,7 @@ function performUpdate()
         $stmt->bindValue(':email', filter_var(strtolower($_POST["email"]), FILTER_SANITIZE_EMAIL));
         $stmt->bindValue(':website', filter_var($_POST["org_website"], FILTER_SANITIZE_URL));
         $stmt->bindValue(':money_url', filter_var($_POST["money_url"], FILTER_SANITIZE_URL));
+            /* TODO: SANITIZE_URL lets some interesting things through. May not be a threat, but worth investigation */
         $stmt->bindValue(':orgid', $orgid);
 
 
@@ -355,6 +343,7 @@ function performUpdate()
 			$goto_page = 8;
 		}
 		
+        $stmt->closeCursor();
 
         /* TODO: detect email change and add verification email */
 
@@ -482,9 +471,9 @@ function displayDbData()
 
             global $email_verified;
             global $email_unverified;
-            
+            global $email;
 
-            global $website;
+            global $org_website;
             global $money_url;
             global $action;
 
@@ -494,8 +483,16 @@ function displayDbData()
             $email_verified = htmlspecialchars($row["email_verified"]);
             $email_unverified = htmlspecialchars($row["email_unverified"]);
             
+            if (strlen($email_verified) > 0)
+            {
+                $email = $email_verified;
+            }
+            else
+            {
+                $email = $email_unverified;
+            }
 
-            $website = htmlspecialchars($row["website"]);
+            $org_website = htmlspecialchars($row["website"]);
             $money_url = htmlspecialchars($row["money_url"]);
             $action = "U";
             buildCsrfToken();
@@ -525,22 +522,22 @@ function displayPostData()
 
 {
     /* an error was encountered, so repopulate the fields from the POST */
-    global $email_verified; 
+    global $email; 
     global $person_name;
     global $org_name;
-    global $website;
+    global $org_website;
     global $money_url;
     global $action; 
 
-    $email_verified = $_POST["email"]; /* TODO: don't know if the email is verified or not yet
-                                        not sure how to handle this */
+    $email = htmlspecialchars(filter_var($_POST["email"], FILTER_SANITIZE_EMAIL)); 
+        /* TODO: don't know if the email is verified or not yet not sure how to handle this */
     $person_name = htmlspecialchars(filter_var($_POST["person_name"], FILTER_SANITIZE_STRING, FILTER_FLAG_NO_ENCODE_QUOTES + 
             FILTER_FLAG_STRIP_LOW + FILTER_FLAG_STRIP_HIGH + FILTER_FLAG_STRIP_BACKTICK));
     $org_name = htmlspecialchars(filter_var($_POST["org_name"], FILTER_SANITIZE_STRING, FILTER_FLAG_NO_ENCODE_QUOTES + 
             FILTER_FLAG_STRIP_LOW + FILTER_FLAG_STRIP_HIGH + FILTER_FLAG_STRIP_BACKTICK));
     
 
-    $website = htmlspecialchars($_POST["org_website"]);
+    $org_website = htmlspecialchars($_POST["org_website"]);
     $money_url = htmlspecialchars($_POST["money_url"]);
     $action = strtoupper(substr($_POST["action"], 0, 1)); /* on error, always retain the same action that was posted */
 
@@ -905,20 +902,9 @@ function updateQuestionnaireData()
 
     <div class="form-group">
         <label for="email">Email address:</label>
-        <?php 
-            if (strlen($email_verified) > 0)
-            {
-                echo "<input class='form-control' type='email' id='email' maxlength='128' name='email' value='$email_verified' />\n";
-            }
-            elseif (strlen($email_unverified) > 0)
-            {
-                echo "<input class='form-control' type='email' id='email' maxlength='128' name='email' value='$email_unverified' />\n";
-            }
-            else
-            {
-                echo "<input class='form-control' type='email' id='email' maxlength='128' name='email' value='' />\n";
-            }
+        <input class="form-control" type="email" id="email" maxlength="128" name="email" value="<?php echo $email; ?>" />
 
+        <?php
             if (strlen($email_unverified) > 0)
             {
                 echo "<div class='alert alert-info' id='email_unverified_msg' >The email address: $email_unverified has not been verified yet.</div>\n";
@@ -965,11 +951,11 @@ function updateQuestionnaireData()
 
     <div class="form-group">
         <label for="org_website">Organization website:</label>
-        <input class="form-control" type="url" id="org_website" maxlength="255"  name="org_website" value="<?php echo $website ?>" />
+        <input class="form-control" type="url" id="org_website" maxlength="255"  name="org_website" value="<?php echo $org_website ?>" />
     </div> <!-- form-group -->
 
-    <div class="alert alert-danger" <?php if (!isset($website_msg)) echo "hidden='true'"; ?> id="website_invalid_msg" >
-        <?php if (isset($website_msg)) echo $website_msg; ?>
+    <div class="alert alert-danger" <?php if (!isset($org_website_msg)) echo "hidden='true'"; ?> id="org_website_msg" >
+        <?php if (isset($org_website_msg)) echo $org_website_msg; ?>
     </div>
 
     <div class="form-group">
@@ -1059,7 +1045,7 @@ function updateQuestionnaireData()
 
 
     <div class="form-group">
-        <label for="benefit-1">What benefits might a volunteer see from working for you:</label>
+        <label for="benefit-1">What benefits might a volunteer see from working for you: <strong>Bogus Placeholder Question</strong></label>
 		<select name="benefit-1" id="benefit-1" class="form-control">
 			<option value="NULL">&lt;No selection&gt;</option>
 		</select>
@@ -1076,6 +1062,33 @@ function updateQuestionnaireData()
 
 <div id="page8" <?php if ($goto_page != 8) echo "hidden='true'"; ?> >
     <center><h3 id="header">Summary</h3></center>
+
+    <div class="row">
+        <div class="col-md-3" ><strong>Representative Name:</strong></div>
+        <div class="col-md-9" id="person_name_summary"><?php echo $person_name; ?></div>
+    </div> 
+
+    <div class="row">
+        <div class="col-md-3" ><strong>Email Address</strong></div>
+        <div class="col-md-9" id="email_summary"><?php echo $email; ?></div>
+    </div> 
+
+    <div class="row">
+        <div class="col-md-3" ><strong>Organization Name:</strong></div>
+        <div class="col-md-9" id="org_name_summary"><?php echo $org_name; ?></div>
+    </div> 
+
+
+    <div class="row">
+        <div class="col-md-3" ><strong>Organization Website:</strong></div>
+        <div class="col-md-9" id="org_website_summary"><?php echo $org_website; ?></div>
+    </div> 
+
+
+    <div class="row">
+        <div class="col-md-3" ><strong>Donations URL:</strong></div>
+        <div class="col-md-9" id="money_url_summary"><?php echo $money_url; ?></div>
+    </div> 
 
     <ul class="pager">
         <li><a href="#" id="p8_goto_p7" >Previous</a></li>
