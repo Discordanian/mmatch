@@ -371,15 +371,15 @@ function performInsert()
 
         /* this is a new record, so do the insert */
         global $dbh, $orgid, $goto_page,$action, $success_msg;
-        $stmt = $dbh->prepare("INSERT INTO org (org_name, person_name, email_unverified, pwhash, website, money_url)" 
-            . " VALUES (:org_name, :person_name, :email, :pwhash, :website, :money_url);");
+        $stmt = $dbh->prepare("INSERT INTO org (org_name, person_name, email_unverified, pwhash, org_website, money_url)" 
+            . " VALUES (:org_name, :person_name, :email, :pwhash, :org_website, :money_url);");
 
         $stmt->bindValue(':org_name', filter_var($_POST["org_name"], FILTER_SANITIZE_STRING, FILTER_FLAG_NO_ENCODE_QUOTES + 
             FILTER_FLAG_STRIP_LOW + FILTER_FLAG_STRIP_HIGH + FILTER_FLAG_STRIP_BACKTICK));
         $stmt->bindValue(':person_name', filter_var($_POST["person_name"], FILTER_SANITIZE_STRING, FILTER_FLAG_NO_ENCODE_QUOTES + 
             FILTER_FLAG_STRIP_LOW + FILTER_FLAG_STRIP_HIGH + FILTER_FLAG_STRIP_BACKTICK));
         $stmt->bindValue(':email', FILTER_VAR(strtolower($_POST["email"]), FILTER_SANITIZE_EMAIL));
-        $stmt->bindValue(':website', FILTER_VAR($_POST["org_website"], FILTER_SANITIZE_URL));
+        $stmt->bindValue(':org_website', FILTER_VAR($_POST["org_website"], FILTER_SANITIZE_URL));
         $stmt->bindValue(':money_url', FILTER_VAR($_POST["money_url"], FILTER_SANITIZE_URL));
         $pwhash = password_hash($_POST["password1"], PASSWORD_BCRYPT);
         $stmt->bindValue(':pwhash', $pwhash);
@@ -448,7 +448,7 @@ function displayDbData()
             header("Location: login.php?errmsg");
         }
 
-        $stmt = $dbh->prepare("SELECT orgid, org_name, person_name, email_verified, email_unverified, website, money_url FROM org WHERE orgid = :orgid ;");
+        $stmt = $dbh->prepare("SELECT orgid, org_name, person_name, email_verified, email_unverified, org_website, money_url FROM org WHERE orgid = :orgid ;");
         $stmt->bindValue(':orgid', $orgid);
 
         $stmt->execute();
@@ -492,7 +492,7 @@ function displayDbData()
                 $email = $email_unverified;
             }
 
-            $org_website = htmlspecialchars($row["website"]);
+            $org_website = htmlspecialchars($row["org_website"]);
             $money_url = htmlspecialchars($row["money_url"]);
             $action = "U";
             buildCsrfToken();
