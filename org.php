@@ -74,6 +74,8 @@ else
     $person_name = "";
     $org_name = "";
     $email_verified = "";
+    $email_unverified = "";
+    $email = "";
     $org_website = "";
     $money_url = "";
     $action = "I"; /* Insert */
@@ -106,6 +108,7 @@ function checkCsrfToken()
     {
         error_log("CSRF token mismatch in org.php. Just kill me now...");
         header("Location: login.php?errmsg");
+        exit();
     }
 
 
@@ -117,6 +120,14 @@ function validatePostData()
     global $email_msg, $orgid, $goto_page, $org_website_msg, $money_url_msg, $pwd_msg;
     $orgid = FILTER_VAR($_REQUEST["orgid"], FILTER_VALIDATE_INT);
 
+    if (!($orgid >= 0))
+    {
+        error_log("Parameter tampering detected (validatePostData) orgid.");
+        header("Location: login.php?errmsg");
+        exit();
+    }
+
+    
     /* first do basic validations before accessing the database */
     if (isset($_POST["email"])) 
     {
@@ -287,13 +298,13 @@ function performUpdate()
         assert(isset($dbh));
 
         /* make sure orgid from session matches org ID requested */
-        if (($_SESSION["orgid"] != $orgid) || !array_key_exists("orgid", $_SESSION))
+        if ($_SESSION["orgid"] != $orgid)
         {
             error_log("Unauthorized org ID requested. Possible parameter tampering.");
             header("Location: login.php?errmsg");
         }
 
-        $stmt = $dbh->prepare("UPDATE org SET org_name = :org_name, person_name = :person_name, website = :website, money_url = :money_url WHERE orgid = :orgid; " .
+        $stmt = $dbh->prepare("UPDATE org SET org_name = :org_name, person_name = :person_name, org_website = :org_website, money_url = :money_url WHERE orgid = :orgid; " .
             "UPDATE org SET pwhash = :pwhash WHERE orgid = :orgid AND :pwhash IS NOT NULL; " .
             "UPDATE org SET email_unverified = :email WHERE orgid = :orgid AND email_verified IS NOT NULL AND email_verified != :email; " . 
             "UPDATE org SET email_unverified = :email WHERE orgid = :orgid AND email_verified IS NULL AND email_unverified != :email; " );
@@ -307,7 +318,7 @@ function performUpdate()
         $stmt->bindValue(':person_name', filter_var($_POST["person_name"], FILTER_SANITIZE_STRING, FILTER_FLAG_NO_ENCODE_QUOTES + 
             FILTER_FLAG_STRIP_LOW + FILTER_FLAG_STRIP_HIGH + FILTER_FLAG_STRIP_BACKTICK));
         $stmt->bindValue(':email', filter_var(strtolower($_POST["email"]), FILTER_SANITIZE_EMAIL));
-        $stmt->bindValue(':website', filter_var($_POST["org_website"], FILTER_SANITIZE_URL));
+        $stmt->bindValue(':org_website', filter_var($_POST["org_website"], FILTER_SANITIZE_URL));
         $stmt->bindValue(':money_url', filter_var($_POST["money_url"], FILTER_SANITIZE_URL));
             /* TODO: SANITIZE_URL lets some interesting things through. May not be a threat, but worth investigation */
         $stmt->bindValue(':orgid', $orgid);
@@ -355,7 +366,9 @@ function performUpdate()
     }
     catch(Exception $e)
     {
-        die($e->getMessage());
+        error_log($e->getMessage());
+        header("Location: login.php?errmsg");
+        exit();
         /* TODO: much better/cleaner handling of errors */
     }
 
@@ -370,7 +383,7 @@ function performInsert()
         /* TODO: first check to see if a record under this email address already exists? */
 
         /* this is a new record, so do the insert */
-        global $dbh, $orgid, $goto_page,$action, $success_msg;
+        global $dbh, $orgid, $goto_page, $action, $success_msg, $email_unverified;
         $stmt = $dbh->prepare("INSERT INTO org (org_name, person_name, email_unverified, pwhash, org_website, money_url)" 
             . " VALUES (:org_name, :person_name, :email, :pwhash, :org_website, :money_url);");
 
@@ -378,9 +391,10 @@ function performInsert()
             FILTER_FLAG_STRIP_LOW + FILTER_FLAG_STRIP_HIGH + FILTER_FLAG_STRIP_BACKTICK));
         $stmt->bindValue(':person_name', filter_var($_POST["person_name"], FILTER_SANITIZE_STRING, FILTER_FLAG_NO_ENCODE_QUOTES + 
             FILTER_FLAG_STRIP_LOW + FILTER_FLAG_STRIP_HIGH + FILTER_FLAG_STRIP_BACKTICK));
-        $stmt->bindValue(':email', FILTER_VAR(strtolower($_POST["email"]), FILTER_SANITIZE_EMAIL));
-        $stmt->bindValue(':org_website', FILTER_VAR($_POST["org_website"], FILTER_SANITIZE_URL));
-        $stmt->bindValue(':money_url', FILTER_VAR($_POST["money_url"], FILTER_SANITIZE_URL));
+        $email_unverified = filter_var(strtolower($_POST["email"]), FILTER_SANITIZE_EMAIL);
+        $stmt->bindValue(':email', $email_unverified);
+        $stmt->bindValue(':org_website', filter_var($_POST["org_website"], FILTER_SANITIZE_URL));
+        $stmt->bindValue(':money_url', filter_var($_POST["money_url"], FILTER_SANITIZE_URL));
         $pwhash = password_hash($_POST["password1"], PASSWORD_BCRYPT);
         $stmt->bindValue(':pwhash', $pwhash);
 
@@ -415,6 +429,8 @@ function performInsert()
 
         $stmt->closeCursor();
 
+        sendVerificationEmail();
+
     }
     catch (PDOException $e)
     {
@@ -442,7 +458,7 @@ function displayDbData()
         assert($orgid != false); /* TODO: more error handling needed */
 
         /* make sure orgid from session matches org ID requested */
-        if (($_SESSION["orgid"] != $orgid) || !array_key_exists("orgid", $_SESSION))
+        if ($_SESSION["orgid"] != $orgid)
         {
             error_log("Parameter tampering detected. Requested org ID which is not authorized.");
             header("Location: login.php?errmsg");
@@ -511,7 +527,9 @@ function displayDbData()
     }
     catch(Exception $e)
     {
-        die($e->getMessage());
+        error_log($e->getMessage());
+        header("Location: login.php?errmsg");
+        exit();
         /* TODO: much better/cleaner handling of errors */
     }
 
@@ -854,6 +872,28 @@ function updateQuestionnaireData()
         /* TODO: much better/cleaner handling of errors */
     }
 }
+
+function sendVerificationEmail()
+{
+    global $email_unverified, $csrf_salt, $orgid;
+
+	/* since this is not very security critical use case, (it just sends an email */
+	/* perform basic verification that */
+	/* the request came from a valid source and not a random person */
+	/* also, this URL currently does not expire */
+	$input = $_SERVER["SERVER_NAME"] . $email_unverified . $orgid . "sendverifyemail.php" . $csrf_salt;
+	$token = hash("sha256", $input);
+
+	/* use curl to trigger the php page that sends the email */
+	$url = sprintf("http://%s/mmatch/sendverifyemail.php?email=%s&token=%s&orgid=%d", $_SERVER["SERVER_NAME"], urlencode($email_unverified), $token, $orgid);
+	$ch = curl_init($url);
+	curl_setopt ($ch, CURLOPT_RETURNTRANSFER, 1) ;
+	/* I actually don't care about what's in the return value, it doesn't return anything of value */
+	$res = curl_exec($ch);
+	/* TODO: Check for errors */
+	curl_close($ch);
+}
+
 ?>
 <!DOCTYPE html>
 <html lang="en" >
