@@ -151,7 +151,7 @@ function authenticateCredentials()
             //echo "<!-- Password entered = " . $_POST["password"] . "-->\n";
             //echo "<!-- Password hash calculated = " . password_hash($_POST["password"], PASSWORD_BCRYPT) . " -->\n";
 
-            if (password_hash($_POST["password"], PASSWORD_BCRYPT) == $pwhash)
+            if (password_verify($_POST["password"], $pwhash))
             {
                 $orgid = $row["orgid"];
                 //$email = $row["email_verified"];
