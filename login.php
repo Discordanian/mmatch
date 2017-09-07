@@ -2,7 +2,6 @@
 
 require_once('include/inisets.php');
 require_once('include/secrets.php');
-require_once('include/pwhashfx.php');
 
 /* #1 Cold session, no incoming data, no data to retrieve, clear all cookies, and show defaults on page */
 /* #2 Credentials entered, authentication fails, redisplay blank form, along with error message */

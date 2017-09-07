@@ -143,6 +143,10 @@ $(document).ready(function(){
     });
 
 
+    $("#generateVerificationEmail").click(function(){
+        generateVerificationEmail();
+    });
+
 	if ($("#general_alert_msg:visible"))
 	{
 		setTimeout(closeAlertMsg,3000);
@@ -339,6 +343,18 @@ function showSummary()
     $("#org_name_summary").text($("#org_name").val());
     $("#org_website_summary").text($("#org_website").val());
     $("#money_url_summary").text($("#money_url").val());
+    $("#mission_summary").text($("#mission").val());
 
+}
+
+function generateVerificationEmail()
+{
+    /* does an asynchronous get to the URL which was passed from the server and hidden in the DIV */
+    /* it's not hidden because it needs to remain secret, it's just the user does not need to see it */
+    var url=$("#generateVerficationEmailUrl").text();
+
+    $.get(url, function(data, status){
+        $("#email_unverified_msg").text("An email to verify the address has been sent.");
+        });
 }
 

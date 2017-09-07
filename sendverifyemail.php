@@ -121,21 +121,21 @@ function sendVerificationEmail()
     /* TODO: make expiration date of link parameter driven */
     $datetext = $expdate->format("d-M-Y");
 
-    $input = $_SERVER["SERVER_NAME"] . $email . $datetext . $orgid . $csrf_salt;
-    $token = substr(hash("sha256", $input), 0, 18); /* pull out only the 1st 14 digits of the hash, make it a typable link */
+    $input = $_SERVER["SERVER_NAME"] . $email . $datetext . $orgid . "emailverify.php" . $csrf_salt;
+    $token = substr(hash("sha256", $input), 0, 18); /* pull out only the 1st 18 digits of the hash, make it a typable link? */
     $link = sprintf("http://%s/mmatch/emailverify.php?email=%s&token=%s&orgid=%d", $_SERVER["SERVER_NAME"], $email, $token, $orgid);
 
+	//echo "<!-- $input -->\n"; /* TODO: This is a cheat and a security vulnerability. Remove it */
+	echo "<!-- $link -->\n"; /* TODO: This is a cheat so I don't have to actually send/receive the email. Remove this */
+	
     $message = sprintf("You apparently registered an account with movementmatch.org.\n" .
         "Click on the following link in order to verify that this was intended: \n" .
         "\t%s\n" .
         "This link will expire within 3 days. \n" .
         "If you did not intend to register an account, just ignore and delete this message. \n", $link);
 
-
-    /* mock up email sending first by just writing the message to a file */
-    $filename = sprintf("/tmp/%s.%s.txt" , strtr($email, "@", "_"), $datetext);
-    $fileh = fopen($filename, "w");
-    fwrite($fileh, $message);
-    fclose($fileh); 
-
+	/* send the verification email */
+    $res = mail($email, "Verify your account with movementmatch.org", $message, "From: admin@movementmatch.org");
+	/* I think on CentOS or other SELinux enabled systems, this will not work until you run: #setsebool -P httpd_can_sendmail=1 */
+	/* TODO: handle various return values here. At this point, I am not sure how to respond to various failures */
 }

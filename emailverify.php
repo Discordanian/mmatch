@@ -48,8 +48,8 @@ function testToken()
      
             $datetext = $date->format("d-M-Y");
 
-            $input = $_SERVER["SERVER_NAME"] . $email . $datetext . $orgid . $csrf_salt;
-            $token = substr(hash("sha256", $input), 0, 18); /* pull out only the 1st 14 digits of the hash */
+            $input = $_SERVER["SERVER_NAME"] . $email . $datetext . $orgid . "emailverify.php" . $csrf_salt;
+            $token = substr(hash("sha256", $input), 0, 18); /* pull out only the 1st 18 digits of the hash */
 
             if ($token == $_GET["token"])
             {

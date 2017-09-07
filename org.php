@@ -2,7 +2,6 @@
 
 require_once('include/inisets.php');
 require_once('include/secrets.php');
-require_once('include/pwhashfx.php');
 
 
 /* There are basically 6 possible flows to this page */
@@ -78,6 +77,7 @@ else
     $email = "";
     $org_website = "";
     $money_url = "";
+    $mission = "";
     $action = "I"; /* Insert */
     initializeDb();
     buildEmptyArray();
@@ -304,7 +304,7 @@ function performUpdate()
             header("Location: login.php?errmsg");
         }
 
-        $stmt = $dbh->prepare("UPDATE org SET org_name = :org_name, person_name = :person_name, org_website = :org_website, money_url = :money_url WHERE orgid = :orgid; " .
+        $stmt = $dbh->prepare("UPDATE org SET org_name = :org_name, person_name = :person_name, org_website = :org_website, money_url = :money_url, mission = :mission WHERE orgid = :orgid; " .
             "UPDATE org SET pwhash = :pwhash WHERE orgid = :orgid AND :pwhash IS NOT NULL; " .
             "UPDATE org SET email_unverified = :email WHERE orgid = :orgid AND email_verified IS NOT NULL AND email_verified != :email; " . 
             "UPDATE org SET email_unverified = :email WHERE orgid = :orgid AND email_verified IS NULL AND email_unverified != :email; " );
@@ -322,7 +322,8 @@ function performUpdate()
         $stmt->bindValue(':money_url', filter_var($_POST["money_url"], FILTER_SANITIZE_URL));
             /* TODO: SANITIZE_URL lets some interesting things through. May not be a threat, but worth investigation */
         $stmt->bindValue(':orgid', $orgid);
-
+        $stmt->bindValue(':mission', filter_var($_POST["mission"], FILTER_SANITIZE_STRING, FILTER_FLAG_NO_ENCODE_QUOTES + 
+            FILTER_FLAG_STRIP_LOW + FILTER_FLAG_STRIP_HIGH + FILTER_FLAG_STRIP_BACKTICK));
 
         /* udpate password if a new one specified */
         if (strlen($_POST["password1"]) > 0)
@@ -384,8 +385,8 @@ function performInsert()
 
         /* this is a new record, so do the insert */
         global $dbh, $orgid, $goto_page, $action, $success_msg, $email_unverified;
-        $stmt = $dbh->prepare("INSERT INTO org (org_name, person_name, email_unverified, pwhash, org_website, money_url)" 
-            . " VALUES (:org_name, :person_name, :email, :pwhash, :org_website, :money_url);");
+        $stmt = $dbh->prepare("INSERT INTO org (org_name, person_name, email_unverified, pwhash, org_website, money_url, mission)" 
+            . " VALUES (:org_name, :person_name, :email, :pwhash, :org_website, :money_url, :mission);");
 
         $stmt->bindValue(':org_name', filter_var($_POST["org_name"], FILTER_SANITIZE_STRING, FILTER_FLAG_NO_ENCODE_QUOTES + 
             FILTER_FLAG_STRIP_LOW + FILTER_FLAG_STRIP_HIGH + FILTER_FLAG_STRIP_BACKTICK));
@@ -397,7 +398,8 @@ function performInsert()
         $stmt->bindValue(':money_url', filter_var($_POST["money_url"], FILTER_SANITIZE_URL));
         $pwhash = password_hash($_POST["password1"], PASSWORD_BCRYPT);
         $stmt->bindValue(':pwhash', $pwhash);
-
+        $stmt->bindValue(':mission', filter_var($_POST["mission"], FILTER_SANITIZE_STRING, FILTER_FLAG_NO_ENCODE_QUOTES + 
+            FILTER_FLAG_STRIP_LOW + FILTER_FLAG_STRIP_HIGH + FILTER_FLAG_STRIP_BACKTICK));
         //$stmt->debugDumpParams();
 
         $stmt->execute();
@@ -464,7 +466,7 @@ function displayDbData()
             header("Location: login.php?errmsg");
         }
 
-        $stmt = $dbh->prepare("SELECT orgid, org_name, person_name, email_verified, email_unverified, org_website, money_url FROM org WHERE orgid = :orgid ;");
+        $stmt = $dbh->prepare("SELECT orgid, org_name, person_name, email_verified, email_unverified, org_website, money_url, mission FROM org WHERE orgid = :orgid ;");
         $stmt->bindValue(':orgid', $orgid);
 
         $stmt->execute();
@@ -491,6 +493,7 @@ function displayDbData()
 
             global $org_website;
             global $money_url;
+            global $mission;
             global $action;
 
             $org_name = htmlspecialchars($row["org_name"]);
@@ -510,6 +513,7 @@ function displayDbData()
 
             $org_website = htmlspecialchars($row["org_website"]);
             $money_url = htmlspecialchars($row["money_url"]);
+            $mission = htmlspecialchars($row["mission"]);
             $action = "U";
             buildCsrfToken();
         }
@@ -545,6 +549,7 @@ function displayPostData()
     global $org_name;
     global $org_website;
     global $money_url;
+    global $mission;
     global $action; 
 
     $email = htmlspecialchars(filter_var($_POST["email"], FILTER_SANITIZE_EMAIL)); 
@@ -557,6 +562,9 @@ function displayPostData()
 
     $org_website = htmlspecialchars($_POST["org_website"]);
     $money_url = htmlspecialchars($_POST["money_url"]);
+    $mission = htmlspecialchars(filter_var($_POST["mission"], FILTER_SANITIZE_STRING, FILTER_FLAG_NO_ENCODE_QUOTES + 
+            FILTER_FLAG_STRIP_LOW + FILTER_FLAG_STRIP_HIGH + FILTER_FLAG_STRIP_BACKTICK));
+
     $action = strtoupper(substr($_POST["action"], 0, 1)); /* on error, always retain the same action that was posted */
 
     buildCsrfToken();
@@ -875,23 +883,30 @@ function updateQuestionnaireData()
 
 function sendVerificationEmail()
 {
-    global $email_unverified, $csrf_salt, $orgid;
 
-	/* since this is not very security critical use case, (it just sends an email */
-	/* perform basic verification that */
-	/* the request came from a valid source and not a random person */
+	/* the sendverifyemail.php page is called both here and from the AJAX portion of org.php */
+	/* since this is not very security critical use case, it just sends an email */
+	/* but we do build a hash into the URL to help ensure it isn't called maliciously */
+	$ch = curl_init(buildEmailVerificationUrl());
+	curl_setopt ($ch, CURLOPT_RETURNTRANSFER, 1) ;
+	/* I actually don't care about what's in the return value, it doesn't return anything of value */
+	$res = curl_exec($ch);
+	/* TODO: Check for errors? Hard to imagine what actionable information could be returned */
+	curl_close($ch);
+}
+
+function buildEmailVerificationUrl()
+{
+	global $orgid, $csrf_salt, $email_unverified;
+	/* calculate a hash to ensure the sendverifyemail.php isn't called maliciously */
 	/* also, this URL currently does not expire */
 	$input = $_SERVER["SERVER_NAME"] . $email_unverified . $orgid . "sendverifyemail.php" . $csrf_salt;
 	$token = hash("sha256", $input);
 
 	/* use curl to trigger the php page that sends the email */
 	$url = sprintf("http://%s/mmatch/sendverifyemail.php?email=%s&token=%s&orgid=%d", $_SERVER["SERVER_NAME"], urlencode($email_unverified), $token, $orgid);
-	$ch = curl_init($url);
-	curl_setopt ($ch, CURLOPT_RETURNTRANSFER, 1) ;
-	/* I actually don't care about what's in the return value, it doesn't return anything of value */
-	$res = curl_exec($ch);
-	/* TODO: Check for errors */
-	curl_close($ch);
+
+	return $url;
 }
 
 ?>
@@ -947,7 +962,12 @@ function sendVerificationEmail()
         <?php
             if (strlen($email_unverified) > 0)
             {
-                echo "<div class='alert alert-info' id='email_unverified_msg' >The email address: $email_unverified has not been verified yet.</div>\n";
+                echo "<div class='alert alert-info' id='email_unverified_msg' >The email address: $email_unverified has not been verified yet. \n";
+				echo "<input type='button' id='generateVerificationEmail' value='Click here to request a new verification email.'></input></div>\n";
+				echo "<div hidden='true' id='generateVerficationEmailUrl' >";
+				echo buildEmailVerificationUrl();
+				echo "</div>\n";
+				/* include the URL with the generated hash in a hidden div so that the URL is available to the AJAX/JS */
             }
         ?>
     </div> <!-- form-group -->
@@ -988,6 +1008,11 @@ function sendVerificationEmail()
     <div class="alert alert-danger" hidden="true" id="org_name_msg" >
         The name must contain at least 4 characters.
     </div>
+
+    <div class="form-group">
+        <label for="mission">Organizational Mission Statement:</label>
+        <textarea class="form-control" id="mission" maxlength="2000" name="mission" rows="4" value="" ><?php echo $mission ?></textarea>
+    </div> <!-- form-group -->
 
     <div class="form-group">
         <label for="org_website">Organization website:</label>
@@ -1128,6 +1153,11 @@ function sendVerificationEmail()
     <div class="row">
         <div class="col-md-3" ><strong>Donations URL:</strong></div>
         <div class="col-md-9" id="money_url_summary"><?php echo $money_url; ?></div>
+    </div> 
+
+    <div class="row">
+        <div class="col-md-3" ><strong>Organizational Mission:</strong></div>
+        <div class="col-md-9" id="mission_summary"><?php echo $mission; ?></div>
     </div> 
 
     <ul class="pager">
