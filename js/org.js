@@ -201,6 +201,8 @@ function validate_page1()
         return false;
     }
 
+    $("#email_invalid_msg").hide();
+
 	if ($("#password1").val() != $("#password2").val())
 	{
         $("#pwd_msg").text("Passwords must match.");
@@ -215,8 +217,14 @@ function validate_page1()
         return false;
 	}
 	
+    /* check to make sure a password is specified on insert */
+    if ($("#action").val() == "I" && $("#password1").val().length < 1)
+    {
+        $("#pwd_msg").text("A password is required in order to continue.");
+        $("#pwd_msg").show();
+        return false;        
+    }
     
-    $("#email_invalid_msg").hide();
 	$("#pwd_msg").hide();
     return true;
 }

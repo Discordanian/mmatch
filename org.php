@@ -32,6 +32,9 @@ if (isset($_POST["action"]))
     if (!validatePostData())
     {
         /* #2 or #4 */
+        initializeDb();
+        buildEmptyArray();
+        translatePostIntoArray();
         displayPostData();
     } elseif ($_POST["action"] == "I")
     {
@@ -127,7 +130,7 @@ function validatePostData()
         exit();
     }
 
-    
+
     /* first do basic validations before accessing the database */
     if (isset($_POST["email"])) 
     {
@@ -191,6 +194,28 @@ function validatePostData()
 		return false;
 	}
 	
+    /* check to make sure a password was specified if this is first time */
+    if (isset($_POST["action"]))
+    {
+        /* on insert, the user must specify a password */
+        if (($_POST["action"] == "I") && strlen($_POST["password1"]) < 1)
+        {
+            $pwd_msg = "Password is required in order to continue.";
+            $goto_page = 1;
+            return false;
+        }
+    }
+    else
+    {
+		/* Weird situation because this data field was not even posted.
+		Should probably log it. */
+		$org_website_msg = "An unknown error occurred. Please try again.";
+		/* $goto_page = 2; Not sure if this matters in this case */
+        error_log("Action not posted. Possible parameter tampering.");
+		return false;
+    }
+
+
 	if (isset($_POST["org_website"]))
 	{
 		$org_website = filter_var($_POST["org_website"], FILTER_SANITIZE_URL);
@@ -545,6 +570,7 @@ function displayPostData()
 {
     /* an error was encountered, so repopulate the fields from the POST */
     global $email; 
+    global $email_unverified;
     global $person_name;
     global $org_name;
     global $org_website;
@@ -554,6 +580,8 @@ function displayPostData()
 
     $email = htmlspecialchars(filter_var($_POST["email"], FILTER_SANITIZE_EMAIL)); 
         /* TODO: don't know if the email is verified or not yet not sure how to handle this */
+    $email_unverified = "";
+
     $person_name = htmlspecialchars(filter_var($_POST["person_name"], FILTER_SANITIZE_STRING, FILTER_FLAG_NO_ENCODE_QUOTES + 
             FILTER_FLAG_STRIP_LOW + FILTER_FLAG_STRIP_HIGH + FILTER_FLAG_STRIP_BACKTICK));
     $org_name = htmlspecialchars(filter_var($_POST["org_name"], FILTER_SANITIZE_STRING, FILTER_FLAG_NO_ENCODE_QUOTES + 
