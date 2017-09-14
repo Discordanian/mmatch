@@ -138,6 +138,11 @@ $(document).ready(function(){
 
 
     $("a#save_data").click(function(){
+
+        /* make sure that all zip codes in the zip select box are selected
+            so that they get submitted with the POST */
+        $("#zip_list > option").prop("selected", "true");
+
         $("form#org_save_form").submit();
         
     });
@@ -147,7 +152,8 @@ $(document).ready(function(){
         generateVerificationEmail();
     });
 
-	if ($("#general_alert_msg:visible"))
+
+	if ($("#general_alert_msg").is(":visible"))
 	{
 		setTimeout(closeAlertMsg,3000);
 	}
@@ -157,6 +163,26 @@ $(document).ready(function(){
         $(this).val($(this).val().trim());
     });
 
+	$("#zip_select").click(function(){
+        /* TODO: need lots of input validation here */
+        var opt = document.createElement("option");
+        opt.value = $("#zip_entry").val();
+        opt.text = $("#zip_entry").val();
+
+        $("#zip_list").append($(opt));
+
+        /* clear the value out of the field */
+        $("#zip_entry").val("");
+
+        $("#zip_list option[value='NULL']").remove();
+
+    });
+
+    $("#zip_unselect").click(function(){
+       /* remove the selected option from the zip code list */
+       $("#zip_list option:selected").remove()
+ 
+    });
 
 });
 

@@ -35,6 +35,7 @@ if (isset($_POST["action"]))
         initializeDb();
         buildEmptyArray();
         translatePostIntoArray();
+        zipPostToArray();
         displayPostData();
     } elseif ($_POST["action"] == "I")
     {
@@ -44,6 +45,8 @@ if (isset($_POST["action"]))
         buildEmptyArray();
         translatePostIntoArray();
         updateQuestionnaireData();
+        zipPostToArray();
+        zipArrayToDb();
         displayDbData();
         populateArray();
     }
@@ -55,6 +58,8 @@ if (isset($_POST["action"]))
         buildEmptyArray();
         translatePostIntoArray();
         updateQuestionnaireData();
+        zipPostToArray();
+        zipArrayToDb();
         displayDbData();
         populateArray();
     }
@@ -937,6 +942,89 @@ function buildEmailVerificationUrl()
 	return $url;
 }
 
+function zipPostToArray()
+{
+    global $zip_array;
+
+    //echo "<!-- \n";
+    //var_dump($_POST);
+    //echo "\n --> \n";
+
+
+    if (isset($_POST["zip_list"]))
+    {
+        $zip_array = $_POST["zip_list"];
+    }
+
+    //echo "<!-- \n";
+    //var_dump($zip_array);
+    //echo "\n --> \n";
+
+    
+}
+
+function zipArrayToDb()
+{
+    global $zip_array, $orgid, $dbh;
+
+
+    try
+    {
+
+        $sql = sprintf("DELETE FROM org_zip_code WHERE org_id = %u ; ", $orgid);
+
+        foreach($zip_array as $zipstr)
+        {
+            $zipnum = 0; /* initialize this in case it can't be read below */
+
+            /* ensure that the data supplied from the browser is limited to 5 numeric digits */
+            sscanf($zipstr, "%05u", $zipnum);
+
+    echo "<!-- \n";
+    var_dump($zipstr);
+    var_dump($zipnum);
+    echo "\n --> \n";
+            
+            if ($zipnum > 0) /* obviously, 00000 is not a valid zip code */
+            {
+                $sql = sprintf("%s INSERT INTO org_zip_code (org_id, zip_code) VALUES (%u, %u) ; ", $sql, $orgid, $zipnum);
+            }
+
+        }
+
+        $dbh->beginTransaction();
+
+        $stmt = $dbh->prepare($sql);
+        //$stmt->bindValue(':orgid', $orgid);
+
+        $stmt->execute();
+        
+        if ($stmt->errorCode() != "00000") 
+        {
+            $dbh->rollBack();
+            echo "Error code:<br>";
+            $erinf = $stmt->errorInfo();
+            die("Statement failed<br>Error code:" . $stmt->errorCode() . "<br>" . $erinf[2]); /* the error message in the returned error info */
+        }
+		
+        $dbh->commit();
+
+        
+    }
+    catch (PDOException $e)
+    {
+        $dbh->rollBack();
+        die("Database Connection Error: " . $e->getMessage());
+        /* TODO: much better/cleaner handling of errors */
+    }
+    catch(Exception $e)
+    {
+        die($e->getMessage());
+        /* TODO: much better/cleaner handling of errors */
+    }
+}
+
+
 ?>
 <!DOCTYPE html>
 <html lang="en" >
@@ -1060,6 +1148,21 @@ function buildEmailVerificationUrl()
         <?php if (isset($money_url_msg)) echo $money_url_msg; ?>
     </div>
 
+    <label for="zip_entry">In what zip codes do you expect to physically meet your volunteers and teammates?</label>
+    <div class="form-group row">
+        <div class="col-xs-3" >
+            <input class="form-control" type="number" id="zip_entry" maxlength="5" name="zip_entry" /></div>
+        <div class="col-xs-2" >
+            <button class="btn btn-default" id="zip_select" type="button" alt="Select a zip code" >Add</button>
+            <button class="btn btn-default" id="zip_unselect" type="button" alt="Unselect a zip code">Remove</button>
+        </div>
+        <div class="col-xs-7" >
+            <select multiple name="zip_list[]" id="zip_list" class="form-control" > <!-- Must include the brackets in the name to force browser to send an array -->
+                <option value="NULL" >&lt;No zip codes selected&gt;</option>
+            </select>
+        </div>
+    </div> <!-- form-group -->
+
 
 
     <ul class="pager">
@@ -1138,8 +1241,8 @@ function buildEmailVerificationUrl()
 
 
     <div class="form-group">
-        <label for="benefit-1">What benefits might a volunteer see from working for you: <strong>Bogus Placeholder Question</strong></label>
-		<select name="benefit-1" id="benefit-1" class="form-control">
+        <label for="benefit-1">What benefits might a volunteer see from working for you: Bogus Placeholder Question</label>
+		<select multiple name="benefit-1" id="benefit-1" class="form-control">
 			<option value="NULL">&lt;No selection&gt;</option>
 		</select>
     </div> <!-- form-group -->
@@ -1206,7 +1309,6 @@ function buildEmailVerificationUrl()
 </form>
 
 </div> <!-- Container fluid -->
-
 
 </body>
 </html>
