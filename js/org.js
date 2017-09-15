@@ -164,6 +164,7 @@ $(document).ready(function(){
     });
 
 	$("#zip_select").click(function(){
+        /* Move zip code typed in over to select list */
         /* TODO: need lots of input validation here */
         var opt = document.createElement("option");
         opt.value = $("#zip_entry").val();
@@ -179,8 +180,18 @@ $(document).ready(function(){
     });
 
     $("#zip_unselect").click(function(){
-       /* remove the selected option from the zip code list */
-       $("#zip_list option:selected").remove()
+        /* remove the selected option from the zip code list */
+        $("#zip_list option:selected").remove();
+
+        /* check to see if the select list box is empty, if so put the placeholder back in */
+        if ($("#zip_list > option").length == 0)
+        {
+            var opt = document.createElement("option");
+            opt.value = "NULL";
+            opt.text = "<No zip codes selected>";
+
+            $("#zip_list").append($(opt));
+        }
  
     });
 
