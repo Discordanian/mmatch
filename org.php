@@ -35,6 +35,7 @@ if (isset($_POST["action"]))
         initializeDb();
         buildEmptyArray();
         translatePostIntoArray();
+        zipPostToArray();
         displayPostData();
     } elseif ($_POST["action"] == "I")
     {
@@ -44,6 +45,8 @@ if (isset($_POST["action"]))
         buildEmptyArray();
         translatePostIntoArray();
         updateQuestionnaireData();
+        zipPostToArray();
+        zipArrayToDb();
         displayDbData();
         populateArray();
     }
@@ -55,6 +58,8 @@ if (isset($_POST["action"]))
         buildEmptyArray();
         translatePostIntoArray();
         updateQuestionnaireData();
+        zipPostToArray();
+        zipArrayToDb();
         displayDbData();
         populateArray();
     }
@@ -120,7 +125,7 @@ function checkCsrfToken()
 
 function validatePostData()
 {
-    global $email_msg, $orgid, $goto_page, $org_website_msg, $money_url_msg, $pwd_msg;
+    global $email_msg, $orgid, $goto_page, $org_website_msg, $money_url_msg, $pwd_msg, $org_name_msg;
     $orgid = FILTER_VAR($_REQUEST["orgid"], FILTER_VALIDATE_INT);
 
     if (!($orgid >= 0))
@@ -165,6 +170,35 @@ function validatePostData()
 		$email_msg = "A valid email address is required.";
 		$goto_page = 1;
         error_log("Email not posted. Possible parameter tampering.");
+		return false;
+	}
+
+
+    if (isset($_POST["org_name"]))
+    {
+        $org_name = $_POST["org_name"];
+        if (strlen($org_name) < 4)
+        {
+            $org_name_msg = "The organization name must have at least 4 characters.";
+            $goto_page = 2;
+            return false;
+        }
+
+        if (strlen($org_name) > 128)
+        {
+            $org_name_msg = "The organization name exceeds the maximum length of 128 characters.";
+            $goto_page = 2;
+            return false;
+        }
+
+    }
+	else
+	{
+		/* Weird situation because this data field was not even posted.
+		Should probably log it. */
+		$org_name_msg = "An organization name is required to be supplied.";
+		$goto_page = 2;
+        error_log("Org name not posted. Possible parameter tampering.");
 		return false;
 	}
 
@@ -520,6 +554,7 @@ function displayDbData()
             global $money_url;
             global $mission;
             global $action;
+            global $zip_array;
 
             $org_name = htmlspecialchars($row["org_name"]);
             $person_name = htmlspecialchars($row["person_name"]);
@@ -548,6 +583,28 @@ function displayDbData()
             /* TODO: much better/cleaner handling of errors */
         }
         $stmt->closeCursor();
+
+
+        /* now get the zip codes from the database and put into an array */
+
+        $stmt = $dbh->prepare("SELECT zip_code FROM org_zip_code WHERE org_id = :orgid ;");
+        $stmt->bindValue(':orgid', $orgid);
+
+        $stmt->execute();
+
+        if ($stmt->errorCode() != "00000") 
+        {
+            echo "Error code:<br>";
+            $erinf = $stmt->errorInfo();
+            die("Insert failed<br>Error code:" . $stmt->errorCode() . "<br>" . $erinf[2]); /* the error message in the returned error info */
+        }
+		
+
+        $zip_array = $stmt->fetchAll(PDO::FETCH_COLUMN, 0);
+        
+        $stmt->closeCursor();
+
+        
     }
     catch (PDOException $e)
     {
@@ -742,9 +799,6 @@ function translatePostIntoArray()
 {
 
     global $qu_aire, $orgid;
-    //echo "<!-- ";
-    //var_dump($orgid);
-    //echo " -->\n";
 
     foreach($qu_aire as $page_num => $page)
     {
@@ -937,6 +991,82 @@ function buildEmailVerificationUrl()
 	return $url;
 }
 
+function zipPostToArray()
+{
+    global $zip_array;
+
+
+    if (array_key_exists("zip_list", $_POST))
+    {
+        $zip_array = $_POST["zip_list"];
+    }
+    else
+    {
+        $zip_array = array();
+    }
+
+
+
+    
+}
+
+function zipArrayToDb()
+{
+    global $zip_array, $orgid, $dbh;
+
+
+    try
+    {
+
+        $sql = sprintf("DELETE FROM org_zip_code WHERE org_id = %u ; ", $orgid);
+
+        foreach($zip_array as $zipstr)
+        {
+            $zipnum = 0; /* initialize this in case it can't be read below */
+
+            /* ensure that the data supplied from the browser is limited to 5 numeric digits */
+            sscanf($zipstr, "%05u", $zipnum);
+
+            
+            if ($zipnum > 0) /* obviously, 00000 is not a valid zip code */
+            {
+                $sql = sprintf("%s INSERT INTO org_zip_code (org_id, zip_code) VALUES (%u, %u) ; ", $sql, $orgid, $zipnum);
+            }
+
+        }
+
+        $dbh->beginTransaction();
+
+        $stmt = $dbh->prepare($sql);
+
+        $stmt->execute();
+        
+        if ($stmt->errorCode() != "00000") 
+        {
+            $dbh->rollBack();
+            echo "Error code:<br>";
+            $erinf = $stmt->errorInfo();
+            die("Statement failed<br>Error code:" . $stmt->errorCode() . "<br>" . $erinf[2]); /* the error message in the returned error info */
+        }
+		
+        $dbh->commit();
+
+        
+    }
+    catch (PDOException $e)
+    {
+        $dbh->rollBack();
+        die("Database Connection Error: " . $e->getMessage());
+        /* TODO: much better/cleaner handling of errors */
+    }
+    catch(Exception $e)
+    {
+        die($e->getMessage());
+        /* TODO: much better/cleaner handling of errors */
+    }
+}
+
+
 ?>
 <!DOCTYPE html>
 <html lang="en" >
@@ -1033,8 +1163,8 @@ function buildEmailVerificationUrl()
         <input class="form-control" type="text" id="org_name" maxlength="128" name="org_name" value="<?php echo $org_name ?>" />
     </div> <!-- form-group -->
 
-    <div class="alert alert-danger" hidden="true" id="org_name_msg" >
-        The name must contain at least 4 characters.
+    <div class="alert alert-danger" <?php if (!isset($org_name_msg)) echo "hidden='true'"; ?> id="org_name_msg" >
+        <?php if (isset($org_name_msg)) echo $org_name_msg; ?>
     </div>
 
     <div class="form-group">
@@ -1059,6 +1189,33 @@ function buildEmailVerificationUrl()
     <div class="alert alert-danger" <?php if (!isset($money_url_msg)) echo "hidden='true'"; ?> id="money_url_msg" >
         <?php if (isset($money_url_msg)) echo $money_url_msg; ?>
     </div>
+
+    <label for="zip_entry">In what zip codes do you expect to physically meet your volunteers and teammates?</label>
+    <div class="form-group row">
+        <div class="col-xs-3" >
+            <input class="form-control" type="number" id="zip_entry" maxlength="5" name="zip_entry" /></div>
+        <div class="col-xs-2" >
+            <button class="btn btn-default" id="zip_select" type="button" alt="Select a zip code" >Add</button>
+            <button class="btn btn-default" id="zip_unselect" type="button" alt="Unselect a zip code">Remove</button>
+        </div>
+        <div class="col-xs-7" >
+            <select multiple name="zip_list[]" id="zip_list" class="form-control" > <!-- Must include the brackets in the name to force browser to send an array -->
+<?php
+                    if (count($zip_array) > 0)
+                    {
+                        foreach($zip_array as $zipnum)
+                        {
+                            printf("\t\t\t\t<option value='%05u' >%05u</option>\n", $zipnum, $zipnum);
+                        }
+                    }
+                    else
+                    {
+                        echo "\t\t\t\t<option value='NULL' >&lt;No zip codes selected&gt;</option>\n";
+                    }
+?>
+            </select>
+        </div>
+    </div> <!-- form-group -->
 
 
 
@@ -1138,8 +1295,8 @@ function buildEmailVerificationUrl()
 
 
     <div class="form-group">
-        <label for="benefit-1">What benefits might a volunteer see from working for you: <strong>Bogus Placeholder Question</strong></label>
-		<select name="benefit-1" id="benefit-1" class="form-control">
+        <label for="benefit-1">What benefits might a volunteer see from working for you: Bogus Placeholder Question</label>
+		<select multiple name="benefit-1" id="benefit-1" class="form-control">
 			<option value="NULL">&lt;No selection&gt;</option>
 		</select>
     </div> <!-- form-group -->
@@ -1206,7 +1363,6 @@ function buildEmailVerificationUrl()
 </form>
 
 </div> <!-- Container fluid -->
-
 
 </body>
 </html>
