@@ -259,7 +259,7 @@ function redirectToPage()
         <?php if (isset($auth_fail_msg)) echo $auth_fail_msg; ?>
     </div>
 
-    <button type="submit" class="btn btn-default" id="submit">Submit</button>
+    <button type="submit" class="btn btn-default btn-lg" id="submit">Submit</button>
 
 
 </form>

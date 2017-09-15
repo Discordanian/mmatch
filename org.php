@@ -1142,9 +1142,6 @@ function zipArrayToDb()
   </div> <!-- panel-heading -->
 
 <div id="intro1" class="panel-collapse collapse <?php if ($goto_page == -2) echo "in"; ?> "  >
-    <!-- <center>
-        <h3 id="header">Tell us a bit about yourself first</h3>
-    </center> -->
 
 <div class="panel-body">
 
@@ -1282,13 +1279,12 @@ function zipArrayToDb()
 
 
 <?php
-    arrayToHtml(1);
-    arrayToHtml(2);
-    arrayToHtml(3);
-    arrayToHtml(4);
-
+    for ($i = 1; $i < 4; $i++)
+    { 
+        arrayToHtml($i);
+    }
 ?>
-        <button id="save_data" type="button" class="btn btn-primary btn-lg">Save data</button>
+        <button id="save_data" type="button" class="btn btn-default btn-lg">Save data</button>
 
 	<?php if (isset($success_msg))
 	{
