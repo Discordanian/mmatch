@@ -17,7 +17,7 @@ and probably a bunch of other attacks
 Needs serious security review */
 
 session_start();
-$goto_page = 1;
+$goto_page = -2;
 //echo "<!-- ";
 //var_dump($_SESSION);
 //echo " -->\n";
@@ -145,21 +145,21 @@ function validatePostData()
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) 
         {
             $email_msg = "The email address does not appear to follow the proper form.";
-			$goto_page = 1;
+			$goto_page = -2;
             return false;
         }
 
         if (strlen($email) > 128)
         {
             $email_msg = "Email address should not exceed 128 characters in length.";
-			$goto_page = 1;
+			$goto_page = -2;
             return false;
         }
 
         if (strlen($email) < 1) 
         {
             $email_msg = "A valid email address is required.";
-			$goto_page = 1;
+			$goto_page = -2;
             return false;
         }
     }
@@ -168,7 +168,7 @@ function validatePostData()
 		/* Weird situation because this data field was not even posted.
 		Should probably log it. */
 		$email_msg = "A valid email address is required.";
-		$goto_page = 1;
+		$goto_page = -2;
         error_log("Email not posted. Possible parameter tampering.");
 		return false;
 	}
@@ -180,14 +180,14 @@ function validatePostData()
         if (strlen($org_name) < 4)
         {
             $org_name_msg = "The organization name must have at least 4 characters.";
-            $goto_page = 2;
+            $goto_page = -1;
             return false;
         }
 
         if (strlen($org_name) > 128)
         {
             $org_name_msg = "The organization name exceeds the maximum length of 128 characters.";
-            $goto_page = 2;
+            $goto_page = -1;
             return false;
         }
 
@@ -197,7 +197,7 @@ function validatePostData()
 		/* Weird situation because this data field was not even posted.
 		Should probably log it. */
 		$org_name_msg = "An organization name is required to be supplied.";
-		$goto_page = 2;
+		$goto_page = -1;
         error_log("Org name not posted. Possible parameter tampering.");
 		return false;
 	}
@@ -207,14 +207,14 @@ function validatePostData()
 		if ($_POST["password1"] != $_POST["password2"])
 		{
 			$pwd_msg = "Passwords must match.";
-			$goto_page = 1;
+			$goto_page = -2;
 			return false;
 		}
 		
 		if (strlen($_POST["password1"]) > 128)
 		{
 			$pwd_msg = "Password exceeds the maximum length of 128 characters.";
-			$goto_page = 1;
+			$goto_page = -2;
 			return false;
 		}
 	}
@@ -223,7 +223,7 @@ function validatePostData()
 		/* Weird situation because this data field was not even posted.
 		Should probably log it. */
 		$pwd_msg = "Passwords must match.";
-		$goto_page = 1;
+		$goto_page = -2;
         error_log("Password not posted. Possible parameter tampering.");
 		return false;
 	}
@@ -235,7 +235,7 @@ function validatePostData()
         if (($_POST["action"] == "I") && strlen($_POST["password1"]) < 1)
         {
             $pwd_msg = "Password is required in order to continue.";
-            $goto_page = 1;
+            $goto_page = -2;
             return false;
         }
     }
@@ -261,7 +261,7 @@ function validatePostData()
 			if (!filter_var($org_website, FILTER_VALIDATE_URL))
 			{
 				$org_website_msg = "The website URL does not follow the proper pattern for a valid URL.";
-				$goto_page = 2;
+				$goto_page = -1;
 				//echo "<!-- URL failed validation -->\n"; 
 				return false;
 			}
@@ -269,7 +269,7 @@ function validatePostData()
 			if (strlen($org_website) > 255)
 			{
 				$org_website_msg = "Web site address should not exceed 255 characters in length.";
-				$goto_page = 2;
+				$goto_page = -1;
 				return false;
 			}
 		}
@@ -279,7 +279,7 @@ function validatePostData()
 		/* Weird situation because this data field was not even posted.
 		Should probably log it. */
 		$org_website_msg = "An unknown error occurred. Please try again.";
-		$goto_page = 2;
+		$goto_page = -1;
         error_log("Website not posted. Possible parameter tampering.");
 		return false;
 	}
@@ -294,7 +294,7 @@ function validatePostData()
 			if (!filter_var($money_url, FILTER_VALIDATE_URL))
 			{
 				$money_url_msg = "The website URL does not follow the proper pattern for a valid URL.";
-				$goto_page = 2;
+				$goto_page = -1;
 				//echo "<!-- failed validation -->\n"; 
 				return false;
 			}
@@ -302,7 +302,7 @@ function validatePostData()
 			if (strlen($money_url) > 255)
 			{
 				$money_url_msg = "Web site address should not exceed 255 characters in length.";
-				$goto_page = 2;
+				$goto_page = -1;
 				return false;
 			}
 		}
@@ -312,7 +312,7 @@ function validatePostData()
 		/* Weird situation because this data field was not even posted.
 		Should probably log it. */
 		$money_url_msg = "An unknown error occurred. Please try again.";
-		$goto_page = 2;
+		$goto_page = -1;
         error_log("Donations URL not posted. Possible parameter tampering.");
 		return false;
 	}
@@ -411,7 +411,7 @@ function performUpdate()
 		{
 			global $success_msg;
 			$success_msg = "Record successfully updated.";
-			$goto_page = 8;
+			$goto_page = 0;
 		}
 		
         $stmt->closeCursor();
@@ -472,7 +472,7 @@ function performInsert()
 		else
 		{
 			$success_msg = "Record successfully inserted. An email has been sent to validate the email.";
-			$goto_page = 8;
+			$goto_page = 0;
 		}
 		
         /* change the action to update, now that the record was successfully inserted */
@@ -664,7 +664,7 @@ function buildEmptyArray()
         global $dbh, $qu_aire;
 
 
-        $stmt = $dbh->prepare("SELECT gg.page_num, qq.question_id, qq.question_text, " .
+        $stmt = $dbh->prepare("SELECT gg.page_num, gg.group_text, qq.question_id, qq.question_text, " .
         " qq.org_multi_select, qc.choice_id, qc.choice_text, NULL AS org_id " .
         " FROM question_group gg INNER JOIN question qq " .
         " ON gg.group_id = qq.question_group_id " .
@@ -709,7 +709,7 @@ function populateArray()
         global $dbh, $orgid, $qu_aire;
 
 
-        $stmt = $dbh->prepare("SELECT gg.page_num, qq.question_id, qq.question_text, " .
+        $stmt = $dbh->prepare("SELECT gg.page_num, gg.group_text, qq.question_id, qq.question_text, " .
         " qq.org_multi_select, qc.choice_id, qc.choice_text, res.org_id " .
         " FROM question_group gg INNER JOIN question qq " .
         " ON gg.group_id = qq.question_group_id " .
@@ -751,10 +751,38 @@ function populateArray()
 
 function arrayToHtml($pagenum)
 {
-    global $qu_aire;
+    global $qu_aire, $goto_page;
+
+    //echo "<!-- \n";
+    //var_dump($row);
+    //printf("<!-- QuestionID %d ChoiceID %d Selection %d -->\n", $choice["question_id"], $choice["choice_id"], $choice["org_id"]);
+    //echo "--> \n";
 
     $page = $qu_aire[$pagenum];
 
+
+    $row = current(current($page)); /* get the first choice from the first question, use that to pull the group text */
+    $group_text = htmlspecialchars($row["group_text"]);
+    echo "<div class='panel-group'>\n";
+    echo "<div class='panel panel-default'>\n";
+    echo "<div class='panel-heading'>\n";
+    echo "<h4 class='panel-title'>\n";
+    printf("<a data-toggle='collapse' href='#page%u'><span class='glyphicon glyphicon-plus'></span> %s </a>", $pagenum, $group_text);
+
+    echo "</h4>\n";
+    echo "</div> <!-- panel-heading -->\n";
+
+    if ($goto_page == $pagenum)
+    {
+        $in = "in ";
+    }
+    else
+    {
+        $in = "";
+    }
+
+    printf("<div id='page%u' class='panel-collapse collapse %s' >\n", $pagenum, $in);
+    echo "<div class='panel-body'>\n";
 
     foreach($page as $question_id => $question)
     {
@@ -766,13 +794,13 @@ function arrayToHtml($pagenum)
 
         if ($row["org_multi_select"])
         {
-            $multi = sprintf(" multiple name='question-%d[]'", $question_id); /* add the brackets which force the browser to send an array */
+            $multi = sprintf(" multiple name='question-%u[]'", $question_id); /* add the brackets which force the browser to send an array */
         }
         else
         {
             $multi = sprintf(" name='question-%d'", $question_id);
         }
-        printf("\t<select $multi id='question-%u' class='form-control' >\n", $question_id);
+        printf("\t<select %s id='question-%u' class='form-control' >\n", $multi, $question_id);
         /* Must include the "<no selection>" value because otherwise user has no way to remove a previously selected option */
         echo "\t\t<option value='NULL'>&lt;No selection&gt;</option>\n";
         foreach($question as $choice_id => $choice)
@@ -793,6 +821,12 @@ function arrayToHtml($pagenum)
     }
     
     echo "\n"; /* this may be stupid but the tabs and LFs are for visually readable HTML source. Invisible Aesthetics FTW! */
+
+    echo "</div> <!-- panel-body -->\n";
+    echo "</div> <!-- page -->\n";
+    echo "</div> <!-- panel-default -->\n";
+    echo "</div> <!-- panel-group -->\n\n";
+
 }
 
 function translatePostIntoArray()
@@ -1099,10 +1133,20 @@ function zipArrayToDb()
 <input type="hidden" id="action" name="action" value="<?php echo $action ?>" />
 <input type="hidden" id="orgid" name="orgid" value="<?php echo $orgid ?>" />
 
-<div id="page1" <?php if ($goto_page != 1) echo "hidden='true'"; ?> >
-    <center>
+<div class="panel-group">
+ <div class="panel panel-default">
+  <div class="panel-heading">
+   <h4 class="panel-title">
+    <a data-toggle="collapse" href="#intro1"><span class="glyphicon glyphicon-plus"></span> Tell us a bit about yourself</a>
+   </h4>
+  </div> <!-- panel-heading -->
+
+<div id="intro1" class="panel-collapse collapse <?php if ($goto_page == -2) echo "in"; ?> "  >
+    <!-- <center>
         <h3 id="header">Tell us a bit about yourself first</h3>
-    </center>
+    </center> -->
+
+<div class="panel-body">
 
     <div class="form-group">
         <label for="person_name">Name:</label>
@@ -1148,15 +1192,24 @@ function zipArrayToDb()
         <?php if (isset($pwd_msg)) echo $pwd_msg; ?>
     </div>
 	
-    <ul class="pager">
-        <!-- <li><a href="#" id="" >Save data</a></li> -->
-        <li><a href="#" id="p1_goto_p2" >Next</a></li>
-    </ul> 
 
-</div> <!-- page 1 -->
+</div> <!-- panel-body -->
+</div> <!-- page -->
+</div> <!-- panel-default -->
+</div> <!-- panel-group -->
 
-<div id="page2" <?php if ($goto_page != 2) echo "hidden='true'"; ?> >
-    <center><h3 id="header">Tell us identifying information about the organization</h3></center>
+
+<div class="panel-group">
+ <div class="panel panel-default">
+  <div class="panel-heading">
+   <h4 class="panel-title">
+    <a data-toggle="collapse" href="#intro2"><span class="glyphicon glyphicon-plus"></span> Tell us identifying information about the organization</a>
+   </h4>
+  </div> <!-- panel-heading -->
+
+<div id="intro2" class="panel-collapse collapse <?php if ($goto_page == -1) echo "in"; ?> "  >
+<!--    <center><h3 id="header">Tell us identifying information about the organization</h3></center> -->
+<div class="panel-body">
 
     <div class="form-group">
         <label for="org_name">Organization Name:</label>
@@ -1219,136 +1272,23 @@ function zipArrayToDb()
 
 
 
-    <ul class="pager">
-        <li><a href="#" id="p2_goto_p1" >Previous</a></li>
-        <li><a href="#" id="p2_goto_p3" >Next</a></li>
-    </ul> 
 
-</div> <!-- page 2 -->
+</div> <!-- panel-body -->
+</div> <!-- page -->
+</div> <!-- panel-default -->
+</div> <!-- panel-group -->
 
-<div id="page3" <?php if ($goto_page != 3) echo "hidden='true'"; ?> >
-    <center><h3 id="header">Tell us about the issues you are working on</h3></center>
+
+
 
 <?php
     arrayToHtml(1);
-?>
-
-	<ul class="pager">
-        <li><a href="#" id="p3_goto_p2" >Previous</a></li>
-        <li><a href="#" id="p3_goto_p4" >Next</a></li>
-    </ul> 
-
-
-</div> <!-- Page 3 -->
-
-<div id="page4" <?php if ($goto_page != 4) echo "hidden='true'"; ?> >
-    <center><h3 id="header">Tell us about the type of organization this is</h3></center>
-
-
-<?php
     arrayToHtml(2);
-?>
-	
-	
-    <ul class="pager">
-        <li><a href="#" id="p4_goto_p3" >Previous</a></li>
-        <li><a href="#" id="p4_goto_p5" >Next</a></li>
-    </ul> 
-
-
-</div> <!-- Page 4 -->
-
-<div id="page5" <?php if ($goto_page != 5) echo "hidden='true'"; ?> >
-    <center><h3 id="header">Tell us about the types of people you are looking for</h3></center>
-
-
-<?php
     arrayToHtml(3);
-?>
-	
-    <ul class="pager">
-        <li><a href="#" id="p5_goto_p4" >Previous</a></li>
-        <li><a href="#" id="p5_goto_p6" >Next</a></li>
-    </ul> 
-
-
-</div> <!-- Page 5 -->
-
-<div id="page6" <?php if ($goto_page != 6) echo "hidden='true'"; ?> >
-    <center><h3 id="header">Tell us about the skills you need</h3></center>
-
-
-<?php
     arrayToHtml(4);
+
 ?>
-
-    <ul class="pager">
-        <li><a href="#" id="p6_goto_p5" >Previous</a></li>
-        <li><a href="#" id="p6_goto_p7" >Next</a></li>
-    </ul> 
-
-
-</div> <!-- Page 6 -->
-
-<div id="page7" <?php if ($goto_page != 7) echo "hidden='true'"; ?> >
-    <center><h3 id="header">Tell us about the benefits you may offer</h3></center>
-
-
-    <div class="form-group">
-        <label for="benefit-1">What benefits might a volunteer see from working for you: Bogus Placeholder Question</label>
-		<select multiple name="benefit-1" id="benefit-1" class="form-control">
-			<option value="NULL">&lt;No selection&gt;</option>
-		</select>
-    </div> <!-- form-group -->
-
-	
-    <ul class="pager">
-        <li><a href="#" id="p7_goto_p6" >Previous</a></li>
-        <li><a href="#" id="p7_goto_p8" >Next</a></li>
-    </ul> 
-
-
-</div> <!-- Page 7 -->
-
-<div id="page8" <?php if ($goto_page != 8) echo "hidden='true'"; ?> >
-    <center><h3 id="header">Summary</h3></center>
-
-    <div class="row">
-        <div class="col-md-3" ><strong>Representative Name:</strong></div>
-        <div class="col-md-9" id="person_name_summary"><?php echo $person_name; ?></div>
-    </div> 
-
-    <div class="row">
-        <div class="col-md-3" ><strong>Email Address</strong></div>
-        <div class="col-md-9" id="email_summary"><?php echo $email; ?></div>
-    </div> 
-
-    <div class="row">
-        <div class="col-md-3" ><strong>Organization Name:</strong></div>
-        <div class="col-md-9" id="org_name_summary"><?php echo $org_name; ?></div>
-    </div> 
-
-
-    <div class="row">
-        <div class="col-md-3" ><strong>Organization Website:</strong></div>
-        <div class="col-md-9" id="org_website_summary"><?php echo $org_website; ?></div>
-    </div> 
-
-
-    <div class="row">
-        <div class="col-md-3" ><strong>Donations URL:</strong></div>
-        <div class="col-md-9" id="money_url_summary"><?php echo $money_url; ?></div>
-    </div> 
-
-    <div class="row">
-        <div class="col-md-3" ><strong>Organizational Mission:</strong></div>
-        <div class="col-md-9" id="mission_summary"><?php echo $mission; ?></div>
-    </div> 
-
-    <ul class="pager">
-        <li><a href="#" id="p8_goto_p7" >Previous</a></li>
-        <li><a id="save_data" href="#">Save data</a></li>
-    </ul> 
+        <button id="save_data" type="button" class="btn btn-primary btn-lg">Save data</button>
 
 	<?php if (isset($success_msg))
 	{
@@ -1358,7 +1298,6 @@ function zipArrayToDb()
 	}
 	?>
 	
-</div> <!-- Page 8 -->
 
 </form>
 

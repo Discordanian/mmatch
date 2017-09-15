@@ -137,7 +137,7 @@ $(document).ready(function(){
 	});
 
 
-    $("a#save_data").click(function(){
+    $("#save_data").click(function(){
 
         /* make sure that all zip codes in the zip select box are selected
             so that they get submitted with the POST */
