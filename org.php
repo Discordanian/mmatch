@@ -402,9 +402,6 @@ function performUpdate()
             FILTER_FLAG_STRIP_LOW + FILTER_FLAG_STRIP_HIGH + FILTER_FLAG_STRIP_BACKTICK), PDO::PARAM_STR);
 
         /* have to check for this because browser does not send it if unchecked */
-        /* also using the data type of INT here even though the DB type is BIT */
-        /* there seems to be some issue handling the PDO data type of BOOL */
-        /* PDO translates it correctly to the db when it is bound as an INT here */
         if (array_key_exists("active_ind", $_POST))
         {
             $stmt->bindValue(':active_ind', ($_POST["active_ind"] == "on" ? 1 : 0), PDO::PARAM_INT);
@@ -630,8 +627,7 @@ function displayDbData()
             $customer_notice = htmlspecialchars($row["customer_notice"]);
             $customer_contact = htmlspecialchars($row["customer_contact"]);
             $admin_contact = htmlspecialchars($row["admin_contact"]);
-            /* for some reason, the bit indicator is coming across as a string, so use ord() to convert it a number */
-            $active_ind = (ord($row["active_ind"]) == 1 ? "checked" : " ");
+            $active_ind = ($row["active_ind"] == 1 ? "checked" : " ");
             $action = "U";
             buildCsrfToken();
         }
