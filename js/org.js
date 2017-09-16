@@ -42,17 +42,29 @@ function select_zip()
 {
     /* Move zip code typed in over to select list */
     /* TODO: need lots of input validation here */
-    var opt = document.createElement("option");
-    opt.value = $("#zip_entry").val();
-    opt.text = $("#zip_entry").val();
+    var pattern = /\d{5}/;
 
-    $("#zip_list").append($(opt));
+    if (pattern.test($("#zip_entry").val()))
+    {    
+        var opt = document.createElement("option");
+        /* trim to 5 digits in case more were entered */
+        var zip = $("#zip_entry").val().substring(0,5);
+        opt.value = zip;
+        opt.text = zip;
+
+        /* now check for duplicates */
+
+        if ($("#zip_list > option[value='" + zip + "']").length == 0)
+        {
+            $("#zip_list").append($(opt));
+
+            $("#zip_list option[value='NULL']").remove();
+        }
+    }
+
 
     /* clear the value out of the field */
     $("#zip_entry").val("");
-
-    $("#zip_list option[value='NULL']").remove();
-
 }
 
 function remove_zip()
