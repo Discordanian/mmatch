@@ -87,6 +87,12 @@ else
     $money_url = "";
     $mission = "";
     $action = "I"; /* Insert */
+    $abbreviated_name = "";
+    $active_ind = "checked";
+    $admin_contact = "";
+    $customer_contact = "";
+    $customer_notice = "";
+
     initializeDb();
     buildEmptyArray();
     buildCsrfToken();
@@ -363,7 +369,9 @@ function performUpdate()
             header("Location: login.php?errmsg");
         }
 
-        $stmt = $dbh->prepare("UPDATE org SET org_name = :org_name, person_name = :person_name, org_website = :org_website, money_url = :money_url, mission = :mission WHERE orgid = :orgid; " .
+        $stmt = $dbh->prepare("UPDATE org SET org_name = :org_name, person_name = :person_name, org_website = :org_website, money_url = :money_url, " .
+            " mission = :mission, active_ind = :active_ind, abbreviated_name = :abbreviated_name, customer_notice = :customer_notice, " .
+            " customer_contact = :customer_contact, admin_contact = :admin_contact WHERE orgid = :orgid; " .
             "UPDATE org SET pwhash = :pwhash WHERE orgid = :orgid AND :pwhash IS NOT NULL; " .
             "UPDATE org SET email_unverified = :email WHERE orgid = :orgid AND email_verified IS NOT NULL AND email_verified != :email; " . 
             "UPDATE org SET email_unverified = :email WHERE orgid = :orgid AND email_verified IS NULL AND email_unverified != :email; " );
@@ -373,17 +381,39 @@ function performUpdate()
             /* OR if email is changed, and it was not previously verified, then changed it and keep it unverified */
             /* should this query be moved to a stored procedure? */
         $stmt->bindValue(':org_name', filter_var($_POST["org_name"], FILTER_SANITIZE_STRING, FILTER_FLAG_NO_ENCODE_QUOTES + 
-            FILTER_FLAG_STRIP_LOW + FILTER_FLAG_STRIP_HIGH + FILTER_FLAG_STRIP_BACKTICK));
+            FILTER_FLAG_STRIP_LOW + FILTER_FLAG_STRIP_HIGH + FILTER_FLAG_STRIP_BACKTICK), PDO::PARAM_STR);
         $stmt->bindValue(':person_name', filter_var($_POST["person_name"], FILTER_SANITIZE_STRING, FILTER_FLAG_NO_ENCODE_QUOTES + 
-            FILTER_FLAG_STRIP_LOW + FILTER_FLAG_STRIP_HIGH + FILTER_FLAG_STRIP_BACKTICK));
-        $stmt->bindValue(':email', filter_var(strtolower($_POST["email"]), FILTER_SANITIZE_EMAIL));
-        $stmt->bindValue(':org_website', filter_var($_POST["org_website"], FILTER_SANITIZE_URL));
-        $stmt->bindValue(':money_url', filter_var($_POST["money_url"], FILTER_SANITIZE_URL));
+            FILTER_FLAG_STRIP_LOW + FILTER_FLAG_STRIP_HIGH + FILTER_FLAG_STRIP_BACKTICK), PDO::PARAM_STR);
+        $stmt->bindValue(':email', filter_var(strtolower($_POST["email"]), FILTER_SANITIZE_EMAIL), PDO::PARAM_STR);
+        $stmt->bindValue(':org_website', filter_var($_POST["org_website"], FILTER_SANITIZE_URL), PDO::PARAM_STR);
+        $stmt->bindValue(':money_url', filter_var($_POST["money_url"], FILTER_SANITIZE_URL), PDO::PARAM_STR);
             /* TODO: SANITIZE_URL lets some interesting things through. May not be a threat, but worth investigation */
-        $stmt->bindValue(':orgid', $orgid);
+        $stmt->bindValue(':orgid', $orgid, PDO::PARAM_INT);
         $stmt->bindValue(':mission', filter_var($_POST["mission"], FILTER_SANITIZE_STRING, FILTER_FLAG_NO_ENCODE_QUOTES + 
-            FILTER_FLAG_STRIP_LOW + FILTER_FLAG_STRIP_HIGH + FILTER_FLAG_STRIP_BACKTICK));
+            FILTER_FLAG_STRIP_LOW + FILTER_FLAG_STRIP_HIGH + FILTER_FLAG_STRIP_BACKTICK), PDO::PARAM_STR);
 
+        $stmt->bindValue(':abbreviated_name', filter_var($_POST["abbreviated_name"], FILTER_SANITIZE_STRING, FILTER_FLAG_NO_ENCODE_QUOTES + 
+            FILTER_FLAG_STRIP_LOW + FILTER_FLAG_STRIP_HIGH + FILTER_FLAG_STRIP_BACKTICK), PDO::PARAM_STR);
+        $stmt->bindValue(':customer_contact', filter_var($_POST["customer_contact"], FILTER_SANITIZE_STRING, FILTER_FLAG_NO_ENCODE_QUOTES + 
+            FILTER_FLAG_STRIP_LOW + FILTER_FLAG_STRIP_HIGH + FILTER_FLAG_STRIP_BACKTICK), PDO::PARAM_STR);
+        $stmt->bindValue(':admin_contact', filter_var($_POST["admin_contact"], FILTER_SANITIZE_STRING, FILTER_FLAG_NO_ENCODE_QUOTES + 
+            FILTER_FLAG_STRIP_LOW + FILTER_FLAG_STRIP_HIGH + FILTER_FLAG_STRIP_BACKTICK), PDO::PARAM_STR);
+        $stmt->bindValue(':customer_notice', filter_var($_POST["customer_notice"], FILTER_SANITIZE_STRING, FILTER_FLAG_NO_ENCODE_QUOTES + 
+            FILTER_FLAG_STRIP_LOW + FILTER_FLAG_STRIP_HIGH + FILTER_FLAG_STRIP_BACKTICK), PDO::PARAM_STR);
+
+        /* have to check for this because browser does not send it if unchecked */
+        /* also using the data type of INT here even though the DB type is BIT */
+        /* there seems to be some issue handling the PDO data type of BOOL */
+        /* PDO translates it correctly to the db when it is bound as an INT here */
+        if (array_key_exists("active_ind", $_POST))
+        {
+            $stmt->bindValue(':active_ind', ($_POST["active_ind"] == "on" ? 1 : 0), PDO::PARAM_INT);
+        }
+        else
+        {
+            $stmt->bindValue(':active_ind', 0, PDO::PARAM_INT);
+        }
+ 
         /* udpate password if a new one specified */
         if (strlen($_POST["password1"]) > 0)
         {
@@ -394,7 +424,7 @@ function performUpdate()
             $pwhash = null;
         }
 
-        $stmt->bindValue(':pwhash', $pwhash);
+        $stmt->bindValue(':pwhash', $pwhash, PDO::PARAM_STR);
 		
 		//echo "<!-- ";
 		//$stmt->debugDumpParams();
@@ -444,22 +474,41 @@ function performInsert()
 
         /* this is a new record, so do the insert */
         global $dbh, $orgid, $goto_page, $action, $success_msg, $email_unverified;
-        $stmt = $dbh->prepare("INSERT INTO org (org_name, person_name, email_unverified, pwhash, org_website, money_url, mission)" 
-            . " VALUES (:org_name, :person_name, :email, :pwhash, :org_website, :money_url, :mission);");
+        $stmt = $dbh->prepare("INSERT INTO org (org_name, person_name, email_unverified, pwhash, org_website, "
+            . " money_url, mission, abbreviated_name, customer_notice, customer_contact, admin_contact, active_ind) " 
+            . " VALUES (:org_name, :person_name, :email, :pwhash, :org_website, :money_url, :mission, "
+            . " :abbreviated_name, :customer_notice, :customer_contact, :admin_contact, :active_ind);");
 
         $stmt->bindValue(':org_name', filter_var($_POST["org_name"], FILTER_SANITIZE_STRING, FILTER_FLAG_NO_ENCODE_QUOTES + 
-            FILTER_FLAG_STRIP_LOW + FILTER_FLAG_STRIP_HIGH + FILTER_FLAG_STRIP_BACKTICK));
+            FILTER_FLAG_STRIP_LOW + FILTER_FLAG_STRIP_HIGH + FILTER_FLAG_STRIP_BACKTICK), PDO::PARAM_STR);
         $stmt->bindValue(':person_name', filter_var($_POST["person_name"], FILTER_SANITIZE_STRING, FILTER_FLAG_NO_ENCODE_QUOTES + 
-            FILTER_FLAG_STRIP_LOW + FILTER_FLAG_STRIP_HIGH + FILTER_FLAG_STRIP_BACKTICK));
-        $email_unverified = filter_var(strtolower($_POST["email"]), FILTER_SANITIZE_EMAIL);
-        $stmt->bindValue(':email', $email_unverified);
-        $stmt->bindValue(':org_website', filter_var($_POST["org_website"], FILTER_SANITIZE_URL));
-        $stmt->bindValue(':money_url', filter_var($_POST["money_url"], FILTER_SANITIZE_URL));
+            FILTER_FLAG_STRIP_LOW + FILTER_FLAG_STRIP_HIGH + FILTER_FLAG_STRIP_BACKTICK), PDO::PARAM_STR);
+        $email_unverified = filter_var(strtolower($_POST["email"]), FILTER_SANITIZE_EMAIL, PDO::PARAM_STR);
+        $stmt->bindValue(':email', $email_unverified, PDO::PARAM_STR);
+        $stmt->bindValue(':org_website', filter_var($_POST["org_website"], FILTER_SANITIZE_URL), PDO::PARAM_STR);
+        $stmt->bindValue(':money_url', filter_var($_POST["money_url"], FILTER_SANITIZE_URL), PDO::PARAM_STR);
         $pwhash = password_hash($_POST["password1"], PASSWORD_BCRYPT);
-        $stmt->bindValue(':pwhash', $pwhash);
+        $stmt->bindValue(':pwhash', $pwhash, PDO::PARAM_STR);
         $stmt->bindValue(':mission', filter_var($_POST["mission"], FILTER_SANITIZE_STRING, FILTER_FLAG_NO_ENCODE_QUOTES + 
-            FILTER_FLAG_STRIP_LOW + FILTER_FLAG_STRIP_HIGH + FILTER_FLAG_STRIP_BACKTICK));
-        //$stmt->debugDumpParams();
+            FILTER_FLAG_STRIP_LOW + FILTER_FLAG_STRIP_HIGH + FILTER_FLAG_STRIP_BACKTICK), PDO::PARAM_STR);
+
+        $stmt->bindValue(':abbreviated_name', filter_var($_POST["abbreviated_name"], FILTER_SANITIZE_STRING, FILTER_FLAG_NO_ENCODE_QUOTES + 
+            FILTER_FLAG_STRIP_LOW + FILTER_FLAG_STRIP_HIGH + FILTER_FLAG_STRIP_BACKTICK), PDO::PARAM_STR);
+        $stmt->bindValue(':customer_contact', filter_var($_POST["customer_contact"], FILTER_SANITIZE_STRING, FILTER_FLAG_NO_ENCODE_QUOTES + 
+            FILTER_FLAG_STRIP_LOW + FILTER_FLAG_STRIP_HIGH + FILTER_FLAG_STRIP_BACKTICK), PDO::PARAM_STR);
+        $stmt->bindValue(':admin_contact', filter_var($_POST["admin_contact"], FILTER_SANITIZE_STRING, FILTER_FLAG_NO_ENCODE_QUOTES + 
+            FILTER_FLAG_STRIP_LOW + FILTER_FLAG_STRIP_HIGH + FILTER_FLAG_STRIP_BACKTICK), PDO::PARAM_STR);
+        $stmt->bindValue(':customer_notice', filter_var($_POST["customer_notice"], FILTER_SANITIZE_STRING, FILTER_FLAG_NO_ENCODE_QUOTES + 
+            FILTER_FLAG_STRIP_LOW + FILTER_FLAG_STRIP_HIGH + FILTER_FLAG_STRIP_BACKTICK), PDO::PARAM_STR);
+        if (array_key_exists("active_ind", $_POST))
+        {
+            $stmt->bindValue(':active_ind', ($_POST["active_ind"] == "on" ? 1 : 0), PDO::PARAM_INT);
+        }
+        else
+        {
+            $stmt->bindValue(':active_ind', 0, PDO::PARAM_INT);
+        }
+
 
         $stmt->execute();
 
@@ -525,8 +574,9 @@ function displayDbData()
             header("Location: login.php?errmsg");
         }
 
-        $stmt = $dbh->prepare("SELECT orgid, org_name, person_name, email_verified, email_unverified, org_website, money_url, mission FROM org WHERE orgid = :orgid ;");
-        $stmt->bindValue(':orgid', $orgid);
+        $stmt = $dbh->prepare("SELECT orgid, org_name, person_name, email_verified, email_unverified, org_website, money_url, mission, "
+            . " abbreviated_name, customer_notice, customer_contact, admin_contact, active_ind FROM org WHERE orgid = :orgid AND org_type = 1;");
+        $stmt->bindValue(':orgid', $orgid, PDO::PARAM_INT);
 
         $stmt->execute();
 
@@ -556,6 +606,7 @@ function displayDbData()
             global $action;
             global $zip_array;
 
+            global $abbreviated_name, $customer_notice, $customer_contact, $admin_contact, $active_ind;
             $org_name = htmlspecialchars($row["org_name"]);
             $person_name = htmlspecialchars($row["person_name"]);
 
@@ -574,6 +625,13 @@ function displayDbData()
             $org_website = htmlspecialchars($row["org_website"]);
             $money_url = htmlspecialchars($row["money_url"]);
             $mission = htmlspecialchars($row["mission"]);
+
+            $abbreviated_name = htmlspecialchars($row["abbreviated_name"]);
+            $customer_notice = htmlspecialchars($row["customer_notice"]);
+            $customer_contact = htmlspecialchars($row["customer_contact"]);
+            $admin_contact = htmlspecialchars($row["admin_contact"]);
+            /* for some reason, the bit indicator is coming across as a string, so use ord() to convert it a number */
+            $active_ind = (ord($row["active_ind"]) == 1 ? "checked" : " ");
             $action = "U";
             buildCsrfToken();
         }
@@ -588,7 +646,7 @@ function displayDbData()
         /* now get the zip codes from the database and put into an array */
 
         $stmt = $dbh->prepare("SELECT zip_code FROM org_zip_code WHERE org_id = :orgid ;");
-        $stmt->bindValue(':orgid', $orgid);
+        $stmt->bindValue(':orgid', $orgid, PDO::PARAM_INT);
 
         $stmt->execute();
 
@@ -634,6 +692,7 @@ function displayPostData()
     global $money_url;
     global $mission;
     global $action; 
+    global $abbreviated_name, $customer_notice, $customer_contact, $admin_contact, $active_ind;
 
     $email = htmlspecialchars(filter_var($_POST["email"], FILTER_SANITIZE_EMAIL)); 
         /* TODO: don't know if the email is verified or not yet not sure how to handle this */
@@ -649,6 +708,16 @@ function displayPostData()
     $money_url = htmlspecialchars($_POST["money_url"]);
     $mission = htmlspecialchars(filter_var($_POST["mission"], FILTER_SANITIZE_STRING, FILTER_FLAG_NO_ENCODE_QUOTES + 
             FILTER_FLAG_STRIP_LOW + FILTER_FLAG_STRIP_HIGH + FILTER_FLAG_STRIP_BACKTICK));
+
+    $abbreviated_name = htmlspecialchars(filter_var($_POST["abbreviated_name"], FILTER_SANITIZE_STRING, FILTER_FLAG_NO_ENCODE_QUOTES + 
+        FILTER_FLAG_STRIP_LOW + FILTER_FLAG_STRIP_HIGH + FILTER_FLAG_STRIP_BACKTICK));
+    $customer_contact = htmlspecialchars(filter_var($_POST["customer_contact"], FILTER_SANITIZE_STRING, FILTER_FLAG_NO_ENCODE_QUOTES + 
+        FILTER_FLAG_STRIP_LOW + FILTER_FLAG_STRIP_HIGH + FILTER_FLAG_STRIP_BACKTICK));
+    $admin_contact = htmlspecialchars(filter_var($_POST["admin_contact"], FILTER_SANITIZE_STRING, FILTER_FLAG_NO_ENCODE_QUOTES + 
+        FILTER_FLAG_STRIP_LOW + FILTER_FLAG_STRIP_HIGH + FILTER_FLAG_STRIP_BACKTICK));
+    $customer_notice = htmlspecialchars(filter_var($_POST["customer_notice"], FILTER_SANITIZE_STRING, FILTER_FLAG_NO_ENCODE_QUOTES + 
+        FILTER_FLAG_STRIP_LOW + FILTER_FLAG_STRIP_HIGH + FILTER_FLAG_STRIP_BACKTICK));
+    $active_ind = ($_POST["active_ind"] == "on" ? "checked" : " " );
 
     $action = strtoupper(substr($_POST["action"], 0, 1)); /* on error, always retain the same action that was posted */
 
@@ -719,7 +788,7 @@ function populateArray()
         " ON res.choice_id = qc.choice_id " .
         " WHERE res.org_id IS NULL OR res.org_id = :orgid " .
         " ORDER BY gg.group_id, gg.page_num, qq.question_id, qq.sort_order, qc.choice_id, qc.sort_order;");
-        $stmt->bindValue(':orgid', $orgid);
+        $stmt->bindValue(':orgid', $orgid, PDO::PARAM_INT);
 
         $stmt->execute();
 
@@ -1217,9 +1286,24 @@ function zipArrayToDb()
         <?php if (isset($org_name_msg)) echo $org_name_msg; ?>
     </div>
 
+    <div class="form-group row">
+        <div class="col-xs-4" for="active_ind"><p><strong>Set this Organization to Active:</strong></p><p>This is required in order to be shown to the public.</p></div>
+        <div class="col-xs-1" ><input class="" type="checkbox" id="active_ind" name="active_ind" <?php echo $active_ind ?> /></div>
+    </div> <!-- form-group -->
+
+    <div class="form-group">
+        <label for="abbreviated_name">Abbreviation:</label>
+        <input class="form-control" type="text" id="abbreviated_name" maxlength="15" name="abbreviated_name" value="<?php echo $abbreviated_name ?>" />
+    </div> <!-- form-group -->
+
     <div class="form-group">
         <label for="mission">Organizational Mission Statement:</label>
         <textarea class="form-control" id="mission" maxlength="2000" name="mission" rows="4" value="" ><?php echo $mission ?></textarea>
+    </div> <!-- form-group -->
+
+    <div class="form-group">
+        <label for="customer_notice">Customer Informational Notice:</label><p>This information is shown to the customer prior to final selection.</p>
+        <textarea class="form-control" id="customer_notice" maxlength="255" name="customer_notice" rows="4" value="" ><?php echo $customer_notice ?></textarea>
     </div> <!-- form-group -->
 
     <div class="form-group">
@@ -1239,6 +1323,16 @@ function zipArrayToDb()
     <div class="alert alert-danger" <?php if (!isset($money_url_msg)) echo "hidden='true'"; ?> id="money_url_msg" >
         <?php if (isset($money_url_msg)) echo $money_url_msg; ?>
     </div>
+
+    <div class="form-group">
+        <label for="admin_contact">Administrative Contact Instructions (not displayed to public):</label>
+        <input class="form-control" type="text" id="admin_contact" maxlength="255" name="admin_contact" value="<?php echo $admin_contact ?>" />
+    </div> <!-- form-group -->
+
+    <div class="form-group">
+        <label for="customer_contact">Customer Contact Instructions (displayed to public):</label>
+        <input class="form-control" type="text" id="customer_contact" maxlength="255" name="customer_contact" value="<?php echo $customer_contact ?>" />
+    </div> <!-- form-group -->
 
     <label for="zip_entry">In what zip codes do you expect to physically meet your volunteers and teammates?</label>
     <div class="form-group row">
