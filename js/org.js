@@ -1,156 +1,9 @@
 $(document).ready(function(){
 
-
-	$("a#p1_goto_p2").click(function(){
-
-
-        /* all the client side validation has been passed for page 1 */
-
-        if (validate_page1())
-        {
-		    $("div#page1").hide();
-		    $("div#page2").show();
-	    }
-
-	});
+    $("#save_data").click(save_data_click);
 
 
-	$("a#p2_goto_p1").click(function(){
-
-        if (validate_page2()) 
-        {
-
-		    $("div#page2").hide();
-		    $("div#page1").show();
-        }
-	
-	});
-
-	$("a#p2_goto_p3").click(function(){
-
-        if (validate_page2()) 
-        {
-
-		    $("div#page2").hide();
-		    $("div#page3").show();
-	    } 
-   	});
-    
-
-	$("a#p3_goto_p2").click(function(){
-
-		$("div#page3").hide();
-		$("div#page2").show();
-	
-	});
-
-	
-	$("a#p3_goto_p4").click(function(){
-
-		$("div#page3").hide();
-		$("div#page4").show();
-	
-	});
-
-	$("a#p4_goto_p3").click(function(){
-
-		$("div#page4").hide();
-		$("div#page3").show();
-	
-	});
-
-
-	$("a#p4_goto_p5").click(function(){
-
-		$("div#page4").hide();
-		$("div#page5").show();
-	
-	});
-
-	$("a#p5_goto_p4").click(function(){
-
-		$("div#page5").hide();
-		$("div#page4").show();
-	
-	});
-
-
-	$("a#p5_goto_p6").click(function(){
-
-		$("div#page5").hide();
-		$("div#page6").show();
-	
-	});
-	
-
-	$("a#p5_goto_p4").click(function(){
-
-		$("div#page5").hide();
-		$("div#page4").show();
-	
-	});
-
-
-	$("a#p5_goto_p6").click(function(){
-
-		$("div#page5").hide();
-		$("div#page6").show();
-	
-	});
-
-	$("a#p6_goto_p5").click(function(){
-
-		$("div#page6").hide();
-		$("div#page5").show();
-	
-	});
-
-
-	$("a#p6_goto_p7").click(function(){
-
-		$("div#page6").hide();
-		$("div#page7").show();
-	
-	});
-
-	$("a#p7_goto_p6").click(function(){
-
-		$("div#page7").hide();
-		$("div#page6").show();
-	
-	});
-
-
-	$("a#p7_goto_p8").click(function(){
-
-        showSummary();
-		$("div#page7").hide();
-		$("div#page8").show();
-	
-	});
-
-	$("a#p8_goto_p7").click(function(){
-
-		$("div#page8").hide();
-		$("div#page7").show();
-	
-	});
-
-
-    $("a#save_data").click(function(){
-
-        /* make sure that all zip codes in the zip select box are selected
-            so that they get submitted with the POST */
-        $("#zip_list > option").prop("selected", "true");
-
-        $("form#org_save_form").submit();
-        
-    });
-
-
-    $("#generateVerificationEmail").click(function(){
-        generateVerificationEmail();
-    });
+    $("#generateVerificationEmail").click(generateVerificationEmail);
 
 
 	if ($("#general_alert_msg").is(":visible"))
@@ -163,42 +16,62 @@ $(document).ready(function(){
         $(this).val($(this).val().trim());
     });
 
-	$("#zip_select").click(function(){
-        /* Move zip code typed in over to select list */
-        /* TODO: need lots of input validation here */
-        var opt = document.createElement("option");
-        opt.value = $("#zip_entry").val();
-        opt.text = $("#zip_entry").val();
+	$("#zip_select").click(select_zip);
 
-        $("#zip_list").append($(opt));
-
-        /* clear the value out of the field */
-        $("#zip_entry").val("");
-
-        $("#zip_list option[value='NULL']").remove();
-
-    });
-
-    $("#zip_unselect").click(function(){
-        /* remove the selected option from the zip code list */
-        $("#zip_list option:selected").remove();
-
-        /* check to see if the select list box is empty, if so put the placeholder back in */
-        if ($("#zip_list > option").length == 0)
-        {
-            var opt = document.createElement("option");
-            opt.value = "NULL";
-            opt.text = "<No zip codes selected>";
-
-            $("#zip_list").append($(opt));
-        }
- 
-    });
+    $("#zip_unselect").click(remove_zip);
 
 });
 
 
-function validate_page1() 
+function save_data_click()
+{
+
+    /* validate all data points */
+    if (validate_person_name() && validate_email() && validate_password() &&
+         validate_org_name() && validate_website() && validate_money_url()) 
+    {
+        /* make sure that all zip codes in the zip select box are selected
+            so that they get submitted with the POST */
+        $("#zip_list > option").prop("selected", "true");
+
+        $("form#org_save_form").submit();
+    }    
+}
+
+function select_zip()
+{
+    /* Move zip code typed in over to select list */
+    /* TODO: need lots of input validation here */
+    var opt = document.createElement("option");
+    opt.value = $("#zip_entry").val();
+    opt.text = $("#zip_entry").val();
+
+    $("#zip_list").append($(opt));
+
+    /* clear the value out of the field */
+    $("#zip_entry").val("");
+
+    $("#zip_list option[value='NULL']").remove();
+
+}
+
+function remove_zip()
+{
+    /* remove the selected option from the zip code list */
+    $("#zip_list option:selected").remove();
+
+    /* check to see if the select list box is empty, if so put the placeholder back in */
+    if ($("#zip_list > option").length == 0)
+    {
+        var opt = document.createElement("option");
+        opt.value = "NULL";
+        opt.text = "<No zip codes selected>";
+
+        $("#zip_list").append($(opt));
+    }
+}
+
+function validate_person_name() 
 {
 
     /* first validate the person name and email */
@@ -206,6 +79,7 @@ function validate_page1()
     if ($("#person_name").val().length <= 3)
     {
         $("#person_name_msg").show();
+        $("#intro1").collapse("show");
         return false;
     }
     else
@@ -213,6 +87,11 @@ function validate_page1()
         $("#person_name_msg").hide();
     }
 
+    return true;
+}
+
+function validate_email()
+{
     /* lowercase the email */
     $("#email").val($("#email").val().toLowerCase());
 
@@ -220,6 +99,7 @@ function validate_page1()
     {
         $("#email_invalid_msg").text("A valid email address is required.");
         $("#email_invalid_msg").show();
+        $("#intro1").collapse("show");
         return false;
     }
 
@@ -228,6 +108,7 @@ function validate_page1()
     {
         $("#email_invalid_msg").text("Email address should not exceed 128 characters in length.");
         $("#email_invalid_msg").show();
+        $("#intro1").collapse("show");
         return false;
     }
 
@@ -235,15 +116,21 @@ function validate_page1()
     {
         $("#email_invalid_msg").text("The email address does not appear to follow the proper form.");
         $("#email_invalid_msg").show();
+        $("#intro1").collapse("show");
         return false;
     }
 
     $("#email_invalid_msg").hide();
+    return true;
+}
 
+function validate_password()
+{
 	if ($("#password1").val() != $("#password2").val())
 	{
         $("#pwd_msg").text("Passwords must match.");
         $("#pwd_msg").show();
+        $("#intro1").collapse("show");
         return false;
 	}
 	
@@ -251,6 +138,7 @@ function validate_page1()
 	{
         $("#pwd_msg").text("The password exceeds the maximum length of 128 characters.");
         $("#pwd_msg").show();
+        $("#intro1").collapse("show");
         return false;
 	}
 	
@@ -259,6 +147,7 @@ function validate_page1()
     {
         $("#pwd_msg").text("A password is required in order to continue.");
         $("#pwd_msg").show();
+        $("#intro1").collapse("show");
         return false;        
     }
     
@@ -267,12 +156,13 @@ function validate_page1()
 }
 
 
-function validate_page2() 
+function validate_org_name() 
 {
     if ($("#org_name").val().length <= 3)
     {
         $("#org_name_msg").text("The organization name must have at least 4 characters.");
         $("#org_name_msg").show();
+        $("#intro2").collapse("show");
         return false;
     }
     else
@@ -285,6 +175,7 @@ function validate_page2()
     {
         $("#org_name_msg").text("The organization name should not exceed 128 characters in length.");
         $("#org_name_msg").show();
+        $("#intro2").collapse("show");
         return false;
     }
     else
@@ -292,12 +183,18 @@ function validate_page2()
         $("#org_name_msg").hide();
     }
 
+    return true;
+}
+
+function validate_website()
+{
     $("#org_website_msg").hide();
 
     if ($("#org_website").val().length > 255)
     {
         $("#org_website_msg").text("The website URL should not exceed 255 characters in length.");
         $("#org_website_msg").show();
+        $("#intro2").collapse("show");
         return false;
     }
 
@@ -308,19 +205,18 @@ function validate_page2()
         {
             $("#org_website_msg").text("The website URL does not follow the proper pattern for a valid URL.");
             $("#org_website_msg").show();
+            $("#intro2").collapse("show");
             return false;
         }
-        else
-        {
-                $("#org_website_msg").hide();        
-        }
-        
     }
-    else
-    {
-            $("#org_website_msg").hide();        
-    }
+    
+    $("#org_website_msg").hide();        
+    return true;
+}
 
+
+function validate_money_url()
+{
 
     $("#money_url_msg").hide();
 
@@ -328,6 +224,7 @@ function validate_page2()
     {
         $("#money_url_msg").text("The donations URL should not exceed 255 characters in length.");
         $("#money_url_msg").show();
+        $("#intro2").collapse("show");
         return false;
     }
 
@@ -338,20 +235,15 @@ function validate_page2()
         {
             $("#money_url_msg").text("The donations URL does not follow the proper pattern for a valid URL.");
             $("#money_url_msg").show();
+            $("#intro2").collapse("show");
             return false;
         }
-        else
-        {
-                $("#money_url_msg").hide();        
-        }
-    }
-    else
-    {
-            $("#money_url_msg").hide();        
     }
     
+    $("#money_url_msg").hide();        
     return true;
 }
+
 
 function isValidEmailAddress(emailAddress) 
 {
@@ -399,6 +291,7 @@ function generateVerificationEmail()
     var url=$("#generateVerficationEmailUrl").text();
 
     $.get(url, function(data, status){
+        /* it's almost impossible to have a meaningful return value here */
         $("#email_unverified_msg").text("An email to verify the address has been sent.");
         });
 }
