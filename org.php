@@ -1279,7 +1279,7 @@ function zipArrayToDb()
 
 
 <?php
-    for ($i = 1; $i < 4; $i++)
+    for ($i = 1; $i <= count($qu_aire); $i++)
     { 
         arrayToHtml($i);
     }
