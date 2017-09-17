@@ -1030,7 +1030,7 @@ function updateQuestionnaireData()
     try
     {
 
-        $dbh->beginTransaction();
+        //$dbh->beginTransaction();
 
         $stmt = $dbh->prepare($sql);
         //$stmt->bindValue(':orgid', $orgid);
@@ -1039,19 +1039,22 @@ function updateQuestionnaireData()
         
         if ($stmt->errorCode() != "00000") 
         {
-            $dbh->rollBack();
-            echo "Error code:<br>";
+            //$dbh->rollBack();
             $erinf = $stmt->errorInfo();
+            error_log("Error code: " . $stmt->errorCode());
+            error_log("Error Info: " . $erinf[2]);
             die("Statement failed<br>Error code:" . $stmt->errorCode() . "<br>" . $erinf[2]); /* the error message in the returned error info */
         }
 		
-        $dbh->commit();
+        //echo "<!-- About to commit question responses" . $dbh->inTransaction() . " -->\n";
+        //$dbh->commit();
+        //echo "<!-- Just committed question responses" . $dbh->inTransaction() . " -->\n";
 
         
     }
     catch (PDOException $e)
     {
-        $dbh->rollBack();
+        //$dbh->rollBack();
         die("Database Connection Error: " . $e->getMessage());
         /* TODO: much better/cleaner handling of errors */
     }
@@ -1134,7 +1137,7 @@ function zipArrayToDb()
 
         }
 
-        $dbh->beginTransaction();
+        //$dbh->beginTransaction();
 
         $stmt = $dbh->prepare($sql);
 
@@ -1142,19 +1145,22 @@ function zipArrayToDb()
         
         if ($stmt->errorCode() != "00000") 
         {
-            $dbh->rollBack();
-            echo "Error code:<br>";
+            //$dbh->rollBack();
             $erinf = $stmt->errorInfo();
+            error_log("Error code: " . $stmt->errorCode());
+            error_log("Error Info: " . $erinf[2]);
             die("Statement failed<br>Error code:" . $stmt->errorCode() . "<br>" . $erinf[2]); /* the error message in the returned error info */
         }
 		
-        $dbh->commit();
+        //echo "<!-- About to commit zip codes" . $dbh->inTransaction() . " -->\n";
+        //$dbh->commit();
+       // echo "<!-- Just committed zip codes" . $dbh->inTransaction() . " -->\n";
 
         
     }
     catch (PDOException $e)
     {
-        $dbh->rollBack();
+        //$dbh->rollBack();
         die("Database Connection Error: " . $e->getMessage());
         /* TODO: much better/cleaner handling of errors */
     }
@@ -1283,7 +1289,7 @@ function zipArrayToDb()
     </div>
 
     <div class="form-group row">
-        <div class="col-xs-4" for="active_ind"><p><strong>Set this Organization to Active:</strong></p><p>This is required in order to be shown to the public.</p></div>
+        <div class="col-xs-5" for="active_ind"><p><strong>Set this Organization to Active:</strong></p><p>This is required in order to be shown to the public.</p></div>
         <div class="col-xs-1" ><input class="" type="checkbox" id="active_ind" name="active_ind" <?php echo $active_ind ?> /></div>
     </div> <!-- form-group -->
 
