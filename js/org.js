@@ -1,5 +1,6 @@
-$(document).ready(function(){
-
+$(function(){
+	
+	
     $("#save_data").click(save_data_click);
 
 
@@ -57,14 +58,34 @@ function select_zip()
         if ($("#zip_list > option[value='" + zip + "']").length == 0)
         {
             $("#zip_list").append($(opt));
+			
+			/* generate the request to look up the city & state */
+			var url = document.location.origin + "/mmatch/service/zipcode.php?zip_code=" + zip;
+			
+			$.get(url, populatezipfromservice);
 
             $("#zip_list option[value='NULL']").remove();
         }
     }
 
 
-    /* clear the value out of the field */
+    /* clear the value out of the entry field */
     $("#zip_entry").val("");
+}
+
+function populatezipfromservice(data, status)
+{
+	/* data contains the zip code, city, and state */
+	var obj = JSON.parse(data);
+		
+	if (status == "success") /* populate the city and state */
+	{
+		var txt = obj.zip_code + " - " + obj.city + ", " + obj.state;
+		
+		$("#zip_list > option[value='" + obj.zip_code + "']").text(txt);
+	}
+	/* TODO: Need to define an error event handler upon calling using the jqxhr object */
+
 }
 
 function remove_zip()

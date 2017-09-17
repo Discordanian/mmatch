@@ -57,3 +57,7 @@ typings/
 # dotenv environment variables file
 .env
 
+#begin alan additions
+.htaccess
+secrets.php
+#end alan additionss
