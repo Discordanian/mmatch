@@ -641,7 +641,8 @@ function displayDbData()
 
         /* now get the zip codes from the database and put into an array */
 
-        $stmt = $dbh->prepare("SELECT zip_code FROM org_zip_code WHERE org_id = :orgid ;");
+        $stmt = $dbh->prepare("SELECT ozc.zip_code, zcr.city, zcr.state FROM org_zip_code ozc " .
+			" INNER JOIN zip_code_ref zcr ON ozc.zip_code = zcr.zip_code WHERE ozc.org_id = :orgid ORDER BY ozc.zip_code ;");
         $stmt->bindValue(':orgid', $orgid, PDO::PARAM_INT);
 
         $stmt->execute();
@@ -650,12 +651,13 @@ function displayDbData()
         {
             echo "Error code:<br>";
             $erinf = $stmt->errorInfo();
-            die("Insert failed<br>Error code:" . $stmt->errorCode() . "<br>" . $erinf[2]); /* the error message in the returned error info */
+            die("Query failed<br>Error code:" . $stmt->errorCode() . "<br>" . $erinf[2]); /* the error message in the returned error info */
         }
 		
 
-        $zip_array = $stmt->fetchAll(PDO::FETCH_COLUMN, 0);
-        
+        $zip_array = $stmt->fetchAll(PDO::FETCH_GROUP); /* put zip, city & state into an array */
+
+		
         $stmt->closeCursor();
 
         
@@ -1349,9 +1351,9 @@ function zipArrayToDb()
 <?php
                     if (count($zip_array) > 0)
                     {
-                        foreach($zip_array as $zipnum)
+                        foreach($zip_array as $zipnum => $cityState)
                         {
-                            printf("\t\t\t\t<option value='%05u' >%05u</option>\n", $zipnum, $zipnum);
+                            printf("\t\t\t\t<option value='%05u' >%05u - %s, %s</option>\n", $zipnum, $zipnum, $cityState[0][0], $cityState[0][1]);
                         }
                     }
                     else
