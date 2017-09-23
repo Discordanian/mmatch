@@ -62,9 +62,9 @@ function select_zip()
 			/* generate the request to look up the city & state */
 			var url = document.location.origin + "/mmatch/service/zipcode.php?zip_code=" + zip;
 			
-			$.get(url, populatezipfromservice);
-
-            $("#zip_list option[value='NULL']").remove();
+			var jxhr = $.get(url, populateZipFromService);
+			jxhr.fail(failedToFindZip);
+			
         }
     }
 
@@ -73,7 +73,7 @@ function select_zip()
     $("#zip_entry").val("");
 }
 
-function populatezipfromservice(data, status)
+function populateZipFromService(data, status)
 {
 	/* data contains the zip code, city, and state */
 	var obj = JSON.parse(data);
@@ -83,9 +83,31 @@ function populatezipfromservice(data, status)
 		var txt = obj.zip_code + " - " + obj.city + ", " + obj.state;
 		
 		$("#zip_list > option[value='" + obj.zip_code + "']").text(txt);
-	}
-	/* TODO: Need to define an error event handler upon calling using the jqxhr object */
 
+			/* remove the "nothing selected" option */
+            $("#zip_list option[value='NULL']").remove();
+		}
+
+}
+
+function failedToFindZip(jqxhr, textStatus, error)
+{
+	//Must remove the zip that was not found from the list otherwise, a db integrity error will be registered
+	// when we try to insert
+	//not sure how to just remove the ones without a city+state using just one selector
+	//so just quickly iterate through
+	$("#zip_list > option").each(remove_invalid_zip);
+	
+}
+
+function remove_invalid_zip()
+{
+	/* remove any zips in the list that don't have the city and state tagged onto them
+	in other words, any where the length of the text() is <= 5 characters */
+	if ($(this).text().length <= 5)
+	{
+		$(this).remove();
+	}
 }
 
 function remove_zip()
@@ -103,6 +125,7 @@ function remove_zip()
         $("#zip_list").append($(opt));
     }
 }
+
 
 function validate_person_name() 
 {
