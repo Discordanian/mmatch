@@ -103,6 +103,8 @@ try
 catch (Exception $e)
 {
 	/* errors just redirect the user back to the login page */
+	/* TODO: There are certain errors that might warrant a redisplay 
+	or a retry rather than just blowing up back to the login page */
 	header("Location: login.php?errmsg=9");
 	exit();
 }
@@ -481,7 +483,9 @@ function performUpdate()
         if ($stmt->errorCode() != "00000") 
         {
             $erinf = $stmt->errorInfo();
-            die("Update failed<br>Error code:" . $stmt->errorCode() . "<br>" . $erinf[2]); /* the error message in the returned error info */
+			error_log("UPDATE failed in org.php: " . $stmt->errorCode() . " " . $erinf[2]);
+			throw new Exception("An unknown error was encountered (10). Please attempt to reauthenticate.");
+            exit();
         }
 		else
 		{
@@ -497,15 +501,16 @@ function performUpdate()
     }
     catch (PDOException $e)
     {
-        die("Database Query Error: " . $e->getMessage());
-        /* TODO: much better/cleaner handling of errors */
+        error_log("Database error during UPDATE query in org.php: " . $e->getMessage());
+        throw new Exception("An unknown error was encountered (11). Please attempt to reauthenticate.");
+		exit();
     }
     catch(Exception $e)
     {
-        error_log($e->getMessage());
-        header("Location: login.php?errmsg");
-        exit();
-        /* TODO: much better/cleaner handling of errors */
+        error_log("Error during database UPDATE query in org.php: " . $e->getMessage());
+		/* We most likely got here from the SQL error above, so just bubble up the exception */
+        throw new Exception("An unknown error was encountered (12). Please attempt to reauthenticate.");
+		exit();
     }
 
 }
@@ -560,9 +565,10 @@ function performInsert()
 
         if ($stmt->errorCode() != "00000") 
         {
-            echo "Error code:<br>";
             $erinf = $stmt->errorInfo();
-            die("Insert failed<br>Error code:" . $stmt->errorCode() . "<br>" . $erinf[2]); /* the error message in the returned error info */
+			error_log("INSERT failed in org.php: " . $stmt->errorCode() . " " . $erinf[2]);
+			throw new Exception("An unknown error was encountered (13). Please attempt to reauthenticate.");
+            exit();
         }
 		else
 		{
@@ -576,8 +582,9 @@ function performInsert()
 
         if (!isset($orgid)) 
         {
-            die("Oops...failed to get the insert Id. That sucks big time...");
-            /* TODO: much better/cleaner handling of errors */
+			error_log("Failed to get the inserted ID# in org.php");
+			throw new Exception("An unknown error was encountered (14). Please attempt to reauthenticate.");
+			exit();
         }
 
         /* place the org ID into session */
@@ -590,16 +597,18 @@ function performInsert()
     }
     catch (PDOException $e)
     {
-        die("Database Query Error: " . $e->getMessage());
-        /* TODO: much better/cleaner handling of errors */
+        error_log("Database error during INSERT query in org.php: " . $e->getMessage());
+        throw new Exception("An unknown error was encountered (15). Please attempt to reauthenticate.");
+		exit();
     }
     catch(Exception $e)
     {
-        die($e->getMessage());
-        /* TODO: much better/cleaner handling of errors */
+        error_log("Error during database INSERT query in org.php: " . $e->getMessage());
+		/* We most likely got here from the SQL error above, so just bubble up the exception */
+        throw new Exception("An unknown error was encountered (16). Please attempt to reauthenticate.");
+		exit();
     }
     
-    /* TODO: add verification email */
 
 }
 
@@ -611,13 +620,12 @@ function displayDbData()
 
         global $dbh, $orgid;
 
-        assert($orgid != false); /* TODO: more error handling needed */
-
         /* make sure orgid from session matches org ID requested */
         if ($_SESSION["orgid"] != $orgid)
         {
-            error_log("Parameter tampering detected. Requested org ID which is not authorized.");
-            header("Location: login.php?errmsg");
+            error_log("Unauthorized org ID requested. Possible parameter tampering.");
+			throw new Exception("Unauthorized org ID requested. Possible parameter tampering.");
+			exit();
         }
 
         $stmt = $dbh->prepare("SELECT orgid, org_name, person_name, email_verified, email_unverified, org_website, money_url, mission, "
@@ -628,9 +636,10 @@ function displayDbData()
 
         if ($stmt->errorCode() != "00000") 
         {
-            echo "Error code:<br>";
             $erinf = $stmt->errorInfo();
-            die("Insert failed<br>Error code:" . $stmt->errorCode() . "<br>" . $erinf[2]); /* the error message in the returned error info */
+			error_log("SELECT failed in org.php: " . $stmt->errorCode() . " " . $erinf[2]);
+			throw new Exception("An unknown error was encountered (17). Please attempt to reauthenticate.");
+            exit();
         }
 		
 
@@ -682,8 +691,9 @@ function displayDbData()
         }
         else
         {
-            die("Oops, no organization found with that Id.");
-            /* TODO: much better/cleaner handling of errors */
+			error_log("Failed to get the org record with that ID.");
+			throw new Exception("An unknown error was encountered (18). Please attempt to reauthenticate.");
+            exit();
         }
         $stmt->closeCursor();
 
@@ -698,9 +708,10 @@ function displayDbData()
 
         if ($stmt->errorCode() != "00000") 
         {
-            echo "Error code:<br>";
             $erinf = $stmt->errorInfo();
-            die("Query failed<br>Error code:" . $stmt->errorCode() . "<br>" . $erinf[2]); /* the error message in the returned error info */
+			error_log("SELECT zip codes failed in org.php: " . $stmt->errorCode() . " " . $erinf[2]);
+			throw new Exception("An unknown error was encountered (19). Please attempt to reauthenticate.");
+            exit();
         }
 		
 
@@ -713,15 +724,16 @@ function displayDbData()
     }
     catch (PDOException $e)
     {
-        die("Database Connection Error: " . $e->getMessage());
-        /* TODO: much better/cleaner handling of errors */
+        error_log("Database error during SELECT query in org.php: " . $e->getMessage());
+        throw new Exception("An unknown error was encountered (20). Please attempt to reauthenticate.");
+		exit();
     }
     catch(Exception $e)
     {
-        error_log($e->getMessage());
-        header("Location: login.php?errmsg");
-        exit();
-        /* TODO: much better/cleaner handling of errors */
+        error_log("Error during database SELECT query in org.php: " . $e->getMessage());
+		/* We most likely got here from the SQL error above, so just bubble up the exception */
+        throw new Exception("An unknown error was encountered (21). Please attempt to reauthenticate.");
+		exit();
     }
 
 }
@@ -789,6 +801,14 @@ function buildEmptyArray()
         " ORDER BY gg.group_id, gg.page_num, qq.question_id, qq.sort_order, qc.choice_id, qc.sort_order;");
 
         $stmt->execute();
+        if ($stmt->errorCode() != "00000") 
+        {
+            $erinf = $stmt->errorInfo();
+			error_log("SELECT questions failed in org.php: " . $stmt->errorCode() . " " . $erinf[2]);
+			throw new Exception("An unknown error was encountered (22). Please attempt to reauthenticate.");
+            exit();
+        }
+		
 
         while ($row = $stmt->fetch(PDO::FETCH_ASSOC))
         {
@@ -807,13 +827,16 @@ function buildEmptyArray()
     }
     catch (PDOException $e)
     {
-        die("Database Connection Error: " . $e->getMessage());
-        /* TODO: much better/cleaner handling of errors */
+        error_log("Database error during SELECT query in org.php: " . $e->getMessage());
+        throw new Exception("An unknown error was encountered (23). Please attempt to reauthenticate.");
+		exit();
     }
     catch(Exception $e)
     {
-        die($e->getMessage());
-        /* TODO: much better/cleaner handling of errors */
+        error_log("Error during database SELECT query in org.php: " . $e->getMessage());
+		/* We most likely got here from the SQL error above, so just bubble up the exception */
+        throw new Exception("An unknown error was encountered (24). Please attempt to reauthenticate.");
+		exit();
     }
 
 }
@@ -838,6 +861,13 @@ function populateArray()
         $stmt->bindValue(':orgid', $orgid, PDO::PARAM_INT);
 
         $stmt->execute();
+        if ($stmt->errorCode() != "00000") 
+        {
+            $erinf = $stmt->errorInfo();
+			error_log("SELECT questions failed in org.php: " . $stmt->errorCode() . " " . $erinf[2]);
+			throw new Exception("An unknown error was encountered (25). Please attempt to reauthenticate.");
+            exit();
+        }
 
         while ($row = $stmt->fetch(PDO::FETCH_ASSOC))
         {
@@ -854,13 +884,16 @@ function populateArray()
     }
     catch (PDOException $e)
     {
-        die("Database Connection Error: " . $e->getMessage());
-        /* TODO: much better/cleaner handling of errors */
+        error_log("Database error during SELECT query in org.php: " . $e->getMessage());
+        throw new Exception("An unknown error was encountered (26). Please attempt to reauthenticate.");
+		exit();
     }
     catch(Exception $e)
     {
-        die($e->getMessage());
-        /* TODO: much better/cleaner handling of errors */
+        error_log("Error during database SELECT query in org.php: " . $e->getMessage());
+		/* We most likely got here from the SQL error above, so just bubble up the exception */
+        throw new Exception("An unknown error was encountered (27). Please attempt to reauthenticate.");
+		exit();
     }
 
 }
@@ -1031,17 +1064,7 @@ function translatePostIntoArray()
                     }
                 }
             }
-            //else
-            //{
-            //printf("<!-- Question ID = %s was not found in POST -->\n", $question_name);
 
-            //}
-
-            /* foreach($question as $choice_id => $choice)
-            {
-
-
-            } */
             
         }    
     }
@@ -1092,9 +1115,9 @@ function updateQuestionnaireData()
         {
             //$dbh->rollBack();
             $erinf = $stmt->errorInfo();
-            error_log("Error code: " . $stmt->errorCode());
-            error_log("Error Info: " . $erinf[2]);
-            die("Statement failed<br>Error code:" . $stmt->errorCode() . "<br>" . $erinf[2]); /* the error message in the returned error info */
+			error_log("UPDATE/INSERT questions failed in org.php: " . $stmt->errorCode() . " " . $erinf[2]);
+			throw new Exception("An unknown error was encountered (27). Please attempt to reauthenticate.");
+            exit();
         }
 		
         //echo "<!-- About to commit question responses" . $dbh->inTransaction() . " -->\n";
@@ -1106,13 +1129,16 @@ function updateQuestionnaireData()
     catch (PDOException $e)
     {
         //$dbh->rollBack();
-        die("Database Connection Error: " . $e->getMessage());
-        /* TODO: much better/cleaner handling of errors */
+        error_log("Database error during questionnaire INSERT query in org.php: " . $e->getMessage());
+        throw new Exception("An unknown error was encountered (28). Please attempt to reauthenticate.");
+		exit();
     }
     catch(Exception $e)
     {
-        die($e->getMessage());
-        /* TODO: much better/cleaner handling of errors */
+        error_log("Error during database questionnaire INSERT query in org.php: " . $e->getMessage());
+		/* We most likely got here from the SQL error above, so just bubble up the exception */
+        throw new Exception("An unknown error was encountered (29). Please attempt to reauthenticate.");
+		exit();
     }
 }
 
@@ -1138,9 +1164,9 @@ function buildEmailVerificationUrl()
 	$input = $_SERVER["SERVER_NAME"] . $email_unverified . $orgid . "sendverifyemail.php" . $csrf_salt;
 	$token = hash("sha256", $input);
 
-	/* use curl to trigger the php page that sends the email */
-	$url = sprintf("http://%s/mmatch/sendverifyemail.php?email=%s&token=%s&orgid=%d", $_SERVER["SERVER_NAME"], urlencode($email_unverified), $token, $orgid);
-
+	$url = sprintf("http://%s/mmatch/sendverifyemail.php?email=%s&token=%s&orgid=%d", $_SERVER["SERVER_NAME"], 
+		urlencode($email_unverified), $token, $orgid);
+	/* TODO: Handle the determination of http/https in the URL */
 	return $url;
 }
 
@@ -1155,6 +1181,7 @@ function zipPostToArray()
     }
     else
     {
+		/* Set to an empty array because nothing was passed in the zips select box */
         $zip_array = array();
     }
 
@@ -1198,9 +1225,9 @@ function zipArrayToDb()
         {
             //$dbh->rollBack();
             $erinf = $stmt->errorInfo();
-            error_log("Error code: " . $stmt->errorCode());
-            error_log("Error Info: " . $erinf[2]);
-            die("Statement failed<br>Error code:" . $stmt->errorCode() . "<br>" . $erinf[2]); /* the error message in the returned error info */
+			error_log("UPDATE/INSERT zip codes failed in org.php: " . $stmt->errorCode() . " " . $erinf[2]);
+			throw new Exception("An unknown error was encountered (30). Please attempt to reauthenticate.");
+            exit();
         }
 		
         //echo "<!-- About to commit zip codes" . $dbh->inTransaction() . " -->\n";
@@ -1212,13 +1239,16 @@ function zipArrayToDb()
     catch (PDOException $e)
     {
         //$dbh->rollBack();
-        die("Database Connection Error: " . $e->getMessage());
-        /* TODO: much better/cleaner handling of errors */
+        error_log("Database error during zip code INSERT query in org.php: " . $e->getMessage());
+        throw new Exception("An unknown error was encountered (31). Please attempt to reauthenticate.");
+		exit();
     }
     catch(Exception $e)
     {
-        die($e->getMessage());
-        /* TODO: much better/cleaner handling of errors */
+        error_log("Error during database zip code INSERT query in org.php: " . $e->getMessage());
+		/* We most likely got here from the SQL error above, so just bubble up the exception */
+        throw new Exception("An unknown error was encountered (32). Please attempt to reauthenticate.");
+		exit();
     }
 }
 

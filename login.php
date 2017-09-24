@@ -81,7 +81,7 @@ function checkCsrfToken()
 	if (!array_key_exists("csrf_expdate", $_POST) || !array_key_exists("nonce", $_POST))
 	{
 		error_log("POST parameters missing in login.php. Possible tampering detected.");
-		throw new Exception("An unknown error occurred (1). Please attent to authenticate again.");
+		throw new Exception("An unknown error occurred (1). Please attempt to authenticate again.");
 		exit(); /* this should not be run, but just in case, we do not want to continue */
 	}
 	
@@ -91,7 +91,7 @@ function checkCsrfToken()
     if (hash("sha256", $token) != $_POST["nonce"])
     {
 		error_log("csrf token mismatch in login.php. Possible tampering detected.");
-		throw new Exception("An unknown error occurred (2). Please attent to authenticate again.");
+		throw new Exception("An unknown error occurred (2). Please attempt to authenticate again.");
 		exit(); /* this should not be run, but just in case, we do not want to continue */
     }
 	
@@ -100,7 +100,7 @@ function checkCsrfToken()
 	if ($dateint == FALSE)
 	{
 		error_log("expdate does not follow proper format in login.php. Possible tampering detected.");
-		throw new Exception("An unknown error occurred (3). Please attent to authenticate again.");
+		throw new Exception("An unknown error occurred (3). Please attempt to authenticate again.");
 		exit(); /* this should not be run, but just in case, we do not want to continue */
 	}
 	
@@ -111,7 +111,7 @@ function checkCsrfToken()
 	if ($expdate < $today)
 	{
 		error_log("CSRF token expired in login.php");
-		throw new Exception("An unknown error occurred (4). Please attent to authenticate again.");
+		throw new Exception("An unknown error occurred (4). Please attempt to authenticate again.");
 		exit(); /* this should not be run, but just in case, we do not want to continue */
 		
 	}
