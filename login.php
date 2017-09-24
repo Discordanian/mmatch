@@ -52,7 +52,6 @@ try
 }
 catch (Exception $e)
 {
-	echo "<!-- top level exception handler -->\n";
 	$auth_fail_msg = $e->getMessage();
 }
 
@@ -68,7 +67,7 @@ function buildCsrfToken()
     global $csrf_nonce, $csrf_salt, $csrf_expdate;
 	
 	$csrf_expdate = new DateTime(NULL, new DateTimeZone("UTC"));
-	$csrf_expdate->add(new DateInterval("PT30S")); /* CSRF token expires in 4 hours */
+	$csrf_expdate->add(new DateInterval("PT30M")); /* CSRF token expires in 30 minutes */
     $token = $_SERVER['SERVER_SIGNATURE'] . $_SERVER['SCRIPT_FILENAME'] . $csrf_expdate->format('U') . $csrf_salt;
     //echo "<!-- DEBUG build token = $token -->\n";
     $csrf_nonce = hash("sha256", $token);
@@ -145,7 +144,6 @@ function initializeDb()
     catch (PDOException $e)
     {
         error_log("Database Connection Error: " . $e->getMessage());
-	echo "<!-- exception handler initializeDb -->\n";
         throw new Exception("An unknown error was encountered (5). Please attempt to reauthenticate.");
 		exit();
     }

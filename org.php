@@ -23,80 +23,90 @@ $goto_page = -2;
 //echo " -->\n";
 
 
+try
+{
+	
+	if (isset($_POST["action"]))
+	{
+		/* Flow #2, #3, #4, or #5 */
+		checkCsrfToken();
+		
+		if (!validatePostData())
+		{
+			/* #2 or #4 */
+			initializeDb();
+			buildEmptyArray();
+			translatePostIntoArray();
+			zipPostToArray();
+			displayPostData();
+		} elseif ($_POST["action"] == "I")
+		{
+			/* #3 */
+			initializeDb();
+			performInsert();
+			buildEmptyArray();
+			translatePostIntoArray();
+			updateQuestionnaireData();
+			zipPostToArray();
+			zipArrayToDb();
+			displayDbData();
+			populateArray();
+		}
+		elseif ($_POST["action"] == "U")
+		{
+			/* #5 */
+			initializeDb();
+			performUpdate();
+			buildEmptyArray();
+			translatePostIntoArray();
+			updateQuestionnaireData();
+			zipPostToArray();
+			zipArrayToDb();
+			displayDbData();
+			populateArray();
+		}
+	}
+	elseif (isset($_REQUEST["orgid"]))
+	{
+		/* #6 */
+		$orgid = FILTER_VAR($_REQUEST["orgid"], FILTER_VALIDATE_INT);
+		initializeDb();
+		displayDbData();
+		buildEmptyArray();
+		populateArray();
+	}
+	else
+	{
+		/* #1 */
+		/* Build default screen data */
+		$orgid = 0;
+		$person_name = "";
+		$org_name = "";
+		$email_verified = "";
+		$email_unverified = "";
+		$email = "";
+		$org_website = "";
+		$money_url = "";
+		$mission = "";
+		$action = "I"; /* Insert */
+		$abbreviated_name = "";
+		$active_ind = "checked";
+		$admin_contact = "";
+		$customer_contact = "";
+		$customer_notice = "";
 
-if (isset($_POST["action"]))
-{
-    /* Flow #2, #3, #4, or #5 */
-    checkCsrfToken();
-    
-    if (!validatePostData())
-    {
-        /* #2 or #4 */
-        initializeDb();
-        buildEmptyArray();
-        translatePostIntoArray();
-        zipPostToArray();
-        displayPostData();
-    } elseif ($_POST["action"] == "I")
-    {
-        /* #3 */
-        initializeDb();
-        performInsert();
-        buildEmptyArray();
-        translatePostIntoArray();
-        updateQuestionnaireData();
-        zipPostToArray();
-        zipArrayToDb();
-        displayDbData();
-        populateArray();
-    }
-    elseif ($_POST["action"] == "U")
-    {
-        /* #5 */
-        initializeDb();
-        performUpdate();
-        buildEmptyArray();
-        translatePostIntoArray();
-        updateQuestionnaireData();
-        zipPostToArray();
-        zipArrayToDb();
-        displayDbData();
-        populateArray();
-    }
+		initializeDb();
+		buildEmptyArray();
+		buildCsrfToken();
+	}
 }
-elseif (isset($_REQUEST["orgid"]))
+catch (Exception $e)
 {
-    /* #6 */
-    $orgid = FILTER_VAR($_REQUEST["orgid"], FILTER_VALIDATE_INT);
-    initializeDb();
-    displayDbData();
-    buildEmptyArray();
-    populateArray();
+	/* errors just redirect the user back to the login page */
+	header("Location: login.php?errmsg=9");
+	exit();
 }
-else
-{
-    /* #1 */
-    /* Build default screen data */
-    $orgid = 0;
-    $person_name = "";
-    $org_name = "";
-    $email_verified = "";
-    $email_unverified = "";
-    $email = "";
-    $org_website = "";
-    $money_url = "";
-    $mission = "";
-    $action = "I"; /* Insert */
-    $abbreviated_name = "";
-    $active_ind = "checked";
-    $admin_contact = "";
-    $customer_contact = "";
-    $customer_notice = "";
 
-    initializeDb();
-    buildEmptyArray();
-    buildCsrfToken();
-}
 /* end of global section, now fall through to HTML */
 
 function buildCsrfToken()
@@ -104,8 +114,10 @@ function buildCsrfToken()
     /* for csrf protection, the nonce will be formed from a hash of several variables 
         that make up the session, concatenated, but should be stable between requests,
         along with some random salt (defined above) */
-    global $csrf_nonce, $csrf_salt, $action, $orgid;
-    $token = $orgid . $action . $_SERVER['SERVER_SIGNATURE'] . $_SERVER['SCRIPT_FILENAME'] . session_id() . $csrf_salt;
+    global $csrf_nonce, $csrf_salt, $action, $orgid, $csrf_expdate;
+	$csrf_expdate = new DateTime(NULL, new DateTimeZone("UTC"));
+	$csrf_expdate->add(new DateInterval("PT4H")); /* CSRF token expires in 4 hours */
+    $token = $orgid . $action . $_SERVER['SERVER_SIGNATURE'] . $_SERVER['SCRIPT_FILENAME'] . $csrf_expdate->format('U') . session_id() . $csrf_salt;
     //echo "<!-- DEBUG token = $token -->\n";
     $csrf_nonce = hash("sha256", $token);
 }
@@ -115,16 +127,44 @@ function checkCsrfToken()
 {
     global $csrf_salt;
 
-    $token = $_REQUEST["orgid"] . $_POST["action"] . $_SERVER['SERVER_SIGNATURE'] . $_SERVER['SCRIPT_FILENAME'] . session_id() . $csrf_salt;
+	if (!array_key_exists("csrf_expdate", $_POST) || !array_key_exists("nonce", $_POST))
+	{
+		error_log("POST parameters missing in org.php. Possible tampering detected.");
+		throw new Exception("An unknown error occurred (1). Please attempt to authenticate again.");
+		exit(); /* this should not be run, but just in case, we do not want to continue */
+	}
+	
+
+    $token = $_REQUEST["orgid"] . $_POST["action"] . $_SERVER['SERVER_SIGNATURE'] . $_SERVER['SCRIPT_FILENAME'] .  $_POST['csrf_expdate'] . session_id() . 			$csrf_salt;
 	
 	//echo "<!-- DEBUG Check Token = $token -->\n";
     if (hash("sha256", $token) != $_POST["nonce"])
     {
-        error_log("CSRF token mismatch in org.php. Just kill me now...");
-        header("Location: login.php?errmsg");
-        exit();
+		error_log("csrf token mismatch in org.php. Possible tampering detected.");
+		throw new Exception("An unknown error occurred (2). Please attempt to authenticate again.");
+		exit(); /* this should not be run, but just in case, we do not want to continue */
     }
 
+	$dateint = filter_var($_POST["csrf_expdate"], FILTER_VALIDATE_INT);
+	
+	if ($dateint == FALSE)
+	{
+		error_log("expdate does not follow proper format in org.php. Possible tampering detected.");
+		throw new Exception("An unknown error occurred (3). Please attempt to authenticate again.");
+		exit(); /* this should not be run, but just in case, we do not want to continue */
+	}
+	
+
+	$expdate = new DateTime("@" . $dateint, new DateTimeZone("UTC")); /* specify the @ sign to denote passing in a Unix TS integer */
+	$today = new DateTime(NULL, new DateTimeZone("UTC"));
+		
+	if ($expdate < $today)
+	{
+		error_log("CSRF token expired in org.php");
+		throw new Exception("An unknown error occurred (4). Please attempt to authenticate again.");
+		exit(); /* this should not be run, but just in case, we do not want to continue */
+		
+	}
 
 }
 
@@ -137,7 +177,7 @@ function validatePostData()
     if (!($orgid >= 0))
     {
         error_log("Parameter tampering detected (validatePostData) orgid.");
-        header("Location: login.php?errmsg");
+        throw new Exception("Paramter tampering detected (validatePostData) orgid.");
         exit();
     }
 
@@ -176,6 +216,7 @@ function validatePostData()
 		$email_msg = "A valid email address is required.";
 		$goto_page = -2;
         error_log("Email not posted. Possible parameter tampering.");
+        throw new Exception("Paramter tampering detected (validatePostData) email missing.");
 		return false;
 	}
 
@@ -205,6 +246,7 @@ function validatePostData()
 		$org_name_msg = "An organization name is required to be supplied.";
 		$goto_page = -1;
         error_log("Org name not posted. Possible parameter tampering.");
+        throw new Exception("Paramter tampering detected (validatePostData) org_name missing.");
 		return false;
 	}
 
@@ -231,6 +273,7 @@ function validatePostData()
 		$pwd_msg = "Passwords must match.";
 		$goto_page = -2;
         error_log("Password not posted. Possible parameter tampering.");
+        throw new Exception("Paramter tampering detected (validatePostData) password not sent.");
 		return false;
 	}
 	
@@ -252,6 +295,7 @@ function validatePostData()
 		$org_website_msg = "An unknown error occurred. Please try again.";
 		/* $goto_page = 2; Not sure if this matters in this case */
         error_log("Action not posted. Possible parameter tampering.");
+        throw new Exception("Paramter tampering detected (validatePostData) password missing.");
 		return false;
     }
 
@@ -287,6 +331,7 @@ function validatePostData()
 		$org_website_msg = "An unknown error occurred. Please try again.";
 		$goto_page = -1;
         error_log("Website not posted. Possible parameter tampering.");
+        throw new Exception("Paramter tampering detected (validatePostData) website missing.");
 		return false;
 	}
 
@@ -320,6 +365,7 @@ function validatePostData()
 		$money_url_msg = "An unknown error occurred. Please try again.";
 		$goto_page = -1;
         error_log("Donations URL not posted. Possible parameter tampering.");
+        throw new Exception("Paramter tampering detected (validatePostData) money site missing.");
 		return false;
 	}
 
@@ -341,13 +387,15 @@ function initializeDb()
     }
     catch (PDOException $e)
     {
-        die("Database Connection Error: " . $e->getMessage());
-        /* TODO: much better/cleaner handling of errors */
+        error_log("Database Connection Error: " . $e->getMessage());
+        throw new Exception("An unknown error was encountered (5). Please attempt to reauthenticate.");
+		exit();
     }
     catch(Exception $e)
     {
-        die($e->getMessage());
-        /* TODO: much better/cleaner handling of errors */
+        error_log("Error during database connection: " . $e->getMessage());
+        throw new Exception("An unknown error was encountered (6). Please attempt to reauthenticate.");
+		exit();
     }
 
 }
@@ -366,7 +414,8 @@ function performUpdate()
         if ($_SESSION["orgid"] != $orgid)
         {
             error_log("Unauthorized org ID requested. Possible parameter tampering.");
-            header("Location: login.php?errmsg");
+			throw new Exception("Unauthorized org ID requested. Possible parameter tampering.");
+			exit();
         }
 
         $stmt = $dbh->prepare("UPDATE org SET org_name = :org_name, person_name = :person_name, org_website = :org_website, money_url = :money_url, " .
@@ -1202,9 +1251,10 @@ function zipArrayToDb()
 </center>
 
 <form method="POST" action="org.php" id="org_save_form" >
-<input type="hidden" id="nonce" name="nonce" value="<?php echo $csrf_nonce ?>" />
-<input type="hidden" id="action" name="action" value="<?php echo $action ?>" />
-<input type="hidden" id="orgid" name="orgid" value="<?php echo $orgid ?>" />
+<input type="hidden" id="nonce" name="nonce" value="<?php echo $csrf_nonce; ?>" />
+<input type="hidden" id="csrf_expdate" name="csrf_expdate" value="<?php echo $csrf_expdate->format('U'); ?>" />
+<input type="hidden" id="action" name="action" value="<?php echo $action; ?>" />
+<input type="hidden" id="orgid" name="orgid" value="<?php echo $orgid; ?>" />
 
 <div class="panel-group">
  <div class="panel panel-default">
