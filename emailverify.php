@@ -11,7 +11,7 @@ require_once('include/secrets.php');
 and probably a bunch of other attacks
 Needs serious security review */
 
-if (isset($_GET["email"]) && isset($_GET["token"]) && isset($_GET["orgid"]))
+if (isset($_GET["email"]) && isset($_GET["token"]) && isset($_GET["orgid"]) && isset($_GET["date"]))
 {
     testToken();
 }
@@ -29,38 +29,48 @@ function testToken()
 
     $orgid = filter_var($_GET["orgid"], FILTER_VALIDATE_INT);
     $email = filter_var($_GET["email"], FILTER_SANITIZE_EMAIL);
+	$dateint = filter_var($_GET["date"], FILTER_VALIDATE_INT);
 
-    if (($orgid <= 0) || (strlen($email) <= 0))
+    if (($orgid <= 0) || (strlen($email) <= 0) || ($dateint == false))
     {
-        $err_msg="Unable to verify based upon the information provided (2). Please try to log in again and request another email.";
+        $err_msg = "Unable to verify based upon the information provided (2). Please try to log in again and request another email.";
+        throw new Exception("Unable to verify based upon the information provided (2). Please try to log in again and request another email");
+        exit();
     }
-    else
-    {
+    
 
-        $err_msg="Unable to verify based upon the information provided (3). The link may have expired. Please try to log in again and request another email.";
-        /* TODO: make time zone parameter driven */
-        /* or use UTC/GMT or use Eastern Time */
-        $date = new DateTime(NULL, timezone_open("America/Chicago"));
-        $din = new DateInterval("P1D"); /* 1 day dateinterval */
+	/* first checks to make sure the expiration date has not passed */
+	$expdate = new DateTime("@" . $dateint, new DateTimeZone("UTC")); /* specify the @ sign to denote passing in a Unix TS integer */
+	$today = new DateTime(NULL, new DateTimeZone("UTC"));
+			
+	if ($expdate < $today)
+	{
+		$err_msg = "The email verification link has expired. Please try to log in again and request another email.";
+		throw new Exception("Date token expired in emailverify.php.");
+		exit(); /* this should not be run, but just in case, we do not want to continue */
+	
+	}
 
-        for ($i = 0; $i <= 3; $i++)
-        {
      
-            $datetext = $date->format("d-M-Y");
+    $datetext = $expdate->format("U");
 
-            $input = $_SERVER["SERVER_NAME"] . $email . $datetext . $orgid . "emailverify.php" . $csrf_salt;
-            $token = substr(hash("sha256", $input), 0, 18); /* pull out only the 1st 18 digits of the hash */
+    $input = $_SERVER["SERVER_NAME"] . $email . $datetext . $orgid . "emailverify.php" . $csrf_salt;
+    $token = substr(hash("sha256", $input), 0, 18); /* pull out only the 1st 18 digits of the hash */
 
-            if ($token == $_GET["token"])
-            {
-                initializeDb();
-                verifyEmail();
-            }
-
-            $date = $date->add($din);
-
-        }
+    if ($token == $_GET["token"])
+    {
+	    initializeDb();
+       verifyEmail();
     }
+    else 
+    {
+    	/* */
+        $err_msg = "Unable to verify based upon the information provided (3). Please try to log in again and request another email.";
+        throw new Exception("Unable to verify based upon the information provided (2). Please try to log in again and request another email");
+		exit(); /* this should not be run, but just in case, we do not want to continue */
+    }
+
+
 }
 
 
@@ -77,13 +87,15 @@ function initializeDb()
     }
     catch (PDOException $e)
     {
-        die("Database Connection Error: " . $e->getMessage());
-        /* TODO: much better/cleaner handling of errors */
+        error_log("Database Connection Error: " . $e->getMessage());
+        throw new Exception("Database error while connecting.");
+		exit();
     }
     catch(Exception $e)
     {
-        die($e->getMessage());
-        /* TODO: much better/cleaner handling of errors */
+        error_log("Error during database connection: " . $e->getMessage());
+        throw new Exception("Error while connecting to database.");
+		exit();
     }
 
 }
@@ -106,9 +118,11 @@ function verifyEmail()
         if ($stmt->errorCode() != "00000") 
         {
             $erinf = $stmt->errorInfo();
-            error_log("Update failed. Error code:" . $stmt->errorCode() . "<br>" . $erinf[2]); /* the error message in the returned error info */
+				error_log("UPDATE failed in emailverify.php: " . $stmt->errorCode() . " " . $erinf[2]);
             $err_msg = "An unknown error (4) occurred trying to verify the email using that link. Please try to log in again and request another email.";
             $success_msg = NULL;
+				throw new Exception("UPDATE failed in emailverify.php");
+            exit();
         }
 		else
 		{
@@ -123,15 +137,20 @@ function verifyEmail()
     }
     catch (PDOException $e)
     {
-        error_log("Database Query Error: " . $e->getMessage());
+        error_log("Database error during UPDATE query in emailverify.php: " . $e->getMessage());
         $err_msg = "An unknown error (5) occurred trying to verify the email using that link. Please try to log in again and request another email.";
         $success_msg = NULL;
+        throw new Exception("Database error during UPDATE query in emailverify.php");
+		exit();
     }
     catch(Exception $e)
     {
-        error_log($e->getMessage());
+        error_log("Error during UPDATE query in emailverify.php: " . $e->getMessage());
         $err_msg = "An unknown error (6) occurred trying to verify the email using that link. Please try to log in again and request another email.";
         $success_msg = NULL;
+		/* We most likely got here from the SQL error above, so just bubble up the exception */
+        throw new Exception("Error during UPDATE query in emailverify.php");
+		exit();
     }
 
     

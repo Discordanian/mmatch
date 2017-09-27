@@ -179,7 +179,7 @@ function validatePostData()
     if (!($orgid >= 0))
     {
         error_log("Parameter tampering detected (validatePostData) orgid.");
-        throw new Exception("Paramter tampering detected (validatePostData) orgid.");
+        throw new Exception("Parameter tampering detected (validatePostData) orgid.");
         exit();
     }
 
@@ -218,7 +218,7 @@ function validatePostData()
 		$email_msg = "A valid email address is required.";
 		$goto_page = -2;
         error_log("Email not posted. Possible parameter tampering.");
-        throw new Exception("Paramter tampering detected (validatePostData) email missing.");
+        throw new Exception("Parameter tampering detected (validatePostData) email missing.");
 		return false;
 	}
 
@@ -248,7 +248,7 @@ function validatePostData()
 		$org_name_msg = "An organization name is required to be supplied.";
 		$goto_page = -1;
         error_log("Org name not posted. Possible parameter tampering.");
-        throw new Exception("Paramter tampering detected (validatePostData) org_name missing.");
+        throw new Exception("Parameter tampering detected (validatePostData) org_name missing.");
 		return false;
 	}
 
@@ -275,7 +275,7 @@ function validatePostData()
 		$pwd_msg = "Passwords must match.";
 		$goto_page = -2;
         error_log("Password not posted. Possible parameter tampering.");
-        throw new Exception("Paramter tampering detected (validatePostData) password not sent.");
+        throw new Exception("Parameter tampering detected (validatePostData) password not sent.");
 		return false;
 	}
 	
@@ -297,7 +297,7 @@ function validatePostData()
 		$org_website_msg = "An unknown error occurred. Please try again.";
 		/* $goto_page = 2; Not sure if this matters in this case */
         error_log("Action not posted. Possible parameter tampering.");
-        throw new Exception("Paramter tampering detected (validatePostData) password missing.");
+        throw new Exception("Parameter tampering detected (validatePostData) password missing.");
 		return false;
     }
 
@@ -333,7 +333,7 @@ function validatePostData()
 		$org_website_msg = "An unknown error occurred. Please try again.";
 		$goto_page = -1;
         error_log("Website not posted. Possible parameter tampering.");
-        throw new Exception("Paramter tampering detected (validatePostData) website missing.");
+        throw new Exception("Parameter tampering detected (validatePostData) website missing.");
 		return false;
 	}
 
@@ -367,7 +367,7 @@ function validatePostData()
 		$money_url_msg = "An unknown error occurred. Please try again.";
 		$goto_page = -1;
         error_log("Donations URL not posted. Possible parameter tampering.");
-        throw new Exception("Paramter tampering detected (validatePostData) money site missing.");
+        throw new Exception("Parameter tampering detected (validatePostData) money site missing.");
 		return false;
 	}
 
@@ -1159,13 +1159,18 @@ function sendVerificationEmail()
 function buildEmailVerificationUrl()
 {
 	global $orgid, $csrf_salt, $email_unverified;
-	/* calculate a hash to ensure the sendverifyemail.php isn't called maliciously */
-	/* also, this URL currently does not expire */
-	$input = $_SERVER["SERVER_NAME"] . $email_unverified . $orgid . "sendverifyemail.php" . $csrf_salt;
+	/* use a hash in the URL to ensure the sendverifyemail.php isn't called maliciously */
+	$link_expdate = new DateTime(NULL, new DateTimeZone("UTC"));
+	$link_expdate->add(new DateInterval("PT4H")); /* the window to send the email expires in 4 hours */
+	/* that should be fine since this is done almost completely programmatically */
+	/* either when the record is first added, or when the button on page 1 is clicked */
+	
+	$input = $_SERVER["SERVER_NAME"] . $email_unverified . $orgid . 
+		"sendverifyemail.php" . $link_expdate->format('U') . $csrf_salt;
 	$token = hash("sha256", $input);
 
-	$url = sprintf("http://%s/mmatch/sendverifyemail.php?email=%s&token=%s&orgid=%d", $_SERVER["SERVER_NAME"], 
-		urlencode($email_unverified), $token, $orgid);
+	$url = sprintf("http://%s/mmatch/service/sendverifyemail.php?email=%s&token=%s&orgid=%d&date=%s", 
+		$_SERVER["SERVER_NAME"], urlencode($email_unverified), $token, $orgid, $link_expdate->format('U'));
 	/* TODO: Handle the determination of http/https in the URL */
 	return $url;
 }

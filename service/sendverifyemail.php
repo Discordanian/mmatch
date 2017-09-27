@@ -1,17 +1,33 @@
 <?php
 
-require_once('include/inisets.php');
-require_once('include/secrets.php');
+require_once('../include/inisets.php');
+require_once('../include/secrets.php');
 
 /* This page is so that AJAX requests from the page */
 /* Can asynchronously trigger the verification email to be sent */
 
 /* TODO: Needs serious security review */
 
-if (isset($_GET["email"]) && isset($_GET["token"]) && isset($_GET["orgid"]))
+try 
 {
-    checkValidRequest();
-    sendVerificationEmail();
+	
+	if (isset($_GET["email"]) && isset($_GET["token"]) && isset($_GET["orgid"]) && isset($_GET["date"]))
+	{
+		checkValidRequest();
+		sendVerificationEmail();
+	}
+	else
+	{
+		throw new Exception("Insufficient parameters were passed into sendverifyemail.php");
+	}
+
+	
+}
+catch(Exception $e)
+{
+	error_log("Error in top level error handler of sendverifyemail.php: " . $e->getMessage());
+	header("HTTP/1.0 500 Server Error", true, 500);
+	exit();
 }
 
 function checkValidRequest()
@@ -20,19 +36,39 @@ function checkValidRequest()
 
     $orgid = filter_var($_GET["orgid"], FILTER_VALIDATE_INT);
     $email = filter_var($_GET["email"], FILTER_SANITIZE_EMAIL);
-
+	$dateint = filter_var($_GET["date"], FILTER_VALIDATE_INT);
+	
+	if ($dateint == false) 
+	{
+		error_log("Encountered an invalid date int as part of the request to sendverifyemail.php.");
+		throw new Exception("Encountered an invalid date int as part of the request to sendverifyemail.php.");
+		exit();
+	}
+	/* first checks to make sure the expiration date has not passed */
+	$expdate = new DateTime("@" . $dateint, new DateTimeZone("UTC")); /* specify the @ sign to denote passing in a Unix TS integer */
+	$today = new DateTime(NULL, new DateTimeZone("UTC"));
+		
+	if ($expdate < $today)
+	{
+		error_log("Date token expired in sendverifyemail.php");
+		throw new Exception("Date token expired in sendverifyemail.php. The user will need to try again.");
+		exit(); /* this should not be run, but just in case, we do not want to continue */
+		
+	}
+	
 	/* since this is not very security critical use case, (it just sends an email */
 	/* perform basic verification that */
 	/* the request came from a valid source and not a random person */
-	/* also, this URL currently does not expire */
-	$input = $_SERVER["SERVER_NAME"] . $_GET["email"] . $_GET["orgid"] . "sendverifyemail.php" . $csrf_salt;
+
+	$input = $_SERVER["SERVER_NAME"] . $_GET["email"] . $_GET["orgid"] . 
+		"sendverifyemail.php" . $dateint . $csrf_salt;
 	$token = hash("sha256", $input);
 	/* verify that the token that we calculate equals the token that was passed in */
 	/* they could only be equal for a process that knows the secret salt value */
 	if ($token != $_GET["token"])
 	{
 		error_log("Possible parameter tampering encountered in sendverifyemail.php");
-		http_response_code(500);
+		throw new Exception("Token validation failed. Possible parameter tampering in sendverifyemail.php.");
 		exit();
 	}
 }
@@ -50,13 +86,15 @@ function initializeDb()
     }
     catch (PDOException $e)
     {
-        die("Database Connection Error: " . $e->getMessage());
-        /* TODO: much better/cleaner handling of errors */
+        error_log("Database Connection Error: " . $e->getMessage());
+        throw new Exception("Database error while connecting.");
+		exit();
     }
     catch(Exception $e)
     {
-        die($e->getMessage());
-        /* TODO: much better/cleaner handling of errors */
+        error_log("Error during database connection: " . $e->getMessage());
+        throw new Exception("Error while connecting to database.");
+		exit();
     }
 
 }
@@ -75,10 +113,10 @@ function lookupEmail()
 
         if ($stmt->errorCode() != "00000") 
         {
-            echo "Error code:<br>";
             $erinf = $stmt->errorInfo();
-			http_response_code(500);
-            die("Insert failed<br>Error code:" . $stmt->errorCode() . "<br>" . $erinf[2]); /* the error message in the returned error info */
+			error_log("SELECT failed in sendverifyemail.php: " . $stmt->errorCode() . " " . $erinf[2]);
+			throw new Exception("SELECT encountered an error in sendverifyemail.php");
+            exit();
         }
 		
 
@@ -87,7 +125,7 @@ function lookupEmail()
 		if (!isset($row))
 		{
 			error_log("Failed to look up valid email and orgid combination in sendverifyemail.php.");
-			http_response_code(500);
+			throw new Exception("Failed to look up valid email and orgid combination in sendverifyemail.php");
 			exit();
 		}
 
@@ -96,13 +134,16 @@ function lookupEmail()
     }
     catch (PDOException $e)
     {
-        die("Database Connection Error: " . $e->getMessage());
-        /* TODO: much better/cleaner handling of errors */
+        error_log("Database error during SELECT query in sendverifyemail.php: " . $e->getMessage());
+        throw new Exception("Database error during SELECT query in sendverifyemail.php");
+		exit();
     }
     catch(Exception $e)
     {
-        die($e->getMessage());
-        /* TODO: much better/cleaner handling of errors */
+        error_log("Error during SELECT query in sendverifyemail.php: " . $e->getMessage());
+		/* We most likely got here from the SQL error above, so just bubble up the exception */
+        throw new Exception("Error during SELECT query in sendverifyemail.php");
+		exit();
     }
 }
 
@@ -115,15 +156,15 @@ function sendVerificationEmail()
     /* TODO: use different time zones depending upon the locality of the organization ? */
     /* Links effectively expire at midnight */
     /* Or just use eastern time for everything, or UTC/GMT */
-    $date = new DateTime(NULL, timezone_open("America/Chicago"));
-    $din = new DateInterval("P3D");
-    $expdate = $date->add($din);
+    $expdate = new DateTime(NULL, new DateTimeZone("UTC"));
+    $din = new DateInterval("P3D"); /* email verification link expires in 3 days */
+    $expdate->add($din);
     /* TODO: make expiration date of link parameter driven */
-    $datetext = $expdate->format("d-M-Y");
+    $datetext = $expdate->format("U");
 
     $input = $_SERVER["SERVER_NAME"] . $email . $datetext . $orgid . "emailverify.php" . $csrf_salt;
     $token = substr(hash("sha256", $input), 0, 18); /* pull out only the 1st 18 digits of the hash, make it a typable link? */
-    $link = sprintf("http://%s/mmatch/emailverify.php?email=%s&token=%s&orgid=%d", $_SERVER["SERVER_NAME"], $email, $token, $orgid);
+    $link = sprintf("http://%s/mmatch/emailverify.php?email=%s&token=%s&orgid=%d&date=%s", $_SERVER["SERVER_NAME"], $email, $token, $orgid, $datetext);
 
 	//echo "<!-- $input -->\n"; /* TODO: This is a cheat and a security vulnerability. Remove it */
 	echo "<!-- $link -->\n"; /* TODO: This is a cheat so I don't have to actually send/receive the email. Remove this */
