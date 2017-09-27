@@ -57,13 +57,14 @@ try
 			/* #5 */
 			initializeDb();
 			performUpdate();
-			buildEmptyArray();
+			//buildEmptyArray();
+			populateArray();
 			translatePostIntoArray();
 			updateQuestionnaireData();
 			zipPostToArray();
 			zipArrayToDb();
 			displayDbData();
-			populateArray();
+			//populateArray();
 		}
 	}
 	elseif (isset($_REQUEST["orgid"]))
@@ -791,9 +792,9 @@ function buildEmptyArray()
 
         global $dbh, $qu_aire;
 
-
-        $stmt = $dbh->prepare("SELECT gg.page_num, gg.group_text, qq.question_id, qq.question_text, " .
-        " qq.org_multi_select, qc.choice_id, qc.choice_text, NULL AS org_id " .
+			/* the NULL selects are there to put columns in the returned data set to hold data which will be used a little later */
+        $stmt = $dbh->prepare("SELECT gg.page_num, gg.group_text, qq.question_id, qq.question_text, qq.org_multi_select, " .
+        " qc.choice_id, qc.choice_text, NULL AS org_response_id, NULL AS org_id, NULL AS selected, NULL AS new_selected " .
         " FROM question_group gg INNER JOIN question qq " .
         " ON gg.group_id = qq.question_group_id " .
         " INNER JOIN question_choice qc " .
@@ -848,15 +849,15 @@ function populateArray()
         global $dbh, $orgid, $qu_aire;
 
 
-        $stmt = $dbh->prepare("SELECT gg.page_num, gg.group_text, qq.question_id, qq.question_text, " .
-        " qq.org_multi_select, qc.choice_id, qc.choice_text, res.org_id " .
+			/* the NULL selects are there to put columns in the returned data set to hold data which will be used a little later */
+        $stmt = $dbh->prepare("SELECT gg.page_num, gg.group_text, qq.question_id, qq.question_text, qq.org_multi_select, " .
+        " qc.choice_id, qc.choice_text, res.org_response_id, res.org_id, res.selected, NULL AS new_selected " .
         " FROM question_group gg INNER JOIN question qq " .
         " ON gg.group_id = qq.question_group_id " .
         " INNER JOIN question_choice qc " .
         " ON qc.question_id = qq.question_id " .
         " LEFT OUTER JOIN org_response res " .
-        " ON res.choice_id = qc.choice_id " .
-        " WHERE res.org_id IS NULL OR res.org_id = :orgid " .
+        " ON res.choice_id = qc.choice_id AND (res.org_id IS NULL OR res.org_id = :orgid) " .
         " ORDER BY gg.group_id, gg.page_num, qq.question_id, qq.sort_order, qc.choice_id, qc.sort_order;");
         $stmt->bindValue(':orgid', $orgid, PDO::PARAM_INT);
 
@@ -955,7 +956,7 @@ function arrayToHtml($pagenum)
         foreach($question as $choice_id => $choice)
         {
 
-            if ($choice["org_id"] > 0)
+            if ($choice["selected"] > 0)
             {
                 $selected = " selected ";
             }
@@ -1040,7 +1041,7 @@ function translatePostIntoArray()
                             //printf("<!-- Before P# %d Qid %d ChID %d OrgID %d -->\n", $page_num, $question_id, $choice_id, 
                             //    $qu_aire[$page_num][$question_id][$choice_id]["org_id"]);
                             //var_dump($qu_aire);
-                            $qu_aire[$page_num][$question_id][$choice_id]["org_id"] = $orgid;
+                            $qu_aire[$page_num][$question_id][$choice_id]["selected"] = 1;
                             //printf("<!-- After P# %d Qid %d ChID %d OrgID %d -->\n", $page_num, $question_id, $choice_id, 
                             //    $qu_aire[$page_num][$question_id][$choice_id]["org_id"]);
                         }
@@ -1058,7 +1059,7 @@ function translatePostIntoArray()
                         //printf("<!-- Before P# %d Qid %d ChID %d OrgID %d -->\n", $page_num, $question_id, $choice_id, 
                         //    $qu_aire[$page_num][$question_id][$choice_id]["org_id"]);
                         //var_dump($qu_aire);
-                        $qu_aire[$page_num][$question_id][$choice_id]["org_id"] = $orgid;
+                        $qu_aire[$page_num][$question_id][$choice_id]["selected"] = 1;
                         //printf("<!-- After P# %d Qid %d ChID %d OrgID %d -->\n", $page_num, $question_id, $choice_id, 
                         //    $qu_aire[$page_num][$question_id][$choice_id]["org_id"]);
                     }
@@ -1075,7 +1076,7 @@ function updateQuestionnaireData()
 {
     global $qu_aire, $orgid, $dbh;
 
-    $sql = sprintf("DELETE FROM org_response WHERE org_id = %u ; ", $orgid);
+    $sql = "";
 
     foreach($qu_aire as $page_num => $page)
     {
@@ -1083,15 +1084,20 @@ function updateQuestionnaireData()
         {
             foreach($question as $choice_id => $choice)
             {
-                //echo "<!-- \n";
+                echo "<!-- \n";
                 //var_dump($choice);
-                //printf("<!-- QuestionID %d ChoiceID %d Selection %d -->\n", $choice["question_id"], $choice["choice_id"], $choice["org_id"]);
-                //echo "--> \n";
+                printf("org_response_id %u QuestionID %u ChoiceID %u Selection %u \n", $choice["org_response_id"], $choice["question_id"], $choice["choice_id"], $choice["selected"]);
+                echo "--> \n";
                 
-                if ($choice["org_id"] > 0)
+                if (isset($choice["org_response_id"]) && $choice["org_response_id"] > 0)
                 {
-                    $sql = sprintf("%s INSERT INTO org_response (choice_id, org_id) VALUES (%u, %u) ; ", $sql, $choice_id, $orgid);
+                    $sql = sprintf("%s UPDATE org_response SET selected = %u WHERE org_response_id = %u AND org_id = %u AND choice_id = %u; ", 
+                    	$sql, $choice["selected"], $choice["org_response_id"], $orgid, $choice_id );
                 }
+                else 
+                {
+                	$sql = sprintf("%s INSERT INTO org_response (choice_id, org_id, selected) VALUES (%u, %u, %u) ; ", $sql, $choice_id, $orgid, $choice["selected"]);
+				}
 
             }
         }
@@ -1467,7 +1473,7 @@ function zipArrayToDb()
         arrayToHtml($i);
     }
 ?>
-        <button id="save_data" type="button" class="btn btn-default btn-lg">Save data</button>
+        <button id="save_data" type="submit" class="btn btn-default btn-lg">Save data</button>
 
 	<?php if (isset($success_msg))
 	{
