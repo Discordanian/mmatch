@@ -14,6 +14,8 @@ try
 	if (isset($_GET["email"]) && isset($_GET["token"]) && isset($_GET["orgid"]) && isset($_GET["date"]))
 	{
 		checkValidRequest();
+		initializeDb();
+		lookupEmail();
 		sendVerificationEmail();
 	}
 	else
@@ -37,6 +39,8 @@ function checkValidRequest()
     $orgid = filter_var($_GET["orgid"], FILTER_VALIDATE_INT);
     $email = filter_var($_GET["email"], FILTER_SANITIZE_EMAIL);
 	$dateint = filter_var($_GET["date"], FILTER_VALIDATE_INT);
+	
+	//echo "<!-- email = " . $email . " -->\n";
 	
 	if ($dateint == false) 
 	{
@@ -162,12 +166,12 @@ function sendVerificationEmail()
     /* TODO: make expiration date of link parameter driven */
     $datetext = $expdate->format("U");
 
-    $input = $_SERVER["SERVER_NAME"] . $email . $datetext . $orgid . "emailverify.php" . $csrf_salt;
+    $input = $_SERVER["SERVER_NAME"] . urlencode($email) . $datetext . $orgid . "emailverify.php" . $csrf_salt;
     $token = substr(hash("sha256", $input), 0, 18); /* pull out only the 1st 18 digits of the hash, make it a typable link? */
-    $link = sprintf("http://%s/mmatch/emailverify.php?email=%s&token=%s&orgid=%d&date=%s", $_SERVER["SERVER_NAME"], $email, $token, $orgid, $datetext);
+    $link = sprintf("http://%s/mmatch/emailverify.php?email=%s&token=%s&orgid=%d&date=%s", $_SERVER["SERVER_NAME"], urlencode($email), $token, $orgid, $datetext);
 
 	//echo "<!-- $input -->\n"; /* TODO: This is a cheat and a security vulnerability. Remove it */
-	echo "<!-- $link -->\n"; /* TODO: This is a cheat so I don't have to actually send/receive the email. Remove this */
+	echo "<!-- $link -->\n"; /* TODO: This is a cheat so I don't have to actually send/receive the email. Remove this eventually */
 	
     $message = sprintf("You apparently registered an account with movementmatch.org.\n" .
         "Click on the following link in order to verify that this was intended: \n" .

@@ -11,13 +11,22 @@ require_once('include/secrets.php');
 and probably a bunch of other attacks
 Needs serious security review */
 
-if (isset($_GET["email"]) && isset($_GET["token"]) && isset($_GET["orgid"]) && isset($_GET["date"]))
+try
 {
-    testToken();
+	if (isset($_GET["email"]) && isset($_GET["token"]) && isset($_GET["orgid"]) && isset($_GET["date"]))
+	{
+		testToken();
+	}
+	else
+	{
+		$err_msg = "An unknown error (1) occurred trying to verify the email using that link. Please try to log in again and request another email.";
+	}
 }
-else
+catch(Exception $e)
 {
-    $err_msg = "An unknown error (1) occurred trying to verify the email using that link. Please try to log in again and request another email.";
+	error_log("Error in top level error handler of emailverify.php: " . $e->getMessage());
+	//header("HTTP/1.0 500 Server Error", true, 500);
+	exit();
 }
 
 
@@ -26,10 +35,13 @@ function testToken()
     global $orgid, $email, $csrf_salt, $err_msg;
 
     /* sanitize these values brought in before I do any processing based upon them */
+	//echo "<!-- getemail = " . $_GET["email"] . " --> \n";
 
     $orgid = filter_var($_GET["orgid"], FILTER_VALIDATE_INT);
     $email = filter_var($_GET["email"], FILTER_SANITIZE_EMAIL);
 	$dateint = filter_var($_GET["date"], FILTER_VALIDATE_INT);
+
+	//echo "<!-- email = " . $email . " --> \n";
 
     if (($orgid <= 0) || (strlen($email) <= 0) || ($dateint == false))
     {
@@ -54,8 +66,12 @@ function testToken()
      
     $datetext = $expdate->format("U");
 
-    $input = $_SERVER["SERVER_NAME"] . $email . $datetext . $orgid . "emailverify.php" . $csrf_salt;
+    $input = $_SERVER["SERVER_NAME"] . urlencode($email) . $datetext . $orgid . "emailverify.php" . $csrf_salt;
     $token = substr(hash("sha256", $input), 0, 18); /* pull out only the 1st 18 digits of the hash */
+
+	//echo "<!-- input = " . $input . " --> \n";
+	//echo "<!-- token = " . $token . " --> \n";
+	//echo "<!-- gettoken = " . $_GET["token"] . " --> \n";
 
     if ($token == $_GET["token"])
     {
@@ -66,7 +82,7 @@ function testToken()
     {
     	/* */
         $err_msg = "Unable to verify based upon the information provided (3). Please try to log in again and request another email.";
-        throw new Exception("Unable to verify based upon the information provided (2). Please try to log in again and request another email");
+        throw new Exception("Unable to verify based upon the information provided (3). Please try to log in again and request another email");
 		exit(); /* this should not be run, but just in case, we do not want to continue */
     }
 
