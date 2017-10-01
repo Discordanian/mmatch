@@ -1091,7 +1091,6 @@ function updateQuestionnaireData()
                     /* detect if this choice had been changed by the user */
                     if ((($choice["selected"] == "0") && ($choice["new_selected"] == "1")) || (($choice["selected"] == "1") && ($choice["new_selected"] == "0")))
                     {
-                        //echo "<!-- Hello from inside loop -->\n";
                         $sql = sprintf("%s UPDATE org_response SET selected = %u WHERE org_response_id = %u AND org_id = %u AND choice_id = %u ;", 
                     	   $sql, $choice["new_selected"], $choice["org_response_id"], $orgid, $choice_id );
                     }
