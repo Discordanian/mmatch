@@ -37,6 +37,10 @@ function save_data_click()
 
         $("form#org_save_form").submit();
     }    
+    else
+    {
+    	return false;
+    }
 }
 
 function select_zip()

@@ -57,13 +57,14 @@ try
 			/* #5 */
 			initializeDb();
 			performUpdate();
-			buildEmptyArray();
+			//buildEmptyArray();
+			populateArray();
 			translatePostIntoArray();
 			updateQuestionnaireData();
 			zipPostToArray();
 			zipArrayToDb();
 			displayDbData();
-			populateArray();
+			//populateArray();
 		}
 	}
 	elseif (isset($_REQUEST["orgid"]))
@@ -105,7 +106,7 @@ catch (Exception $e)
 	/* errors just redirect the user back to the login page */
 	/* TODO: There are certain errors that might warrant a redisplay 
 	or a retry rather than just blowing up back to the login page */
-	header("Location: login.php?errmsg=9");
+	header("Location: login.php?errmsg=9"); /* the #9 means nothing, maybe at some point it will mean something */
 	exit();
 }
 
@@ -179,7 +180,7 @@ function validatePostData()
     if (!($orgid >= 0))
     {
         error_log("Parameter tampering detected (validatePostData) orgid.");
-        throw new Exception("Paramter tampering detected (validatePostData) orgid.");
+        throw new Exception("Parameter tampering detected (validatePostData) orgid.");
         exit();
     }
 
@@ -218,7 +219,7 @@ function validatePostData()
 		$email_msg = "A valid email address is required.";
 		$goto_page = -2;
         error_log("Email not posted. Possible parameter tampering.");
-        throw new Exception("Paramter tampering detected (validatePostData) email missing.");
+        throw new Exception("Parameter tampering detected (validatePostData) email missing.");
 		return false;
 	}
 
@@ -248,7 +249,7 @@ function validatePostData()
 		$org_name_msg = "An organization name is required to be supplied.";
 		$goto_page = -1;
         error_log("Org name not posted. Possible parameter tampering.");
-        throw new Exception("Paramter tampering detected (validatePostData) org_name missing.");
+        throw new Exception("Parameter tampering detected (validatePostData) org_name missing.");
 		return false;
 	}
 
@@ -275,7 +276,7 @@ function validatePostData()
 		$pwd_msg = "Passwords must match.";
 		$goto_page = -2;
         error_log("Password not posted. Possible parameter tampering.");
-        throw new Exception("Paramter tampering detected (validatePostData) password not sent.");
+        throw new Exception("Parameter tampering detected (validatePostData) password not sent.");
 		return false;
 	}
 	
@@ -297,7 +298,7 @@ function validatePostData()
 		$org_website_msg = "An unknown error occurred. Please try again.";
 		/* $goto_page = 2; Not sure if this matters in this case */
         error_log("Action not posted. Possible parameter tampering.");
-        throw new Exception("Paramter tampering detected (validatePostData) password missing.");
+        throw new Exception("Parameter tampering detected (validatePostData) password missing.");
 		return false;
     }
 
@@ -333,7 +334,7 @@ function validatePostData()
 		$org_website_msg = "An unknown error occurred. Please try again.";
 		$goto_page = -1;
         error_log("Website not posted. Possible parameter tampering.");
-        throw new Exception("Paramter tampering detected (validatePostData) website missing.");
+        throw new Exception("Parameter tampering detected (validatePostData) website missing.");
 		return false;
 	}
 
@@ -367,7 +368,7 @@ function validatePostData()
 		$money_url_msg = "An unknown error occurred. Please try again.";
 		$goto_page = -1;
         error_log("Donations URL not posted. Possible parameter tampering.");
-        throw new Exception("Paramter tampering detected (validatePostData) money site missing.");
+        throw new Exception("Parameter tampering detected (validatePostData) money site missing.");
 		return false;
 	}
 
@@ -791,9 +792,9 @@ function buildEmptyArray()
 
         global $dbh, $qu_aire;
 
-
-        $stmt = $dbh->prepare("SELECT gg.page_num, gg.group_text, qq.question_id, qq.question_text, " .
-        " qq.org_multi_select, qc.choice_id, qc.choice_text, NULL AS org_id " .
+			/* the NULL selects are there to put columns in the returned data set to hold data which will be used a little later */
+        $stmt = $dbh->prepare("SELECT gg.page_num, gg.group_text, qq.question_id, qq.question_text, qq.org_multi_select, " .
+        " qc.choice_id, qc.choice_text, NULL AS org_response_id, NULL AS org_id, NULL AS selected, '0' AS new_selected " .
         " FROM question_group gg INNER JOIN question qq " .
         " ON gg.group_id = qq.question_group_id " .
         " INNER JOIN question_choice qc " .
@@ -848,15 +849,15 @@ function populateArray()
         global $dbh, $orgid, $qu_aire;
 
 
-        $stmt = $dbh->prepare("SELECT gg.page_num, gg.group_text, qq.question_id, qq.question_text, " .
-        " qq.org_multi_select, qc.choice_id, qc.choice_text, res.org_id " .
+			/* the NULL selects are there to put columns in the returned data set to hold data which will be used a little later */
+        $stmt = $dbh->prepare("SELECT gg.page_num, gg.group_text, qq.question_id, qq.question_text, qq.org_multi_select, " .
+        " qc.choice_id, qc.choice_text, res.org_response_id, res.org_id, res.selected, '0' AS new_selected " .
         " FROM question_group gg INNER JOIN question qq " .
         " ON gg.group_id = qq.question_group_id " .
         " INNER JOIN question_choice qc " .
         " ON qc.question_id = qq.question_id " .
         " LEFT OUTER JOIN org_response res " .
-        " ON res.choice_id = qc.choice_id " .
-        " WHERE res.org_id IS NULL OR res.org_id = :orgid " .
+        " ON res.choice_id = qc.choice_id AND (res.org_id IS NULL OR res.org_id = :orgid) " .
         " ORDER BY gg.group_id, gg.page_num, qq.question_id, qq.sort_order, qc.choice_id, qc.sort_order;");
         $stmt->bindValue(':orgid', $orgid, PDO::PARAM_INT);
 
@@ -955,7 +956,7 @@ function arrayToHtml($pagenum)
         foreach($question as $choice_id => $choice)
         {
 
-            if ($choice["org_id"] > 0)
+            if ($choice["selected"] == "1")
             {
                 $selected = " selected ";
             }
@@ -1003,7 +1004,7 @@ function translatePostIntoArray()
             /* 1) if the question was not answered, that means there will be
                 nothing in the POST for that question ID
                 nothing to do in that case because the value
-                in the array is already null */
+                in the array is already 0 or null */
 
             /* 2) if the question was a single selection but the first, default
                 "no selection" was chosen, then also nothing to do,
@@ -1012,7 +1013,7 @@ function translatePostIntoArray()
             /* 3) if the question was a single selection, then
                 $postval will contain the choice # of the selection
                 formatted as "choice-#'. In this case, look up the choice #
-                in the array, and set it selected by putting the Org ID in */
+                in the array, and set it to selected */
 
             /* 4) if the question was a multiple selection, then
                 $postval will contain an array of the choice #'s.
@@ -1031,37 +1032,31 @@ function translatePostIntoArray()
                     {
                         /* It's a multiple select, so http sent an array (even if only 1 selected) */
                         //printf("<!-- Question ID %s has the array response of choice id %s -->\n", $question_id, $choice_str);
-                        if ($choice_str != "NULL") /* Don't have to do anything if "no selection" */
+                        if ($choice_str != "NULL") 
                         {
                             sscanf($choice_str, "choice-%u", $choice_id); /* scanf will only allow an integer to be returned */
 
-                            /* pull the correct choice out of the question array, and set the org ID in $qu_aire, 
-                                which will cause a row to be inserted with that ID later */
-                            //printf("<!-- Before P# %d Qid %d ChID %d OrgID %d -->\n", $page_num, $question_id, $choice_id, 
-                            //    $qu_aire[$page_num][$question_id][$choice_id]["org_id"]);
-                            //var_dump($qu_aire);
-                            $qu_aire[$page_num][$question_id][$choice_id]["org_id"] = $orgid;
-                            //printf("<!-- After P# %d Qid %d ChID %d OrgID %d -->\n", $page_num, $question_id, $choice_id, 
-                            //    $qu_aire[$page_num][$question_id][$choice_id]["org_id"]);
+                            /* pull the correct choice out of the question array, and set the selected flag in $qu_aire, 
+                                which will cause a row to be inserted/updated with that ID later */
+                            $qu_aire[$page_num][$question_id][$choice_id]["new_selected"] = "1";
                         }
                     }
                 }
                 else
                 {
                     /* It's a single selection drop down, so the $postval is just the value of the "choice" (if any) */   
-                    if ($postval != "NULL") /* Don't have to do anything if "no selection" */
+                    if ($postval != "NULL") 
                     {
                         sscanf($postval, "choice-%u", $choice_id); /* scanf will only allow an integer to be returned */
 
-                        /* pull the correct choice out of the question array, and set the org ID in the $qu_aire, 
-                            which will cause a row to be inserted with that ID later */
-                        //printf("<!-- Before P# %d Qid %d ChID %d OrgID %d -->\n", $page_num, $question_id, $choice_id, 
-                        //    $qu_aire[$page_num][$question_id][$choice_id]["org_id"]);
-                        //var_dump($qu_aire);
-                        $qu_aire[$page_num][$question_id][$choice_id]["org_id"] = $orgid;
-                        //printf("<!-- After P# %d Qid %d ChID %d OrgID %d -->\n", $page_num, $question_id, $choice_id, 
-                        //    $qu_aire[$page_num][$question_id][$choice_id]["org_id"]);
+                        /* pull the correct choice out of the question array, and set the selected flag in the $qu_aire, 
+                            which will cause a row to be inserted/updated with that ID later */
+                        $qu_aire[$page_num][$question_id][$choice_id]["new_selected"] = "1";
                     }
+                    //else 
+                    //{
+                    //    $qu_aire[$page_num][$question_id][$choice_id]["new_selected"] = "0";
+                    //}
                 }
             }
 
@@ -1075,7 +1070,7 @@ function updateQuestionnaireData()
 {
     global $qu_aire, $orgid, $dbh;
 
-    $sql = sprintf("DELETE FROM org_response WHERE org_id = %u ; ", $orgid);
+    $sql = "";
 
     foreach($qu_aire as $page_num => $page)
     {
@@ -1083,15 +1078,29 @@ function updateQuestionnaireData()
         {
             foreach($question as $choice_id => $choice)
             {
-                //echo "<!-- \n";
-                //var_dump($choice);
-                //printf("<!-- QuestionID %d ChoiceID %d Selection %d -->\n", $choice["question_id"], $choice["choice_id"], $choice["org_id"]);
+                //echo "<!-- Selected: ";
+                //var_dump($choice["selected"]);
+                //echo "\n New Choice: ";
+                //var_dump($choice["new_selected"]);
+                //printf("org_response_id=%u QuestionID=%u ChoiceID=%u Selected=%u New=%u ", $choice["org_response_id"], $choice["question_id"], $choice["choice_id"], $choice["selected"], $choice["new_selected"]);
                 //echo "--> \n";
                 
-                if ($choice["org_id"] > 0)
+                /* detect if this choice happened to be for a new question or a new org, in which case there would be no previous response record */
+                if (isset($choice["org_response_id"]) && $choice["org_response_id"] > 0)
                 {
-                    $sql = sprintf("%s INSERT INTO org_response (choice_id, org_id) VALUES (%u, %u) ; ", $sql, $choice_id, $orgid);
+                    /* detect if this choice had been changed by the user */
+                    if ((($choice["selected"] == "0") && ($choice["new_selected"] == "1")) || (($choice["selected"] == "1") && ($choice["new_selected"] == "0")))
+                    {
+                        //echo "<!-- Hello from inside loop -->\n";
+                        $sql = sprintf("%s UPDATE org_response SET selected = %u WHERE org_response_id = %u AND org_id = %u AND choice_id = %u ;", 
+                    	   $sql, $choice["new_selected"], $choice["org_response_id"], $orgid, $choice_id );
+                    }
                 }
+                else /* there seems to be no row, so must do an insert */
+                {
+                	$sql = sprintf("%s INSERT INTO org_response (choice_id, org_id, selected) VALUES (%u, %u, %u) ;", $sql, $choice_id, $orgid, $choice["new_selected"]);
+				}
+               	$qu_aire[$page_num][$question_id][$choice_id]["selected"] = $choice["new_selected"]; /* set this so that it is redisplayed on the page later */
 
             }
         }
@@ -1101,6 +1110,12 @@ function updateQuestionnaireData()
     //echo strtr($sql, ";", "\n");        
     //echo "--> \n";
 
+    /* if there's nothing in the query, the user didn't change anything, so nothing to do */
+    if (strlen(trim($sql)) == 0)
+    {
+        return;
+    }
+    
     try
     {
 
@@ -1159,13 +1174,18 @@ function sendVerificationEmail()
 function buildEmailVerificationUrl()
 {
 	global $orgid, $csrf_salt, $email_unverified;
-	/* calculate a hash to ensure the sendverifyemail.php isn't called maliciously */
-	/* also, this URL currently does not expire */
-	$input = $_SERVER["SERVER_NAME"] . $email_unverified . $orgid . "sendverifyemail.php" . $csrf_salt;
+	/* use a hash in the URL to ensure the sendverifyemail.php isn't called maliciously */
+	$link_expdate = new DateTime(NULL, new DateTimeZone("UTC"));
+	$link_expdate->add(new DateInterval("PT4H")); /* the window to send the email expires in 4 hours */
+	/* that should be fine since this is done almost completely programmatically */
+	/* either when the record is first added, or when the button on page 1 is clicked */
+	
+	$input = $_SERVER["SERVER_NAME"] . $email_unverified . $orgid . 
+		"sendverifyemail.php" . $link_expdate->format('U') . $csrf_salt;
 	$token = hash("sha256", $input);
 
-	$url = sprintf("http://%s/mmatch/sendverifyemail.php?email=%s&token=%s&orgid=%d", $_SERVER["SERVER_NAME"], 
-		urlencode($email_unverified), $token, $orgid);
+	$url = sprintf("http://%s/mmatch/service/sendverifyemail.php?email=%s&token=%s&orgid=%d&date=%s", 
+		$_SERVER["SERVER_NAME"], urlencode($email_unverified), $token, $orgid, $link_expdate->format('U'));
 	/* TODO: Handle the determination of http/https in the URL */
 	return $url;
 }
@@ -1462,7 +1482,7 @@ function zipArrayToDb()
         arrayToHtml($i);
     }
 ?>
-        <button id="save_data" type="button" class="btn btn-default btn-lg">Save data</button>
+        <button id="save_data" type="submit" class="btn btn-default btn-lg">Save data</button>
 
 	<?php if (isset($success_msg))
 	{
