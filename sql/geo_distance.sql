@@ -14,5 +14,7 @@ BEGIN
 	SET long_dist = (111 * COS(long1 / 2 * PI())) * long_diff;
 	SET dist = SQRT(POW(long_dist,2) + POW(lat_dist,2));
 RETURN dist;
-END
+END$$
 DELIMITER ;
+
+GRANT EXECUTE ON FUNCTION geo_distance TO movemusr@localhost;
