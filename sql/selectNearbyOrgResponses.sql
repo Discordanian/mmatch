@@ -14,6 +14,6 @@ CREATE PROCEDURE selectNearbyOrgResponses (zipcode INT, max_range FLOAT)
 		INNER JOIN postal_code_ref pcr1 ON pcr1.postal_code = zipcode GROUP BY org.orgid) dist
 		ON (dist.orgid = res.org_id OR dist.orgid IS NULL)
 	WHERE dist.distance <= max_range
-	ORDER BY dist.orgid, dist.org_name, dist.distance, qq.question_id, qc.choice_id
+	ORDER BY dist.orgid, dist.org_name, dist.distance, qq.question_id, qc.choice_id;
 
-grant execute on procedure selectNearbyOrgResponses to movem_usr@localhost;
+GRANT EXECUTE ON PROCEDURE selectNearbyOrgResponses TO movemusr@localhost;
