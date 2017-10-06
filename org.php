@@ -1299,7 +1299,7 @@ function zipArrayToDb()
 </div>
 </center>
 
-<form method="POST" action="org.php" id="org_save_form" >
+<form method="POST" action="org.php" id="org_save_form" autocomplete="off" >
 <input type="hidden" id="nonce" name="nonce" value="<?php echo $csrf_nonce; ?>" />
 <input type="hidden" id="csrf_expdate" name="csrf_expdate" value="<?php echo $csrf_expdate->format('U'); ?>" />
 <input type="hidden" id="action" name="action" value="<?php echo $action; ?>" />
