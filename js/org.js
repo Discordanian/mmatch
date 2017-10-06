@@ -39,6 +39,8 @@ function save_data_click()
     }    
     else
     {
+		/* show all panels that contain inputs that are considered invalid */
+		$(".form-control:invalid").parent().parent().parent().collapse("show")
     	return false;
     }
 }

@@ -1309,7 +1309,7 @@ function zipArrayToDb()
  <div class="panel panel-default">
   <div class="panel-heading">
    <h4 class="panel-title">
-    <a data-toggle="collapse" href="#intro1"><span class="glyphicon glyphicon-plus"></span> Tell us a bit about yourself</a>
+    <a data-toggle="collapse" href="#intro1"><span class="glyphicon glyphicon-plus"></span>Tell us a bit about yourself</a>
    </h4>
   </div> <!-- panel-heading -->
 
@@ -1319,7 +1319,7 @@ function zipArrayToDb()
 
     <div class="form-group">
         <label for="person_name">Name:</label>
-        <input class="form-control" type="text" id="person_name" maxlength="128" name="person_name" value="<?php echo $person_name ?>" />
+        <input class="form-control" type="text" id="person_name" maxlength="128" name="person_name" value="<?php echo $person_name ?>"  required />
     </div> <!-- form-group -->
 
     <div class="alert alert-danger" hidden="true" id="person_name_msg" >
@@ -1328,7 +1328,7 @@ function zipArrayToDb()
 
     <div class="form-group">
         <label for="email">Email address:</label>
-        <input class="form-control" type="email" id="email" maxlength="128" name="email" value="<?php echo $email; ?>" />
+        <input class="form-control" type="email" id="email" maxlength="128" name="email" value="<?php echo $email; ?>"  required />
 
         <?php
             if (strlen($email_unverified) > 0)
@@ -1349,12 +1349,12 @@ function zipArrayToDb()
 
    <div class="form-group">
         <label for="password1"><?php if ($action == "U") { echo "Update Password:"; } else { echo "Set Password:"; } ?></label>
-        <input class="form-control" type="password" id="password1" maxlength="128" name="password1" value="" />
+        <input class="form-control" type="password" id="password1" maxlength="128" name="password1" value="" <?php if ($action == "I") { echo "required"; } ?> />
     </div> <!-- form-group -->
 
    <div class="form-group">
         <label for="password2">Verify Password:</label>
-        <input class="form-control" type="password" id="password2" maxlength="128" name="password2" value="" />
+        <input class="form-control" type="password" id="password2" maxlength="128" name="password2" value="" <?php if ($action == "I") { echo "required"; } ?> />
     </div> <!-- form-group -->
 
     <div class="alert alert-danger" <?php if (!isset($pwd_msg)) echo "hidden='true'"; ?> id="pwd_msg" >
@@ -1376,13 +1376,13 @@ function zipArrayToDb()
    </h4>
   </div> <!-- panel-heading -->
 
-<div id="intro2" class="panel-collapse collapse <?php if ($goto_page == -1) echo "in"; ?> "  >
+<div id="intro2" class="panel-collapse collapse <?php if (($goto_page == -1) || ($action == "I")) echo "in"; ?> "  >
 <!--    <center><h3 id="header">Tell us identifying information about the organization</h3></center> -->
 <div class="panel-body">
 
     <div class="form-group">
         <label for="org_name">Organization Name:</label>
-        <input class="form-control" type="text" id="org_name" maxlength="128" name="org_name" value="<?php echo $org_name ?>" />
+        <input class="form-control" type="text" id="org_name" minlength="4" maxlength="128" name="org_name" value="<?php echo $org_name ?>" required />
     </div> <!-- form-group -->
 
     <div class="alert alert-danger" <?php if (!isset($org_name_msg)) echo "hidden='true'"; ?> id="org_name_msg" >
@@ -1390,7 +1390,7 @@ function zipArrayToDb()
     </div>
 
     <div class="form-group row">
-        <div class="col-xs-5" for="active_ind"><p><strong>Set this Organization to Active:</strong></p><p>This is required in order to be shown to the public.</p></div>
+        <div class="col-xs-5" for="active_ind"><p><strong>Set this Organization to Active:</strong></p><p><small class="text-muted">This is required in order to be shown to the public.</small></p></div>
         <div class="col-xs-1" ><input class="" type="checkbox" id="active_ind" name="active_ind" <?php echo $active_ind ?> /></div>
     </div> <!-- form-group -->
 
@@ -1405,8 +1405,9 @@ function zipArrayToDb()
     </div> <!-- form-group -->
 
     <div class="form-group">
-        <label for="customer_notice">Customer Informational Notice:</label><p>This information is shown to the customer prior to final selection.</p>
+        <label for="customer_notice">Customer Informational Notice:</label>
         <textarea class="form-control" id="customer_notice" maxlength="255" name="customer_notice" rows="4" value="" ><?php echo $customer_notice ?></textarea>
+		<small class="text-muted">This information is shown to the customer prior to final selection.</small>
     </div> <!-- form-group -->
 
     <div class="form-group">
@@ -1428,13 +1429,15 @@ function zipArrayToDb()
     </div>
 
     <div class="form-group">
-        <label for="admin_contact">Administrative Contact Instructions (not displayed to public):</label>
+        <label for="admin_contact">Administrative Contact Instructions:</label>
         <input class="form-control" type="text" id="admin_contact" maxlength="255" name="admin_contact" value="<?php echo $admin_contact ?>" />
+		<small class="text-muted">This text is not displayed to the public.</small>
     </div> <!-- form-group -->
 
     <div class="form-group">
-        <label for="customer_contact">Customer Contact Instructions (displayed to public):</label>
+        <label for="customer_contact">Customer Contact Instructions:</label>
         <input class="form-control" type="text" id="customer_contact" maxlength="255" name="customer_contact" value="<?php echo $customer_contact ?>" />
+		<small class="text-muted">This text is displayed to the public.</small>
     </div> <!-- form-group -->
 
     <label for="zip_entry">In what zip codes do you expect to physically meet your volunteers and teammates?</label>
