@@ -421,17 +421,12 @@ function performUpdate()
 			exit();
         }
 
-        $stmt = $dbh->prepare("UPDATE org SET org_name = :org_name, person_name = :person_name, org_website = :org_website, money_url = :money_url, " .
-            " mission = :mission, active_ind = :active_ind, abbreviated_name = :abbreviated_name, customer_notice = :customer_notice, " .
-            " customer_contact = :customer_contact, admin_contact = :admin_contact WHERE orgid = :orgid; " .
-            "UPDATE org SET pwhash = :pwhash WHERE orgid = :orgid AND :pwhash IS NOT NULL; " .
-            "UPDATE org SET email_unverified = :email WHERE orgid = :orgid AND email_verified IS NOT NULL AND email_verified != :email; " . 
-            "UPDATE org SET email_unverified = :email WHERE orgid = :orgid AND email_verified IS NULL AND email_unverified != :email; " );
+        $stmt = $dbh->prepare("CALL updateOrganization(:orgid, :org_name, :person_name, :org_website, :money_url, " . 
+			":mission, :active_ind, :abbreviated_name, :customer_contact, :customer_notice, :admin_contact, :pwhash, :email); " );
             /* first query doesn't update email because it might get updated in a different window/browser/device */
             /* next query only updates password if a new one was entered */
             /* if email is changed, and it was previously verified, then set it to unverified */
             /* OR if email is changed, and it was not previously verified, then changed it and keep it unverified */
-            /* should this query be moved to a stored procedure? */
         $stmt->bindValue(':org_name', filter_var($_POST["org_name"], FILTER_SANITIZE_STRING, FILTER_FLAG_NO_ENCODE_QUOTES + 
             FILTER_FLAG_STRIP_LOW + FILTER_FLAG_STRIP_HIGH + FILTER_FLAG_STRIP_BACKTICK), PDO::PARAM_STR);
         $stmt->bindValue(':person_name', filter_var($_POST["person_name"], FILTER_SANITIZE_STRING, FILTER_FLAG_NO_ENCODE_QUOTES + 
@@ -792,6 +787,7 @@ function buildEmptyArray()
 
         global $dbh, $qu_aire;
 
+		/* the zero is passed in there because the stored procedure returns questions & choices whether or not the org ID is valid */
         $stmt = $dbh->prepare("CALL selectQuestionsWithOrg(0)");
 
         $stmt->execute();
@@ -842,7 +838,7 @@ function populateArray()
         global $dbh, $orgid, $qu_aire;
 
 
-			/* the NULL selects are there to put columns in the returned data set to hold data which will be used a little later */
+		/* the NULL selects are there to put columns in the returned data set to hold data which will be used a little later */
         $stmt = $dbh->prepare("CALL selectQuestionsWithOrg(:orgid)");
         $stmt->bindValue(':orgid', $orgid, PDO::PARAM_INT);
 
