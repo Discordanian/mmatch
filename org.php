@@ -792,15 +792,7 @@ function buildEmptyArray()
 
         global $dbh, $qu_aire;
 
-			/* the NULL selects are there to put columns in the returned data set to hold data which will be used a little later */
-        $stmt = $dbh->prepare("SELECT gg.page_num, gg.group_text, qq.question_id, qq.org_question_text, qq.org_multi_select, " .
-        " qc.choice_id, qc.choice_text, NULL AS org_response_id, NULL AS org_id, NULL AS selected, '0' AS new_selected " .
-        " FROM question_group gg INNER JOIN question qq " .
-        " ON gg.group_id = qq.question_group_id " .
-        " INNER JOIN question_choice qc " .
-        " ON qc.question_id = qq.question_id " .
-		" WHERE qq.active_flag = 'Y' " .
-        " ORDER BY gg.page_num, qq.question_id, qq.sort_order, qc.choice_id, qc.sort_order;");
+        $stmt = $dbh->prepare("CALL selectQuestionsWithOrg(0)");
 
         $stmt->execute();
         if ($stmt->errorCode() != "00000") 
@@ -851,16 +843,7 @@ function populateArray()
 
 
 			/* the NULL selects are there to put columns in the returned data set to hold data which will be used a little later */
-        $stmt = $dbh->prepare("SELECT gg.page_num, gg.group_text, qq.question_id, qq.org_question_text, qq.org_multi_select, " .
-        " qc.choice_id, qc.choice_text, res.org_response_id, res.org_id, res.selected, '0' AS new_selected " .
-        " FROM question_group gg INNER JOIN question qq " .
-        " ON gg.group_id = qq.question_group_id " .
-        " INNER JOIN question_choice qc " .
-        " ON qc.question_id = qq.question_id " .
-        " LEFT OUTER JOIN org_response res " .
-        " ON res.choice_id = qc.choice_id AND (res.org_id IS NULL OR res.org_id = :orgid) " .
-		" WHERE qq.active_flag = 'Y' " .
-        " ORDER BY gg.page_num, qq.question_id, qq.sort_order, qc.choice_id, qc.sort_order;");
+        $stmt = $dbh->prepare("CALL selectQuestionsWithOrg(:orgid)");
         $stmt->bindValue(':orgid', $orgid, PDO::PARAM_INT);
 
         $stmt->execute();
