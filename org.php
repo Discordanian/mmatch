@@ -793,13 +793,13 @@ function buildEmptyArray()
         global $dbh, $qu_aire;
 
 			/* the NULL selects are there to put columns in the returned data set to hold data which will be used a little later */
-        $stmt = $dbh->prepare("SELECT gg.page_num, gg.group_text, qq.question_id, qq.question_text, qq.org_multi_select, " .
+        $stmt = $dbh->prepare("SELECT gg.page_num, gg.group_text, qq.question_id, qq.org_question_text, qq.org_multi_select, " .
         " qc.choice_id, qc.choice_text, NULL AS org_response_id, NULL AS org_id, NULL AS selected, '0' AS new_selected " .
         " FROM question_group gg INNER JOIN question qq " .
         " ON gg.group_id = qq.question_group_id " .
         " INNER JOIN question_choice qc " .
         " ON qc.question_id = qq.question_id " .
-        " ORDER BY gg.group_id, gg.page_num, qq.question_id, qq.sort_order, qc.choice_id, qc.sort_order;");
+        " ORDER BY gg.page_num, qq.question_id, qq.sort_order, qc.choice_id, qc.sort_order;");
 
         $stmt->execute();
         if ($stmt->errorCode() != "00000") 
@@ -850,7 +850,7 @@ function populateArray()
 
 
 			/* the NULL selects are there to put columns in the returned data set to hold data which will be used a little later */
-        $stmt = $dbh->prepare("SELECT gg.page_num, gg.group_text, qq.question_id, qq.question_text, qq.org_multi_select, " .
+        $stmt = $dbh->prepare("SELECT gg.page_num, gg.group_text, qq.question_id, qq.org_question_text, qq.org_multi_select, " .
         " qc.choice_id, qc.choice_text, res.org_response_id, res.org_id, res.selected, '0' AS new_selected " .
         " FROM question_group gg INNER JOIN question qq " .
         " ON gg.group_id = qq.question_group_id " .
@@ -858,7 +858,7 @@ function populateArray()
         " ON qc.question_id = qq.question_id " .
         " LEFT OUTER JOIN org_response res " .
         " ON res.choice_id = qc.choice_id AND (res.org_id IS NULL OR res.org_id = :orgid) " .
-        " ORDER BY gg.group_id, gg.page_num, qq.question_id, qq.sort_order, qc.choice_id, qc.sort_order;");
+        " ORDER BY gg.page_num, qq.question_id, qq.sort_order, qc.choice_id, qc.sort_order;");
         $stmt->bindValue(':orgid', $orgid, PDO::PARAM_INT);
 
         $stmt->execute();
@@ -939,7 +939,7 @@ function arrayToHtml($pagenum)
 
         printf("\t<div class='form-group'>\n\t\t<label for='question-%u'>", $question_id);
         $row = current($question);
-        echo htmlspecialchars($row["question_text"]);
+        echo htmlspecialchars($row["org_question_text"]);
         echo "</label>\n";
 
         if ($row["org_multi_select"])
@@ -1479,9 +1479,9 @@ function zipArrayToDb()
 
 
 <?php
-    for ($i = 1; $i <= count($qu_aire); $i++)
+    foreach($qu_aire as $page_num => $page)
     { 
-        arrayToHtml($i);
+        arrayToHtml($page_num);
     }
 ?>
         <button id="save_data" type="submit" class="btn btn-default btn-lg">Save data</button>
