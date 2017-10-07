@@ -799,6 +799,7 @@ function buildEmptyArray()
         " ON gg.group_id = qq.question_group_id " .
         " INNER JOIN question_choice qc " .
         " ON qc.question_id = qq.question_id " .
+		" WHERE qq.active_flag = 'Y' " .
         " ORDER BY gg.page_num, qq.question_id, qq.sort_order, qc.choice_id, qc.sort_order;");
 
         $stmt->execute();
@@ -858,6 +859,7 @@ function populateArray()
         " ON qc.question_id = qq.question_id " .
         " LEFT OUTER JOIN org_response res " .
         " ON res.choice_id = qc.choice_id AND (res.org_id IS NULL OR res.org_id = :orgid) " .
+		" WHERE qq.active_flag = 'Y' " .
         " ORDER BY gg.page_num, qq.question_id, qq.sort_order, qc.choice_id, qc.sort_order;");
         $stmt->bindValue(':orgid', $orgid, PDO::PARAM_INT);
 
