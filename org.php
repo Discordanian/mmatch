@@ -95,7 +95,7 @@ try
 		$admin_contact = "";
 		$customer_contact = "";
 		$customer_notice = "";
-
+		$zip_array = array(); /* empty array */
 		initializeDb();
 		buildEmptyArray();
 		buildCsrfToken();
@@ -521,10 +521,8 @@ function performInsert()
 
         /* this is a new record, so do the insert */
         global $dbh, $orgid, $goto_page, $action, $success_msg, $email_unverified;
-        $stmt = $dbh->prepare("INSERT INTO org (org_name, person_name, email_unverified, pwhash, org_website, "
-            . " money_url, mission, abbreviated_name, customer_notice, customer_contact, admin_contact, active_ind) " 
-            . " VALUES (:org_name, :person_name, :email, :pwhash, :org_website, :money_url, :mission, "
-            . " :abbreviated_name, :customer_notice, :customer_contact, :admin_contact, :active_ind);");
+        $stmt = $dbh->prepare("CALL insertOrganization(:org_name, :person_name, :org_website, :money_url, " . 
+			":mission, :active_ind, :abbreviated_name, :customer_contact, :customer_notice, :admin_contact, :pwhash, :email); " );
 
         $stmt->bindValue(':org_name', filter_var($_POST["org_name"], FILTER_SANITIZE_STRING, FILTER_FLAG_NO_ENCODE_QUOTES + 
             FILTER_FLAG_STRIP_LOW + FILTER_FLAG_STRIP_HIGH + FILTER_FLAG_STRIP_BACKTICK), PDO::PARAM_STR);
@@ -556,7 +554,6 @@ function performInsert()
             $stmt->bindValue(':active_ind', 0, PDO::PARAM_INT);
         }
 
-
         $stmt->execute();
 
         if ($stmt->errorCode() != "00000") 
@@ -572,11 +569,10 @@ function performInsert()
 			$goto_page = 0;
 		}
 		
-        /* change the action to update, now that the record was successfully inserted */
-        $action = "U";
-        $orgid = $dbh->lastInsertId();
-
-        if (!isset($orgid)) 
+		$orgid = $stmt->fetchColumn(); /* insert ID is returned as a row set from the SP */
+		
+		
+        if ($orgid == FALSE) 
         {
 			error_log("Failed to get the inserted ID# in org.php");
 			throw new Exception("An unknown error was encountered (14). Please attempt to reauthenticate.");
@@ -585,6 +581,8 @@ function performInsert()
 
         /* place the org ID into session */
         $_SESSION["orgid"] = $orgid;
+        /* change the action to update, now that the record was successfully inserted */
+        $action = "U";
 
         $stmt->closeCursor();
 
