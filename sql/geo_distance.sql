@@ -10,7 +10,9 @@ BEGIN
 	SET pt1 = POINT(long1, lat1);
 	SET pt2 = POINT(long2, lat2);
 	SET dist = ST_Distance_Sphere(pt1, pt2)/1000;
-RETURN dist;$$
+RETURN dist;
+END
+$$
 DELIMITER ;
 
 GRANT EXECUTE ON FUNCTION geo_distance TO movemusr@localhost;
