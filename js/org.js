@@ -86,9 +86,9 @@ function populateZipFromService(data, status)
 		
 	if (status == "success") /* populate the city and state */
 	{
-		var txt = obj.zip_code + " - " + obj.city + ", " + obj.state;
+		var txt = obj.postal_code + " - " + obj.city + ", " + obj.state;
 		
-		$("#zip_list > option[value='" + obj.zip_code + "']").text(txt);
+		$("#zip_list > option[value='" + obj.postal_code + "']").text(txt);
 
 			/* remove the "nothing selected" option */
             $("#zip_list option[value='NULL']").remove();
