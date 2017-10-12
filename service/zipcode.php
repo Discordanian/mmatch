@@ -35,7 +35,7 @@ function getZipCodeData()
     {
 
 		initializeDb();
-        $stmt = $dbh->prepare("SELECT zip_code, city, state FROM zip_code_ref WHERE zip_code = :zip_code ; ");
+        $stmt = $dbh->prepare("SELECT postal_code, city, state FROM postal_code_ref WHERE postal_code = :zip_code ; ");
 
         $stmt->bindValue(':zip_code', $zipcode);
 
