@@ -5,14 +5,29 @@ require_once('service/getJSON.php');
 
 session_start();
 
-
-
+// "Global" to the page
+$mconfig = array ("zipcode"=>"-1","distance"=>"-1");
 
 function validatePostData()
 {
-    $zipcode  = FILTER_VAR($_GET["zipcode"],  FILTER_SANITIZE_ENCODED);
-    $distance = FILTER_VAR($_GET["distance"], FILTER_VALIDATE_INT);
+	global $mconfig;
+    if (isset($_GET["zipcode") && isset($_GET["distance"])) {
+	    $mconfig['zipcode']  = FILTER_VAR($_GET["zipcode"],  FILTER_SANITIZE_ENCODED); // Zips can start with a 0
+	    $mconfig['distance'] = FILTER_VAR($_GET["distance"], FILTER_VALIDATE_INT);
+    } else {
+	header('Location: index.html');
+	exit;
+    }
 
+}
+
+validatePostData();
+
+// Bounce if we don't have a zip or a distance 
+if (($mconfig["zipcode"]=="-1") ||($mconfig["distance"]=="-1")) {
+	header('Location: index.html');
+	exit;
+	
 }
 
 
@@ -125,7 +140,7 @@ function validatePostData()
     </tbody>
   </table>
 </div>
-<div id="debug">
+<div class="container border" id="debug">
 <?php 
 validatePostData();
 $arr = get_defined_vars(); print_r($arr); 
