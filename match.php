@@ -4,9 +4,6 @@ require_once('include/inisets.php');
 require_once('service/getJSON.php');
 
 session_start();
-$goto_page = -2;
-
-
 
 
 
@@ -130,7 +127,10 @@ function validatePostData()
   </table>
 </div>
 <div id="debug">
-<?php $arr = get_defined_vars(); print_r($arr); ?>
+<?php 
+validatePostData();
+$arr = get_defined_vars(); print_r($arr); 
+?>
 </div>
 <!-- /Results Table -->
 <script src='https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.0/jquery.min.js'></script>
