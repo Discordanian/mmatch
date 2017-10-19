@@ -25,7 +25,6 @@ function validatePostData()
   <meta name="viewport" content="width=device-width, initial-scale=1">
   
   <link rel='stylesheet prefetch' href='https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/css/bootstrap.min.css'>
-<link rel='stylesheet prefetch' href='https://blackrockdigital.github.io/startbootstrap-landing-page/font-awesome/css/font-awesome.min.css'>
 <link rel='stylesheet prefetch' href='https://fonts.googleapis.com/css?family=Lato:300,400,700,300italic,400italic,700italic'>
 <link rel='stylesheet prefetch' href='https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.2/css/bootstrap-select.css'>
 <link rel='stylesheet prefetch' href='https://cdnjs.cloudflare.com/ajax/libs/bootstrap-table/1.11.1/bootstrap-table.css'>
