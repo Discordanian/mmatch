@@ -622,8 +622,7 @@ function displayDbData()
 			exit();
         }
 
-        $stmt = $dbh->prepare("SELECT orgid, org_name, person_name, email_verified, email_unverified, org_website, money_url, mission, "
-            . " abbreviated_name, customer_notice, customer_contact, admin_contact, active_ind FROM org WHERE orgid = :orgid AND org_type = 1;");
+        $stmt = $dbh->prepare("CALL selectOrganization(:orgid);");
         $stmt->bindValue(':orgid', $orgid, PDO::PARAM_INT);
 
         $stmt->execute();
