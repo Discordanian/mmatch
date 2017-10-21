@@ -1062,29 +1062,22 @@ function updateQuestionnaireData()
                 //printf("org_response_id=%u QuestionID=%u ChoiceID=%u Selected=%u New=%u ", $choice["org_response_id"], $choice["question_id"], $choice["choice_id"], $choice["selected"], $choice["new_selected"]);
                 //echo "--> \n";
                 
-                /* detect if this choice happened to be for a new question or a new org, in which case there would be no previous response record */
-                if (isset($choice["org_response_id"]) && $choice["org_response_id"] > 0)
+                /* detect if this choice had been changed by the user */
+                if ($choice["selected"] != $choice["new_selected"])
                 {
-                    /* detect if this choice had been changed by the user */
-                    if ((($choice["selected"] == "0") && ($choice["new_selected"] == "1")) || (($choice["selected"] == "1") && ($choice["new_selected"] == "0")))
-                    {
-                        $sql = sprintf("%s UPDATE org_response SET selected = %u WHERE org_response_id = %u AND org_id = %u AND choice_id = %u ;", 
-                    	   $sql, $choice["new_selected"], $choice["org_response_id"], $orgid, $choice_id );
-                    }
+                    $sql = sprintf("%s CALL updateOrgResponse(%u, %u, %u, %u);", 
+                	   $sql, $choice["org_response_id"], $orgid, $choice_id, $choice["new_selected"]);
                 }
-                else /* there seems to be no row, so must do an insert */
-                {
-                	$sql = sprintf("%s INSERT INTO org_response (choice_id, org_id, selected) VALUES (%u, %u, %u) ;", $sql, $choice_id, $orgid, $choice["new_selected"]);
-				}
+
                	$qu_aire[$page_num][$question_id][$choice_id]["selected"] = $choice["new_selected"]; /* set this so that it is redisplayed on the page later */
 
             }
         }
     }
 
-    //echo "<!-- \n";
-    //echo strtr($sql, ";", "\n");        
-    //echo "--> \n";
+    echo "<!-- \n";
+    echo strtr($sql, ";", "\n");        
+    echo "--> \n";
 
     /* if there's nothing in the query, the user didn't change anything, so nothing to do */
     if (strlen(trim($sql)) == 0)
