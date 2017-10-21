@@ -1075,9 +1075,9 @@ function updateQuestionnaireData()
         }
     }
 
-    echo "<!-- \n";
-    echo strtr($sql, ";", "\n");        
-    echo "--> \n";
+    //echo "<!-- \n";
+    //echo strtr($sql, ";", "\n");        
+    //echo "--> \n";
 
     /* if there's nothing in the query, the user didn't change anything, so nothing to do */
     if (strlen(trim($sql)) == 0)
