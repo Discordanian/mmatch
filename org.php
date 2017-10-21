@@ -693,8 +693,7 @@ function displayDbData()
 
         /* now get the zip codes from the database and put into an array */
 
-        $stmt = $dbh->prepare("SELECT ozc.zip_code, zcr.city, zcr.state FROM org_zip_code ozc " .
-			" INNER JOIN postal_code_ref zcr ON ozc.zip_code = zcr.postal_code WHERE ozc.org_id = :orgid ORDER BY ozc.zip_code ;");
+        $stmt = $dbh->prepare("CALL selectZipcodesForOrganization(:orgid);");
         $stmt->bindValue(':orgid', $orgid, PDO::PARAM_INT);
 
         $stmt->execute();
