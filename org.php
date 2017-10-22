@@ -1187,27 +1187,17 @@ function zipArrayToDb()
     try
     {
 
-        $sql = sprintf("DELETE FROM org_zip_code WHERE org_id = %u ; ", $orgid);
+        //echo "<!-- JSON array of zips \n";
+        //echo json_encode($zip_array);
+        //echo "-->\n";
 
-        foreach($zip_array as $zipstr)
-        {
-            $zipnum = 0; /* initialize this in case it can't be read below */
 
-            /* ensure that the data supplied from the browser is limited to 5 numeric digits */
-            sscanf($zipstr, "%05u", $zipnum);
-
-            
-            if ($zipnum > 0) /* obviously, 00000 is not a valid zip code */
-            {
-                $sql = sprintf("%s INSERT INTO org_zip_code (org_id, zip_code) VALUES (%u, %u) ; ", $sql, $orgid, $zipnum);
-            }
-
-        }
-
-        //$dbh->beginTransaction();
-
-        $stmt = $dbh->prepare($sql);
-
+        $stmt = $dbh->prepare("CALL updateOrgZipcodes(:orgid, :zipcodeArray);");
+        $stmt->bindValue(':orgid', $orgid, PDO::PARAM_INT);
+        /* must be careful here because this array is untrusted, it came directly from the user agent */
+        /* as long as this is a bound parameter it should be fine */
+        $stmt->bindValue(':zipcodeArray', json_encode($zip_array), PDO::PARAM_STR);
+        
         $stmt->execute();
         
         if ($stmt->errorCode() != "00000") 
@@ -1219,10 +1209,6 @@ function zipArrayToDb()
             exit();
         }
 		
-        //echo "<!-- About to commit zip codes" . $dbh->inTransaction() . " -->\n";
-        //$dbh->commit();
-       // echo "<!-- Just committed zip codes" . $dbh->inTransaction() . " -->\n";
-
         
     }
     catch (PDOException $e)
