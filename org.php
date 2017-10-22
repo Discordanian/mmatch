@@ -1139,14 +1139,14 @@ function zipPostToArray()
     global $zip_array;
 
 
-    if (array_key_exists("zip_list", $_POST))
+    if (array_key_exists("zip_list", $_POST) && isset($_POST["zip_list"]))
     {
         $zip_array = $_POST["zip_list"];
     }
     else
     {
-		/* Set to an empty array because nothing was passed in the zips select box */
-        $zip_array = array();
+		/* Set to NULL because nothing was passed in the zips select box */
+        $zip_array = NULL;
     }
 
 
@@ -1162,9 +1162,9 @@ function zipArrayToDb()
     try
     {
 
-        //echo "<!-- JSON array of zips \n";
-        //echo json_encode($zip_array);
-        //echo "-->\n";
+        echo "<!-- JSON array of zips \n";
+        echo json_encode($zip_array);
+        echo "-->\n";
 
 
         $stmt = $dbh->prepare("CALL updateOrgZipcodes(:orgid, :zipcodeArray);");
