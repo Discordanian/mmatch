@@ -21,7 +21,7 @@ $(function(){
 
     $("#zip_unselect").click(remove_zip);
     
-    setTimeout(backToLogoutPage, 50000);
+    setTimeout(backToLogoutPage, 4 * 60 * 60 * 1000); /* logout after 4 hours of nothing */
 
 });
 
