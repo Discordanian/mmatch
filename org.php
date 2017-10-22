@@ -1128,8 +1128,10 @@ function buildEmailVerificationUrl()
 		"sendverifyemail.php" . $link_expdate->format('U') . $csrf_salt;
 	$token = hash("sha256", $input);
 
-	$url = sprintf("http://%s/mmatch/service/sendverifyemail.php?email=%s&token=%s&orgid=%d&date=%s", 
-		$_SERVER["SERVER_NAME"], urlencode($email_unverified), $token, $orgid, $link_expdate->format('U'));
+	//$url = sprintf("http://%s/mmatch/service/sendverifyemail.php?email=%s&token=%s&orgid=%d&date=%s", 
+	//	$_SERVER["SERVER_NAME"], urlencode($email_unverified), $token, $orgid, $link_expdate->format('U'));
+	$url = sprintf("service/sendverifyemail.php?email=%s&token=%s&orgid=%d&date=%s", 
+		urlencode($email_unverified), $token, $orgid, $link_expdate->format('U'));
 	/* TODO: Handle the determination of http/https in the URL */
 	return $url;
 }
@@ -1162,9 +1164,9 @@ function zipArrayToDb()
     try
     {
 
-        echo "<!-- JSON array of zips \n";
-        echo json_encode($zip_array);
-        echo "-->\n";
+        //echo "<!-- JSON array of zips \n";
+        //echo json_encode($zip_array);
+        //echo "-->\n";
 
 
         $stmt = $dbh->prepare("CALL updateOrgZipcodes(:orgid, :zipcodeArray);");

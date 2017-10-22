@@ -47,7 +47,14 @@ try
 
 		if (isset($_GET["errmsg"]))
 		{
-			$auth_fail_msg = "An unknown error occurred. Please attempt to authenticate again.";
+		    switch ($_GET["errmsg"])
+		    {
+		        /* TODO: make these codes more organized. Right now they are just random numbers and
+		        there's not much rhyme or reason as to what means what */
+		        case "8" : $auth_fail_msg = "Due to inactivity you have been logged off. Please log on again";
+		          break;
+		        default : $auth_fail_msg = "An unknown error occurred. Please attempt to log on again";
+		    }
 		}
 	}
 }

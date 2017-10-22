@@ -20,6 +20,8 @@ $(function(){
 	$("#zip_select").click(select_zip);
 
     $("#zip_unselect").click(remove_zip);
+    
+    setTimeout(backToLogoutPage, 50000);
 
 });
 
@@ -66,7 +68,7 @@ function select_zip()
             $("#zip_list").append($(opt));
 			
 			/* generate the request to look up the city & state */
-			var url = document.location.origin + "/mmatch/service/zipcode.php?zip_code=" + zip;
+			var url = "service/zipcode.php?zip_code=" + zip;
 			
 			var jxhr = $.get(url, populateZipFromService);
 			jxhr.fail(failedToFindZip);
@@ -334,22 +336,17 @@ function closeAlertMsg()
 	$("#general_alert_msg").hide("fast");
 }
 
-function showSummary()
+function backToLogoutPage()
 {
 
-    $("#person_name_summary").text($("#person_name").val());
-    $("#email_summary").text($("#email").val());
-    $("#org_name_summary").text($("#org_name").val());
-    $("#org_website_summary").text($("#org_website").val());
-    $("#money_url_summary").text($("#money_url").val());
-    $("#mission_summary").text($("#mission").val());
+    window.location.replace("login.php?errmsg=8");
 
 }
 
 function generateVerificationEmail()
 {
     /* does an asynchronous get to the URL which was passed from the server and hidden in the DIV */
-    /* it's not hidden because it needs to remain secret, it's just the user does not need to see it */
+    /* The reason that it's hidden is not because it needs to remain secret, it's just the user does not need to see it */
     var url=$("#generateVerficationEmailUrl").text();
 
     $.get(url, function(data, status){
