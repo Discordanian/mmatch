@@ -7,7 +7,6 @@ require_once('include/returnOrgsForZipcodeFunction.php');
 // "Global" to the page
 $mconfig = array ("zipcode"=>"63104","distance"=>"20");
 
-/*
 function validateGetData()
 {
 	global $mconfig;
@@ -16,12 +15,16 @@ function validateGetData()
 	    $mconfig['distance'] = FILTER_VAR($_GET["distance"], FILTER_VALIDATE_INT);
     } else {
 	// Bounce to index.html
+/*
 	header('Location: index.html');
 	exit();
+*/
     }
 
 }
-*/
+validateGetData();
+$jsonraw = getZipCodeData($mconfig['zipcode'],$mconfig['distance']);
+$jsondata = json_decode($jsonraw);
 
 // Bounce if we don't have a zip or a distance 
 /*
@@ -142,8 +145,6 @@ if (($mconfig["zipcode"]=="-1") ||($mconfig["distance"]=="-1")) {
 </div>
 <div class="container border" id="debug">
 <?php 
-//validateGetData();
-$jsonblob = getZipCodeData($mconfig['zipcode'],$mconfig['distance']);
 $arr = get_defined_vars(); print_r($arr); 
 ?>
 </div>
@@ -154,6 +155,9 @@ $arr = get_defined_vars(); print_r($arr);
 <script src='https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.2/js/bootstrap-select.min.js'></script>
 <script src='https://cdnjs.cloudflare.com/ajax/libs/bootstrap-table/1.11.1/bootstrap-table.min.js'></script>
 <script src="js/index.js"></script>
+<script type="text/javascript">
+	<?php echo "var orgs = $jsonraw ;"; ?>
+</script>
 
 </body>
 </html>
