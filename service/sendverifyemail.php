@@ -145,7 +145,12 @@ function sendVerificationEmail()
 
     $input = $_SERVER["SERVER_NAME"] . urlencode($email) . $datetext . $orgid . "emailverify.php" . $csrf_salt;
     $token = substr(hash("sha256", $input), 0, 18); /* pull out only the 1st 18 digits of the hash, make it a typable link? */
-    $link = sprintf("http://%s/mmatch/emailverify.php?email=%s&token=%s&orgid=%d&date=%s", $_SERVER["SERVER_NAME"], urlencode($email), $token, $orgid, $datetext);
+    /* have to do some gymnastics here to make sure to get a nice fully qualified absolute URL */
+    
+    $path = str_replace("/service/sendverifyemail.php", "/emailverify.php", $_SERVER["PHP_SELF"]);
+
+    $link = sprintf("%s://%s%s?email=%s&token=%s&orgid=%d&date=%s", 
+        $_SERVER["REQUEST_SCHEME"], $_SERVER["HTTP_HOST"], $path, urlencode($email), $token, $orgid, $datetext);
 
 	//echo "<!-- $input -->\n"; /* TODO: This is a cheat and a security vulnerability. Remove it */
 	echo "<!-- $link -->\n"; /* TODO: This is a cheat so I don't have to actually send/receive the email. Remove this eventually */
