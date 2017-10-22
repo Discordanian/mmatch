@@ -1,36 +1,36 @@
 <?php
-
 require_once('include/inisets.php');
-require_once('service/getJSON.php');
+require_once('include/returnOrgsForZipcodeFunction.php');
 
-session_start();
+// session_start();
 
 // "Global" to the page
-$mconfig = array ("zipcode"=>"-1","distance"=>"-1");
+$mconfig = array ("zipcode"=>"63104","distance"=>"20");
 
-function validatePostData()
+/*
+function validateGetData()
 {
 	global $mconfig;
-    if (isset($_GET["zipcode") && isset($_GET["distance"])) {
+    if (isset($_GET['zipcode']) && isset($_GET["distance"])) {
 	    $mconfig['zipcode']  = FILTER_VAR($_GET["zipcode"],  FILTER_SANITIZE_ENCODED); // Zips can start with a 0
 	    $mconfig['distance'] = FILTER_VAR($_GET["distance"], FILTER_VALIDATE_INT);
     } else {
+	// Bounce to index.html
 	header('Location: index.html');
-	exit;
+	exit();
     }
 
 }
-
-validatePostData();
+*/
 
 // Bounce if we don't have a zip or a distance 
+/*
 if (($mconfig["zipcode"]=="-1") ||($mconfig["distance"]=="-1")) {
 	header('Location: index.html');
-	exit;
+	exit();
 	
 }
-
-
+*/
 ?>
 <!DOCTYPE html>
 <html >
@@ -142,7 +142,8 @@ if (($mconfig["zipcode"]=="-1") ||($mconfig["distance"]=="-1")) {
 </div>
 <div class="container border" id="debug">
 <?php 
-validatePostData();
+//validateGetData();
+$jsonblob = getZipCodeData($mconfig['zipcode'],$mconfig['distance']);
 $arr = get_defined_vars(); print_r($arr); 
 ?>
 </div>
