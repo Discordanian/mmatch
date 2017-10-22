@@ -2,6 +2,7 @@
 
 require_once('include/inisets.php');
 require_once('include/secrets.php');
+require_once('include/initializeDb.php');
 
 /* Only one way this page goes, take input from GET request, validate */
 /* If valid, then switch email to verified */
@@ -90,31 +91,7 @@ function testToken()
 }
 
 
-function initializeDb()
-{
 
-    try 
-    {
-        if (!isset($dbh))
-        {
-            global $dbh, $dbhostname, $dbusername, $dbpassword;
-            $dbh = new PDO("mysql:dbname=MoveM;host={$dbhostname}" , $dbusername, $dbpassword);
-        }
-    }
-    catch (PDOException $e)
-    {
-        error_log("Database Connection Error: " . $e->getMessage());
-        throw new Exception("Database error while connecting.");
-		exit();
-    }
-    catch(Exception $e)
-    {
-        error_log("Error during database connection: " . $e->getMessage());
-        throw new Exception("Error while connecting to database.");
-		exit();
-    }
-
-}
 
 function verifyEmail()
 {
