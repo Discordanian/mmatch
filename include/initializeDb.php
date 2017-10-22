@@ -5,13 +5,13 @@ require_once('secrets.php');
 function initializeDb()
 {
 
-global $dbh, $dbhostname, $dbusername, $dbpassword;
+global $dbh;
 
     try 
     {
         if (!isset($dbh))
         {
-            $dbh = new PDO("mysql:dbname=MoveM;host={$dbhostname}" , $dbusername, $dbpassword);
+            $dbh = new PDO(DATABASE_DSN , DATABASE_USER, DATABASE_PASSWORD);
         }
     }
     catch (PDOException $e)

@@ -2,6 +2,7 @@
 
 require_once('../include/inisets.php');
 require_once('../include/secrets.php');
+require_once('../include/initializeDb.php');
 
 /* This program takes a zip code as a parameter, validates it,
 	and either sends back the city name as feedback to the user,
@@ -70,29 +71,6 @@ function getZipCodeData()
 }
 
 
-function initializeDb()
-{
-
-    try 
-    {
-        if (!isset($dbh))
-        {
-            global $dbh, $dbhostname, $dbusername, $dbpassword;
-            $dbh = new PDO("mysql:dbname=MoveM;host={$dbhostname}" , $dbusername, $dbpassword);
-        }
-    }
-    catch (PDOException $e)
-    {
-        die("Database Connection Error: " . $e->getMessage());
-        /* TODO: much better/cleaner handling of errors */
-    }
-    catch(Exception $e)
-    {
-        die($e->getMessage());
-        /* TODO: much better/cleaner handling of errors */
-    }
-
-}
 
 
 

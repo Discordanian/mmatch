@@ -2,6 +2,7 @@
 
 require_once('../include/inisets.php');
 require_once('../include/secrets.php');
+require_once('../include/initializeDb.php');
 
 /* This page is so that AJAX requests from the page */
 /* Can asynchronously trigger the verification email to be sent */
@@ -77,31 +78,7 @@ function checkValidRequest()
 	}
 }
 
-function initializeDb()
-{
 
-    try 
-    {
-        if (!isset($dbh))
-        {
-            global $dbh, $dbhostname, $dbusername, $dbpassword;
-            $dbh = new PDO("mysql:dbname=MoveM;host={$dbhostname}" , $dbusername, $dbpassword);
-        }
-    }
-    catch (PDOException $e)
-    {
-        error_log("Database Connection Error: " . $e->getMessage());
-        throw new Exception("Database error while connecting.");
-		exit();
-    }
-    catch(Exception $e)
-    {
-        error_log("Error during database connection: " . $e->getMessage());
-        throw new Exception("Error while connecting to database.");
-		exit();
-    }
-
-}
 
 function lookupEmail()
 {

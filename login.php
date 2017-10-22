@@ -2,6 +2,7 @@
 
 require_once('include/inisets.php');
 require_once('include/secrets.php');
+require_once('include/initializeDb.php');
 
 /* #1 Cold session, no incoming data, no data to retrieve, clear all cookies, and show defaults on page */
 /* #2 Credentials entered, authentication fails, redisplay blank form, along with error message */
@@ -130,31 +131,6 @@ function validatePostData()
 }
 
 
-function initializeDb()
-{
-
-    try 
-    {
-        if (!isset($dbh))
-        {
-            global $dbh, $dbhostname, $dbusername, $dbpassword;
-            $dbh = new PDO("mysql:dbname=MoveM;host={$dbhostname}" , $dbusername, $dbpassword);
-        }
-    }
-    catch (PDOException $e)
-    {
-        error_log("Database Connection Error: " . $e->getMessage());
-        throw new Exception("An unknown error was encountered (5). Please attempt to reauthenticate.");
-		exit();
-    }
-    catch(Exception $e)
-    {
-        error_log("Error during database connection: " . $e->getMessage());
-        throw new Exception("An unknown error was encountered (6). Please attempt to reauthenticate.");
-		exit();
-    }
-
-}
 
 
 function authenticateCredentials()
