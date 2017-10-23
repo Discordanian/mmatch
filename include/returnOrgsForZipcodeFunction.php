@@ -74,7 +74,7 @@ function getZipCodeData($get_zipcode, $get_range_miles)
 
 		        $question->q_id = $row["question_id"];
 		        $question->text = $row["customer_question_text"];
-		        
+		        $question->answers = $choices;
 		        
 		        $questions[$j] = $question;
 		      
@@ -85,7 +85,7 @@ function getZipCodeData($get_zipcode, $get_range_miles)
 		        		        
                 
 		        $org->questions = $questions;
-		        $org->answers = $answers;
+		        //$org->answers = $answers;
 
 		        $dataset[$i] = $org;
 			    
