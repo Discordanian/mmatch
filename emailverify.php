@@ -101,7 +101,7 @@ function verifyEmail()
 
 
 
-        $stmt = $dbh->prepare("UPDATE org SET email_verified = :email, email_unverified = NULL WHERE orgid = :orgid AND email_unverified = :email ; ");
+        $stmt = $dbh->prepare("CALL verifyEmail(:orgid, :email);");
 
         $stmt->bindValue(':email', $email);
         $stmt->bindValue(':orgid', $orgid);

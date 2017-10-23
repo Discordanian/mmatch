@@ -87,7 +87,7 @@ function lookupEmail()
 
         global $dbh, $orgid, $email;
 
-        $stmt = $dbh->prepare("SELECT orgid, email_unverified FROM org WHERE orgid = :orgid AND email_unverified = :email ;");
+        $stmt = $dbh->prepare("CALL selectEmailInfo(:orgid, :email);");
         $stmt->bindValue(':orgid', $orgid);
 		$stmt->bindValue(':email', $email);
         $stmt->execute();
