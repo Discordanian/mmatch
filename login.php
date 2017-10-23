@@ -173,9 +173,6 @@ function authenticateCredentials()
 		{
             $pwhash = $row["pwhash"];
 
-            //echo "<!-- Password hash from db = $pwhash -->\n";
-            //echo "<!-- Password entered = " . $_POST["password"] . "-->\n";
-            //echo "<!-- Password hash calculated = " . password_hash($_POST["password"], PASSWORD_BCRYPT) . " -->\n";
 
             if (password_verify($_POST["password"], $pwhash))
             {
