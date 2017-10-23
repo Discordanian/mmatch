@@ -1163,17 +1163,17 @@ function zipArrayToDb()
     try
     {
 
-        echo "<!-- JSON array of zips \n";
-        echo json_encode($zip_array);
-        echo "-->\n";
-        /* do some basic filtering on this untrusted data */
+        //echo "<!-- JSON array of zips \n";
+        //echo json_encode($zip_array);
+        //echo "-->\n";
         $json_array = json_encode($zip_array);
         /* the only valid characters to be in this array are digits, ", and [] */
         
 
         $stmt = $dbh->prepare("CALL updateOrgZipcodes(:orgid, :zipcodeArray);");
         $stmt->bindValue(':orgid', $orgid, PDO::PARAM_INT);
-        /* as long as this is a bound parameter it should be fine */
+        /* The array of zips has been sanitized, but also */
+        /* as long as this is a bound parameter it should be ok to pass to the DB */
         $stmt->bindValue(':zipcodeArray', $json_array, PDO::PARAM_STR);
         
         $stmt->execute();
