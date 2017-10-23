@@ -149,7 +149,7 @@ function authenticateCredentials()
     try
     {
 
-        $stmt = $dbh->prepare("select orgid, email_verified, email_unverified, pwhash from org where email_verified = :email or email_unverified = :email ;" );
+        $stmt = $dbh->prepare("CALL selectLoginInfo(:email);" );
         $stmt->bindParam(':email', $email);
 		
 		//echo "<!-- ";
