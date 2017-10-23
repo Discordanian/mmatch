@@ -1,6 +1,6 @@
 <?php
 
-function session_reset()
+function my_session_start()
 {
     /* Must do this to keep the session cookie from expiring on the client */
     /* this is based off on an article on stackoverflow */

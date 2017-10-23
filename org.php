@@ -17,7 +17,7 @@ require_once('include/utility_functions.php');
 and probably a bunch of other attacks
 Needs serious security review */
 
-session_reset();
+my_session_start();
 $goto_page = -2;
 
 
