@@ -1,3 +1,5 @@
+var inactivityTimer = 0;
+
 $(function(){
 	
 	
@@ -21,7 +23,11 @@ $(function(){
 
     $("#zip_unselect").click(remove_zip);
     
-    setTimeout(backToLogoutPage, 4 * 60 * 60 * 1000); /* logout after 4 hours of nothing */
+    inactivityTimer = setTimeout(backToLogoutPage, 4 * 60 * 60 * 1000); /* logout after 4 hours of nothing */
+    
+    /* reset the timer on mostly everything on the page */
+    $("div").click(resetInactivityTimer);
+    $(":input").focus(resetInactivityTimer);
 
 });
 
@@ -355,3 +361,11 @@ function generateVerificationEmail()
         });
 }
 
+function resetInactivityTimer()
+{
+
+    clearTimeout(inactivityTimer);
+        
+    inactivityTimer = setTimeout(backToLogoutPage, 60 * 1000); /* logout after 4 hours of nothing */
+
+}
