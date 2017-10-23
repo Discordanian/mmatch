@@ -2,6 +2,7 @@
 
 require_once('include/inisets.php');
 require_once('include/secrets.php');
+require_once('include/initializeDb.php');
 
 /* #1 Cold session, no incoming data, no data to retrieve, clear all cookies, and show defaults on page */
 /* #2 Credentials entered, authentication fails, redisplay blank form, along with error message */
@@ -46,7 +47,14 @@ try
 
 		if (isset($_GET["errmsg"]))
 		{
-			$auth_fail_msg = "An unknown error occurred. Please attempt to authenticate again.";
+		    switch ($_GET["errmsg"])
+		    {
+		        /* TODO: make these codes more organized. Right now they are just random numbers and
+		        there's not much rhyme or reason as to what means what */
+		        case "8" : $auth_fail_msg = "Due to inactivity you have been logged off. Please log on again";
+		          break;
+		        default : $auth_fail_msg = "An unknown error occurred. Please attempt to log on again";
+		    }
 		}
 	}
 }
@@ -130,31 +138,6 @@ function validatePostData()
 }
 
 
-function initializeDb()
-{
-
-    try 
-    {
-        if (!isset($dbh))
-        {
-            global $dbh, $dbhostname, $dbusername, $dbpassword;
-            $dbh = new PDO("mysql:dbname=MoveM;host={$dbhostname}" , $dbusername, $dbpassword);
-        }
-    }
-    catch (PDOException $e)
-    {
-        error_log("Database Connection Error: " . $e->getMessage());
-        throw new Exception("An unknown error was encountered (5). Please attempt to reauthenticate.");
-		exit();
-    }
-    catch(Exception $e)
-    {
-        error_log("Error during database connection: " . $e->getMessage());
-        throw new Exception("An unknown error was encountered (6). Please attempt to reauthenticate.");
-		exit();
-    }
-
-}
 
 
 function authenticateCredentials()
@@ -166,7 +149,7 @@ function authenticateCredentials()
     try
     {
 
-        $stmt = $dbh->prepare("select orgid, email_verified, email_unverified, pwhash from org where email_verified = :email or email_unverified = :email ;" );
+        $stmt = $dbh->prepare("CALL selectLoginInfo(:email);" );
         $stmt->bindParam(':email', $email);
 		
 		//echo "<!-- ";
@@ -190,9 +173,6 @@ function authenticateCredentials()
 		{
             $pwhash = $row["pwhash"];
 
-            //echo "<!-- Password hash from db = $pwhash -->\n";
-            //echo "<!-- Password entered = " . $_POST["password"] . "-->\n";
-            //echo "<!-- Password hash calculated = " . password_hash($_POST["password"], PASSWORD_BCRYPT) . " -->\n";
 
             if (password_verify($_POST["password"], $pwhash))
             {
