@@ -149,7 +149,7 @@ function authenticateCredentials()
     try
     {
 
-        $stmt = $dbh->prepare("select orgid, email_verified, email_unverified, pwhash from org where email_verified = :email or email_unverified = :email ;" );
+        $stmt = $dbh->prepare("CALL selectLoginInfo(:email);" );
         $stmt->bindParam(':email', $email);
 		
 		//echo "<!-- ";
@@ -173,9 +173,6 @@ function authenticateCredentials()
 		{
             $pwhash = $row["pwhash"];
 
-            //echo "<!-- Password hash from db = $pwhash -->\n";
-            //echo "<!-- Password entered = " . $_POST["password"] . "-->\n";
-            //echo "<!-- Password hash calculated = " . password_hash($_POST["password"], PASSWORD_BCRYPT) . " -->\n";
 
             if (password_verify($_POST["password"], $pwhash))
             {

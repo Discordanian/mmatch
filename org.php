@@ -3,6 +3,7 @@
 require_once('include/inisets.php');
 require_once('include/secrets.php');
 require_once('include/initializeDb.php');
+require_once('include/utility_functions.php');
 
 /* There are basically 6 possible flows to this page */
 /* #1 Cold session, no incoming data, no data to retrieve, just show defaults on page */
@@ -16,11 +17,8 @@ require_once('include/initializeDb.php');
 and probably a bunch of other attacks
 Needs serious security review */
 
-session_start();
+my_session_start();
 $goto_page = -2;
-//echo "<!-- ";
-//var_dump($_SESSION);
-//echo " -->\n";
 
 
 try
@@ -1143,7 +1141,8 @@ function zipPostToArray()
 
     if (array_key_exists("zip_list", $_POST) && isset($_POST["zip_list"]))
     {
-        $zip_array = $_POST["zip_list"];
+        /* filter the array of zips to ensure it only contains ints */
+        $zip_array = filter_var_array($_POST["zip_list"], FILTER_SANITIZE_NUMBER_INT);
     }
     else
     {
@@ -1167,13 +1166,15 @@ function zipArrayToDb()
         //echo "<!-- JSON array of zips \n";
         //echo json_encode($zip_array);
         //echo "-->\n";
-
+        $json_array = json_encode($zip_array);
+        /* the only valid characters to be in this array are digits, ", and [] */
+        
 
         $stmt = $dbh->prepare("CALL updateOrgZipcodes(:orgid, :zipcodeArray);");
         $stmt->bindValue(':orgid', $orgid, PDO::PARAM_INT);
-        /* must be careful here because this array is untrusted, it came directly from the user agent */
-        /* as long as this is a bound parameter it should be fine */
-        $stmt->bindValue(':zipcodeArray', json_encode($zip_array), PDO::PARAM_STR);
+        /* The array of zips has been sanitized, but also */
+        /* as long as this is a bound parameter it should be ok to pass to the DB */
+        $stmt->bindValue(':zipcodeArray', $json_array, PDO::PARAM_STR);
         
         $stmt->execute();
         
