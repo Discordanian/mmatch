@@ -15,7 +15,7 @@ function getQuestions($json) {
 function getAnswers($json) {
 	$retval= array();
 	foreach ($json as $org) {
-		for (var $i = 0; $i < count($org['questions']); $i++) {
+		for ( $i = 0; $i < count($org['questions']); $i++) {
 			$index = $q['q_id'];
 			$retval[$index] = $q['text'];
 		}
