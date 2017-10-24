@@ -1,6 +1,7 @@
 <?php
 require_once('include/inisets.php');
 require_once('include/returnOrgsForZipcodeFunction.php');
+require_once('include/jsonParse.php'); // Parses PHP json objects for management
 
 // session_start();
 
@@ -23,8 +24,9 @@ function validateGetData()
 
 }
 validateGetData();
-$jsonraw = getZipCodeData($mconfig['zipcode'],$mconfig['distance']);
-$jsondata = json_decode($jsonraw);
+$mconfig['jsonraw'] = getZipCodeData($mconfig['zipcode'],$mconfig['distance']);
+$mconfig['jsondata'] = json_decode($mconfig['jsonraw'],true);
+// $mconfig['questions'] = getQuestions($mconfig['jsondata']);
 
 // Bounce if we don't have a zip or a distance 
 /*
@@ -144,9 +146,12 @@ if (($mconfig["zipcode"]=="-1") ||($mconfig["distance"]=="-1")) {
   </table>
 </div>
 <div class="container border" id="debug">
+<pre>
 <?php 
-$arr = get_defined_vars(); print_r($arr); 
+$mconfig['questions'] = getQuestions($mconfig['jsondata']);
+$arr = get_defined_vars(); print_r($mconfig); 
 ?>
+</pre>
 </div>
 <!-- /Results Table -->
 <script src='https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.0/jquery.min.js'></script>
@@ -156,7 +161,7 @@ $arr = get_defined_vars(); print_r($arr);
 <script src='https://cdnjs.cloudflare.com/ajax/libs/bootstrap-table/1.11.1/bootstrap-table.min.js'></script>
 <script src="js/index.js"></script>
 <script type="text/javascript">
-	<?php echo "var orgs = $jsonraw ;"; ?>
+	<?php echo "var orgs = {$mconfig['jsonraw']};"; ?>
 </script>
 
 </body>
