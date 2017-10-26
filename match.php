@@ -1,36 +1,46 @@
 <?php
-require_once('include/inisets.php');
-require_once('include/returnOrgsForZipcodeFunction.php');
-require_once('include/jsonParse.php'); // Parses PHP json objects for management
+require_once ('include/inisets.php');
+require_once ('include/returnOrgsForZipcodeFunction.php');
+require_once ('include/jsonParse.php');
 
+ // Parses PHP json objects for management
 // session_start();
-
 // "Global" to the page
-$mconfig = array ("zipcode"=>"63104","distance"=>"20");
+
+$mconfig = array(
+    "zipcode" => "63104",
+    "distance" => "20"
+);
 
 function validateGetData()
 {
-	global $mconfig;
+    global $mconfig;
     if (isset($_GET['zipcode']) && isset($_GET["distance"])) {
-	    $mconfig['zipcode']  = FILTER_VAR($_GET["zipcode"],  FILTER_SANITIZE_ENCODED); // Zips can start with a 0
-	    $mconfig['distance'] = FILTER_VAR($_GET["distance"], FILTER_VALIDATE_INT);
-    } else {
-	// Bounce to index.html
+        $mconfig['zipcode'] = FILTER_VAR($_GET["zipcode"], FILTER_SANITIZE_ENCODED); // Zips can start with a 0
+        $mconfig['distance'] = FILTER_VAR($_GET["distance"], FILTER_VALIDATE_INT);
     }
+    else {
 
+        // Bounce to index.html
+
+    }
 }
+
 validateGetData();
 try {
-	$mconfig['jsonraw']   = getZipCodeData($mconfig['zipcode'],$mconfig['distance']);
+    $mconfig['jsonraw'] = getZipCodeData($mconfig['zipcode'], $mconfig['distance']);
 }
-catch (Exception $e) {
-	$mconfig['jsonraw']   = "[]";
-}
-$mconfig['jsondata']  = json_decode($mconfig['jsonraw'],true);
-$mconfig['questions'] = getQuestions($mconfig['jsondata']);
-$mconfig['answers']   = getAnswers($mconfig['jsondata']);
 
-// TODO Bounce if we don't have a zip or a distance 
+catch(Exception $e) {
+    $mconfig['jsonraw'] = "[]";
+}
+
+$mconfig['jsondata'] = json_decode($mconfig['jsonraw'], true);
+$mconfig['questions'] = getQuestions($mconfig['jsondata']);
+$mconfig['answers'] = getAnswers($mconfig['jsondata']);
+
+// TODO Bounce if we don't have a zip or a distance
+
 ?>
 <!DOCTYPE html>
 <html >
@@ -39,7 +49,7 @@ $mconfig['answers']   = getAnswers($mconfig['jsondata']);
   <title>STL MM Search Demo</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   
-  <link rel='stylesheet prefetch' href='https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/css/bootstrap.min.css'>
+<link rel='stylesheet prefetch' href='https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/css/bootstrap.min.css'>
 <link rel='stylesheet prefetch' href='https://fonts.googleapis.com/css?family=Lato:300,400,700,300italic,400italic,700italic'>
 <link rel='stylesheet prefetch' href='https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.2/css/bootstrap-select.css'>
 <link rel='stylesheet prefetch' href='https://cdnjs.cloudflare.com/ajax/libs/bootstrap-table/1.11.1/bootstrap-table.css'>
@@ -72,8 +82,10 @@ $mconfig['answers']   = getAnswers($mconfig['jsondata']);
 
 
     <!-- /Limited Multiple Select -->
-<?php echo dropDowns($mconfig['questions'],$mconfig['answers']); ?>
-<?php $mconfig['questionid'] = questionIDs($mconfig['questions'],$mconfig['answers']); ?>
+<?php
+echo dropDowns($mconfig['questions'], $mconfig['answers']); ?>
+<?php
+$mconfig['questionid'] = questionIDs($mconfig['questions'], $mconfig['answers']); ?>
 
 
     <button id="toggle" type="submit" class="btn btn-default">Just Show Me</button>
@@ -108,25 +120,29 @@ $mconfig['answers']   = getAnswers($mconfig['jsondata']);
   </table>
 </div>
 <div class="alert alert-danger hidden" id="no_orgs">
-	<strong>No Organizations matched the combination of zipcode and distance</strong>
+    <strong>No Organizations matched the combination of zipcode and distance</strong>
 </div>
 <div class="alert alert-danger hidden" id="all_filtered">
-	<strong>All Organizations have been filtered out.  No Organizations match the combination of zipcode,distance and choice of answers selected</strong>
+    <strong>All Organizations have been filtered out.  No Organizations match the combination of zipcode,distance and choice of answers selected</strong>
 </div>
 <div class="container border" id="footer">
 <a href="index.html">Pick a New ZipCode or Distance</a>
 </div>
 <div class="container border hidden" id="debug">
 <pre>
-<?php 
-// print_r($mconfig); 
+<?php
+
+// print_r($mconfig);
+
 ?>
 </pre>
 </div>
 <!-- /Results Table -->
 <script type="text/javascript">
-<?php echo "var orgs = {$mconfig['jsonraw']};"; ?>
-<?php echo "var qids = ".json_encode($mconfig['questionid']).";"; ?>
+<?php
+echo "var orgs = {$mconfig['jsonraw']};"; ?>
+<?php
+echo "var qids = " . json_encode($mconfig['questionid']) . ";"; ?>
 </script>
 <script src='https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.0/jquery.min.js'></script>
 <script src='https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.0/jquery-ui.min.js'></script>
