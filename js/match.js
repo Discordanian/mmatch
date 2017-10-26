@@ -2,7 +2,7 @@
 // http://javascript.crockford.com/code.html
 var config = {
   debug: true,
-  thresh: 4
+  thresh: 2
 };
 
 // If debug is enabled and we have a console log, write to console log
@@ -51,15 +51,38 @@ var mm = {
 
     // return location_filter && flower_filter;
 */
-	logger(x.org_name);
+	// logger(x.org_name);
 	qids.forEach(function(q) {
-		var k = '#'+q;
+		var k   = '#'+q;
+		var key = getKey(q);
+		var selectedA = $(k).val();
 		// logger(k);
-		// logger($(k).val());
+		// logger(selectedA);
+
+		// skip the parse if we already failed OR if nothing was selected for the question
+		if (retval && selectedA.length) {
+			x.questions.forEach(function(orgq) {
+				if(orgq.q_id === key) {
+					var orgAnswers = orgq.answers;
+					logger("Found this question in this org " + x.org_name);
+					// logger(orgAnswers);
+					var answerMatches = false;
+					selectedA.forEach(function(a) {
+						// See if answer 'a' is in the array for this org.
+						if (orgAnswers.includes(a)) { 
+							answerMatches = true; 
+							logger("Match for answer " + x.org_name + " " + key);
+							}
+					});
+					retval = answerMatches;
+				} // if the org has an answer for the given question
+				
+			}); // forEach x.questions
+		}
 		
-	});
+	}); // forEach qids
 	
-    return true;
+    return retval;
   },
   updateProgress: function() {
     var selected = orgs.filter(mm.filterResults).length;

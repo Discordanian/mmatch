@@ -94,7 +94,7 @@ if (($mconfig["zipcode"]=="-1") ||($mconfig["distance"]=="-1")) {
 
 <!-- Results -->
 <div id="results" class="container hidden">
-  <h2>Your Match</h2>
+  <h2>You may be interested in these</h2>
   <p>We believe that these organizations are the best match for your interests.</p>
   <table data-toggle="table" id="table_results" class="table">
     <thead>
@@ -109,16 +109,6 @@ if (($mconfig["zipcode"]=="-1") ||($mconfig["distance"]=="-1")) {
         <td>1</td>
         <td>Walk a Dog</td>
         <td>St Louis</td>
-      </tr>
-      <tr>
-        <td>2</td>
-        <td>Not the NSA</td>
-        <td>New York</td>
-      </tr>
-      <tr>
-        <td>3</td>
-        <td>Meals on Wheels</td>
-        <td>Everywhere</td>
       </tr>
     </tbody>
   </table>
@@ -140,7 +130,7 @@ if (($mconfig["zipcode"]=="-1") ||($mconfig["distance"]=="-1")) {
 <script src='https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js'></script>
 <script src='https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.2/js/bootstrap-select.min.js'></script>
 <script src='https://cdnjs.cloudflare.com/ajax/libs/bootstrap-table/1.11.1/bootstrap-table.min.js'></script>
-<script src="js/index.js"></script>
+<script src="js/match.js"></script>
 
 </body>
 </html>
