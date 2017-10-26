@@ -40,9 +40,9 @@ function getAnswers($json)
 function dropDowns($q, $a)
 {
     $counter = 0;
-    $retval = "<div class="container">";
-    $leftside = "<div class="col - sm - 6">n";
-    $rightside = "<div class="col - sm - 6">n";
+    $retval = "<div class=\"container\">";
+    $leftside = "<div class=\"col-sm-6\">\n";
+    $rightside = "<div class=\"col-sm-6\">\n";
     foreach(array_keys($q) as $key) {
 
         // If we have fewer than 2 choices, we can skip
@@ -57,10 +57,10 @@ function dropDowns($q, $a)
       <select id="$qid" class="question selectpicker" data-max-options="3" multiple>
 QUESTION;
             foreach($a[$key] as $answer) {
-                $qstr.= "nt<option>$answer</option>n";
+                $qstr.= "\n\t<option>$answer</option>\n";
             } // foreach answer
-            $qstr.= "n</select>n";
-            $qstr.= "</div>nn";
+            $qstr.= "\n</select>\n";
+            $qstr.= "</div>\n";
             if ($counter % 2) {
                 $leftside.= $qstr;
             }
@@ -69,9 +69,9 @@ QUESTION;
             }
         } // end answers > 1
     } // foreach
-    $leftside.= "n</div>n"; // close the col-sm-6 div
-    $rightside.= "n</div>n"; // close the col-sm-6 div
-    $retval.= "$leftsiden$rightsiden</div>n"; // left side and right side and closing container div
+    $leftside.= "\n</div>\n"; // close the col-sm-6 div
+    $rightside.= "\n</div>\n"; // close the col-sm-6 div
+    $retval.= "$leftside\n$rightside\n</div>\n"; // left side and right side and closing container div
     return $retval;
 } //dropDowns
 

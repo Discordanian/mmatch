@@ -9,3 +9,7 @@ Links of interest
 
 - Javascript style guide [http://javascript.crockford.com/code.html]
 
+- Javascript formatting http://jsbeautifier.org/
+
+- PHP Formatting http://phpbeautifier.com/beautify.php
+
