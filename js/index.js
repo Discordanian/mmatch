@@ -99,7 +99,7 @@ var mm = {
         if (mm.resultsVisible) {
               $("#table_results").bootstrapTable(
       "load",
-      organizations.data.filter(mm.filterResults)
+      orgs.filter(mm.filterResults)
     );
       $("#results").removeClass("hidden").addClass("visible");
     } else {
@@ -107,6 +107,7 @@ var mm = {
     }
   },
   filterResults: function(x) {
+/*
     // Location is an example of a single selection
     var location_filter = x.location == $("#locationSelect").val();
     // Flowers is an example of a multiple selection.  Returns an array
@@ -117,11 +118,12 @@ var mm = {
     mm.amihere();
 
     // return location_filter && flower_filter;
+*/
     return true;
   },
   updateProgress: function() {
-    var selected = organizations.data.filter(mm.filterResults).length;
-    var total = organizations.data.length;
+    var selected = orgs.filter(mm.filterResults).length;
+    var total = orgs.length;
     if (selected <=config.thresh && selected !== 0) { mm.resultsVisible = true; mm.displayResults();} else { mm.resultsVisible = false; mm.displayResults();}
     
 
@@ -152,7 +154,7 @@ $(function() {
   $("#toggle").click(function(e) {
     $("#table_results").bootstrapTable(
       "load",
-      organizations.data.filter(mm.filterResults)
+      orgs.filter(mm.filterResults)
     );
     e.preventDefault(); // prevent the default anchor functionality
     mm.toggle();

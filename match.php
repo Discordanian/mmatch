@@ -77,27 +77,6 @@ if (($mconfig["zipcode"]=="-1") ||($mconfig["distance"]=="-1")) {
   <form class="form form-horizontal">
 
 
-    <!-- Limited Multiple Select -->
-    <div class="form-group">
-      <label class="control-label col-sm-2" for="location">Location:</label>
-      <select id="locationSelect" class="question selectpicker">
-  <option>New York</option>
-  <option>St Louis</option>
-  
-</select>
-    </div>
-    <!-- /Limited Multiple Select -->
-
-
-    <!-- Limited Multiple Select -->
-    <div class="form-group">
-      <label class="control-label col-sm-2" for="flower">Flowers:</label>
-      <select id="flowerSelect" class="selectpicker" multiple data-max-options="2" multiple>
-  <option>Rose</option>
-  <option>Violet</option>
-  <option>Lilly</option>
-</select>
-    </div>
     <!-- /Limited Multiple Select -->
 <?php echo dropDowns($mconfig['questions'],$mconfig['answers']); ?>
 <?php $mconfig['questionid'] = questionIDs($mconfig['questions'],$mconfig['answers']); ?>
@@ -120,10 +99,9 @@ if (($mconfig["zipcode"]=="-1") ||($mconfig["distance"]=="-1")) {
   <table data-toggle="table" id="table_results" class="table">
     <thead>
       <tr>
-        <th data-field="rank">Rank</th>
-        <th data-field="organization">Organization</th>
-        <th data-field="location">Location</th>
-        <th data-field="url">Website</th>
+        <th data-field="orgid">ID</th>
+        <th data-field="org_name">Organization</th>
+        <th data-field="customer_notice">Blurb</th>
       </tr>
     </thead>
     <tbody>
@@ -131,19 +109,16 @@ if (($mconfig["zipcode"]=="-1") ||($mconfig["distance"]=="-1")) {
         <td>1</td>
         <td>Walk a Dog</td>
         <td>St Louis</td>
-        <td>http://walkadog.gov</td>
       </tr>
       <tr>
         <td>2</td>
         <td>Not the NSA</td>
         <td>New York</td>
-        <td>http://nsa.gov</td>
       </tr>
       <tr>
         <td>3</td>
         <td>Meals on Wheels</td>
         <td>Everywhere</td>
-        <td>http://mealsonwheels.com</td>
       </tr>
     </tbody>
   </table>
