@@ -65,5 +65,17 @@ QUESTION;
 	return $retval;
 } //dropDowns
 
+// Return relevant question IDs for the DOM in an array
+function questionIDs($q,$a) {
+	$retval = array();
+	foreach(array_keys($q) as $key) {
+		// If we have fewer than 2 choices, we can skip
+		if(count($a[$key]) > 1) {
+			$qid = "question_".$key;
+			array_push($retval,$qid);
+		}  // end answers > 1
+	} // foreach
+	return $retval;
+} //dropDowns
 
 ?>

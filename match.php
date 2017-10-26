@@ -100,6 +100,7 @@ if (($mconfig["zipcode"]=="-1") ||($mconfig["distance"]=="-1")) {
     </div>
     <!-- /Limited Multiple Select -->
 <?php echo dropDowns($mconfig['questions'],$mconfig['answers']); ?>
+<?php $mconfig['questionid'] = questionIDs($mconfig['questions'],$mconfig['answers']); ?>
 
 
     <button id="toggle" type="submit" class="btn btn-default">Just Show Me</button>
@@ -150,20 +151,21 @@ if (($mconfig["zipcode"]=="-1") ||($mconfig["distance"]=="-1")) {
 <div class="container border" id="debug">
 <pre>
 <?php 
-print_r($mconfig); 
+// print_r($mconfig); 
 ?>
 </pre>
 </div>
 <!-- /Results Table -->
+<script type="text/javascript">
+<?php echo "var orgs = {$mconfig['jsonraw']};"; ?>
+<?php echo "var qids = ".json_encode($mconfig['questionid']).";"; ?>
+</script>
 <script src='https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.0/jquery.min.js'></script>
 <script src='https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.0/jquery-ui.min.js'></script>
 <script src='https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js'></script>
 <script src='https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.2/js/bootstrap-select.min.js'></script>
 <script src='https://cdnjs.cloudflare.com/ajax/libs/bootstrap-table/1.11.1/bootstrap-table.min.js'></script>
 <script src="js/index.js"></script>
-<script type="text/javascript">
-	<?php echo "var orgs = {$mconfig['jsonraw']};"; ?>
-</script>
 
 </body>
 </html>

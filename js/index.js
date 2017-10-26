@@ -116,7 +116,8 @@ var mm = {
       selected_flowers.length === 0 || selected_flowers.includes(x.flower);
     mm.amihere();
 
-    return location_filter && flower_filter;
+    // return location_filter && flower_filter;
+    return true;
   },
   updateProgress: function() {
     var selected = organizations.data.filter(mm.filterResults).length;
