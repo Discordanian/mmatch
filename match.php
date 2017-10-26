@@ -99,6 +99,7 @@ if (($mconfig["zipcode"]=="-1") ||($mconfig["distance"]=="-1")) {
 </select>
     </div>
     <!-- /Limited Multiple Select -->
+<?php echo dropDowns($mconfig['questions'],$mconfig['answers']); ?>
 
 
     <button id="toggle" type="submit" class="btn btn-default">Just Show Me</button>
