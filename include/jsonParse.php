@@ -29,29 +29,39 @@ function getAnswers($json) {
 
 
 // Pass it the questions and the answers
-// returns DOM ids for all questions on page
+// returns string
 // Skips questions that have no added value.  IE:  Has less than 2 options
 function dropDowns($q, $a) {
-	$retval = "";
+	$counter=0;
+	$retval = "<div class=\"container\">";
+	$leftside="<div class=\"col-sm-6\">\n";
+	$rightside="<div class=\"col-sm-6\">\n";
 	foreach(array_keys($q) as $key) {
 		// If we have fewer than 2 choices, we can skip
 		if(count($a[$key]) > 1) {
+			$counter++;
 			$qid = "question_".$key;
 			$qtext = $q[$key];
 			$qstr = <<<QUESTION
     <div class="form-group">
-      <label class="control-label col-sm-2" for="$qid">$qtext</label>
+      <label class="control-label col-sm-6" for="$qid">$qtext</label>
       <select id="$qid" class="question selectpicker" data-max-options="3" multiple>
 QUESTION;
 		foreach($a[$key] as $answer) {
 			$qstr .= "\n\t<option>$answer</option>\n";
-		}
+			} // foreach answer
 		$qstr.="\n</select>\n";
 		$qstr.="</div>\n\n";
-		$retval .= $qstr;
-
-		} 
+		if($counter%2) {
+			$leftside.=$qstr;
+			} else {
+			$rightside.=$qstr;
+			}
+		}  // end answers > 1
 	} // foreach
+	$leftside.="\n</div>\n"; // close the col-sm-6 div
+	$rightside.="\n</div>\n"; // close the col-sm-6 div
+	$retval.="$leftside\n$rightside\n</div>\n"; // left side and right side and closing container div
 	return $retval;
 } //dropDowns
 
