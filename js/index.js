@@ -51,10 +51,12 @@ var mm = {
 
     // return location_filter && flower_filter;
 */
+	logger(x.org_name);
 	qids.forEach(function(q) {
 		var k = '#'+q;
-		logger(k);
-		logger($(k).val());
+		// logger(k);
+		// logger($(k).val());
+		
 	});
 	
     return true;
