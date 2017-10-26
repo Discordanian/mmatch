@@ -37,6 +37,15 @@ var mm = {
       $("#results").removeClass("visible").addClass("hidden");
     }
   },
+  showNoOrgs : function() {
+      $("#no_orgs").removeClass("hidden").addClass("visible");
+  },
+  showAllFiltered : function() {
+      $("#all_filtered").removeClass("hidden").addClass("visible");
+  },
+  hideAllFiltered : function() {
+      $("#all_filtered").removeClass("visible").addClass("hidden");
+  },
   filterResults: function(x) {
 	var retval = true;
 /*
@@ -88,6 +97,8 @@ var mm = {
     var selected = orgs.filter(mm.filterResults).length;
     var total = orgs.length;
     if (selected <=config.thresh && selected !== 0) { mm.resultsVisible = true; mm.displayResults();} else { mm.resultsVisible = false; mm.displayResults();}
+    if(selected === 0) { mm.showAllFiltered(); } else { mm.hideAllFiltered(); }
+    if(total === 0) { mm.showNoOrgs(); }
     
 
     mm.complete = Math.floor(100 * ((total - selected) / total));

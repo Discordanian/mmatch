@@ -24,7 +24,12 @@ function validateGetData()
 
 }
 validateGetData();
-$mconfig['jsonraw']   = getZipCodeData($mconfig['zipcode'],$mconfig['distance']);
+try {
+	$mconfig['jsonraw']   = getZipCodeData($mconfig['zipcode'],$mconfig['distance']);
+}
+catch (Exception $e) {
+	$mconfig['jsonraw']   = "[]";
+}
 $mconfig['jsondata']  = json_decode($mconfig['jsonraw'],true);
 $mconfig['questions'] = getQuestions($mconfig['jsondata']);
 $mconfig['answers']   = getAnswers($mconfig['jsondata']);
@@ -113,7 +118,16 @@ if (($mconfig["zipcode"]=="-1") ||($mconfig["distance"]=="-1")) {
     </tbody>
   </table>
 </div>
-<div class="container border" id="debug">
+<div class="alert alert-danger hidden" id="no_orgs">
+	<strong>No Organizations matched the combination of zipcode and distance</strong>
+</div>
+<div class="alert alert-danger hidden" id="all_filtered">
+	<strong>All Organizations have been filtered out.  No Organizations match the combination of zipcode,distance and choice of answers selected</strong>
+</div>
+<div class="container border" id="footer">
+<a href="index.html">Pick a New ZipCode or Distance</a>
+</div>
+<div class="container border hidden" id="debug">
 <pre>
 <?php 
 // print_r($mconfig); 
