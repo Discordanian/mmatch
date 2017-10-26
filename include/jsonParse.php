@@ -41,7 +41,7 @@ function dropDowns($q, $a) {
 			$qstr = <<<QUESTION
     <div class="form-group">
       <label class="control-label col-sm-2" for="$qid">$qtext</label>
-      <select id="$qid" class="question selectpicker" data-max-options="2" multiple>
+      <select id="$qid" class="question selectpicker" data-max-options="3" multiple>
 QUESTION;
 		foreach($a[$key] as $answer) {
 			$qstr .= "\n\t<option>$answer</option>\n";
