@@ -5,86 +5,17 @@ var config = {
   thresh: 4
 };
 
+// If debug is enabled and we have a console log, write to console log
 var logger = function(e) {
   if (config.debug && console.log) {
     console.log(e);
   }
 };
 
-var organizations = {
-  data: [
-    {
-      rank: 0,
-      organization: "Org0 loves Lillies",
-      location: "St Louis",
-      flower: "Lilly",
-      url: "http://localhost"
-    },
-    {
-      rank: 1,
-      organization: "Org1 loves Roses",
-      location: "New York",
-      flower: "Rose",
-      url: "http://localhost1"
-    },
-    {
-      rank: 2,
-      organization: "Org2 loves Lillies",
-      location: "St Louis",
-      flower: "Lilly",
-      url: "http://localhost"
-    },
-    {
-      rank: 3,
-      organization: "Org3 loves Lillies",
-      location: "New York",
-      flower: "Lilly",
-      url: "http://localhost"
-    },
-    {
-      rank: 4,
-      organization: "Org4 loves Violets",
-      location: "St Louis",
-      flower: "Violet",
-      url: "http://localhost"
-    },
-    {
-      rank: 5,
-      organization: "Org5 loves Lillies",
-      location: "St Louis",
-      flower: "Lilly",
-      url: "http://localhost"
-    },
-    {
-      rank: 6,
-      organization: "Org6 loves Violets",
-      location: "New York",
-      flower: "Violet",
-      url: "http://localhost1"
-    },
-    {
-      rank: 7,
-      organization: "Org7 loves Violets",
-      location: "St Louis",
-      flower: "Violet",
-      url: "http://localhost"
-    },
-    {
-      rank: 8,
-      organization: "Org8 loves Roses",
-      location: "New York",
-      flower: "Rose",
-      url: "http://localhost"
-    },
-    {
-      rank: 9,
-      organization: "Org9 loves Lillies",
-      location: "St Louis",
-      flower: "Lilly",
-      url: "http://localhost"
-    }
-  ]
-}; // JSON representation of the orgs
+// given a DOM id (question_1234) return "1234";
+var getKey = function(x) {
+	return x.split("_")[1];
+}
 
 var mm = {
   resultsVisible: false,
@@ -107,6 +38,7 @@ var mm = {
     }
   },
   filterResults: function(x) {
+	var retval = true;
 /*
     // Location is an example of a single selection
     var location_filter = x.location == $("#locationSelect").val();
@@ -119,6 +51,12 @@ var mm = {
 
     // return location_filter && flower_filter;
 */
+	qids.forEach(function(q) {
+		var k = '#'+q;
+		logger(k);
+		logger($(k).val());
+	});
+	
     return true;
   },
   updateProgress: function() {
