@@ -12,29 +12,18 @@ function getQuestions($json) {
 	return $retval;
 }
 
+// Return a dedeuped list of answers to populate drop downs
 function getAnswers($json) {
-	$retval= array();
-	foreach ($json as $org) {
-		for ( $i = 0; $i < count($org['questions']); $i++) {
-			$index = $q['q_id'];
-			$retval[$index] = $q['text'];
-		}
-	} // foreach
-	return $retval;
-}
-
-// get valid answers for nth question
-function getAnswersNth($json,$n) {
 	$retval= array();
 	foreach ($json as $org) {
 		foreach($org['questions'] as $q) {
 			$index = $q['q_id'];
-			$retval[$index] = $q['text'];
+			if(!$retval[$index]) { $retval[$index] = array(); }
+			$retval[$index] = array_unique(array_merge($q['answers'],$retval[$index]));
 		}
-	}
+	} // foreach
 	return $retval;
 }
-
 
 
 ?>

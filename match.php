@@ -24,9 +24,10 @@ function validateGetData()
 
 }
 validateGetData();
-$mconfig['jsonraw'] = getZipCodeData($mconfig['zipcode'],$mconfig['distance']);
-$mconfig['jsondata'] = json_decode($mconfig['jsonraw'],true);
-// $mconfig['questions'] = getQuestions($mconfig['jsondata']);
+$mconfig['jsonraw']   = getZipCodeData($mconfig['zipcode'],$mconfig['distance']);
+$mconfig['jsondata']  = json_decode($mconfig['jsonraw'],true);
+$mconfig['questions'] = getQuestions($mconfig['jsondata']);
+$mconfig['answers']   = getAnswers($mconfig['jsondata']);
 
 // Bounce if we don't have a zip or a distance 
 /*
@@ -148,8 +149,7 @@ if (($mconfig["zipcode"]=="-1") ||($mconfig["distance"]=="-1")) {
 <div class="container border" id="debug">
 <pre>
 <?php 
-$mconfig['questions'] = getQuestions($mconfig['jsondata']);
-$arr = get_defined_vars(); print_r($mconfig); 
+print_r($mconfig); 
 ?>
 </pre>
 </div>
