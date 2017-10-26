@@ -16,10 +16,6 @@ function validateGetData()
 	    $mconfig['distance'] = FILTER_VAR($_GET["distance"], FILTER_VALIDATE_INT);
     } else {
 	// Bounce to index.html
-/*
-	header('Location: index.html');
-	exit();
-*/
     }
 
 }
@@ -34,14 +30,7 @@ $mconfig['jsondata']  = json_decode($mconfig['jsonraw'],true);
 $mconfig['questions'] = getQuestions($mconfig['jsondata']);
 $mconfig['answers']   = getAnswers($mconfig['jsondata']);
 
-// Bounce if we don't have a zip or a distance 
-/*
-if (($mconfig["zipcode"]=="-1") ||($mconfig["distance"]=="-1")) {
-	header('Location: index.html');
-	exit();
-	
-}
-*/
+// TODO Bounce if we don't have a zip or a distance 
 ?>
 <!DOCTYPE html>
 <html >
