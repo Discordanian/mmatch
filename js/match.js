@@ -39,6 +39,7 @@ var mm = {
     },
     showNoOrgs: function() {
         $("#no_orgs").removeClass("hidden").addClass("visible");
+	mm.hideAllFiltered();
     },
     showAllFiltered: function() {
         $("#all_filtered").removeClass("hidden").addClass("visible");
