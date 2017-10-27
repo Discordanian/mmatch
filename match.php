@@ -126,7 +126,7 @@ $mconfig['questionid'] = questionIDs($mconfig['questions'], $mconfig['answers'])
     <strong>All Organizations have been filtered out.  No Organizations match the combination of zipcode,distance and choice of answers selected</strong>
 </div>
 <div class="container border" id="footer">
-<a href="index.html">Pick a New ZipCode or Distance</a>
+<a href="index.html" class="btn btn-info" role="button">Pick a New ZipCode or Distance</a>
 </div>
 <div class="container border hidden" id="debug">
 <pre>
