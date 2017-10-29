@@ -3,8 +3,9 @@ DROP PROCEDURE IF EXISTS selectOrganization;
 DELIMITER $$
 CREATE PROCEDURE selectOrganization(p_orgid INT UNSIGNED)
 BEGIN
-	SELECT orgid, org_name, person_name, email_verified, email_unverified, org_website, money_url, mission, 
-            abbreviated_name, customer_notice, customer_contact, admin_contact, active_ind FROM org WHERE orgid = p_orgid;
+	SELECT org.orgid, org.org_name, usr.person_name, usr.email_verified, usr.email_unverified, 
+	org.org_website, org.money_url, org.mission, org.abbreviated_name, org.customer_notice, org.customer_contact, org.admin_contact, org.active_ind 
+	FROM org INNER JOIN app_user usr on usr.user_id = org.user_id WHERE org.orgid = p_orgid;
 END
 $$
 

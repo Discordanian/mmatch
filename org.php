@@ -23,6 +23,7 @@ $goto_page = -2;
 
 try
 {
+	initializeDb();
 	
 	if (isset($_POST["action"]))
 	{
@@ -32,15 +33,13 @@ try
 		if (!validatePostData())
 		{
 			/* #2 or #4 */
-			initializeDb();
 			buildEmptyArray();
 			translatePostIntoArray();
 			zipPostToArray();
 			displayPostData();
-		} elseif ($_POST["action"] == "I")
+		} elseif ($_POST["action"] != "U")
 		{
 			/* #3 */
-			initializeDb();
 			performInsert();
 			buildEmptyArray();
 			translatePostIntoArray();
@@ -53,7 +52,6 @@ try
 		elseif ($_POST["action"] == "U")
 		{
 			/* #5 */
-			initializeDb();
 			performUpdate();
 			//buildEmptyArray();
 			populateArray();
@@ -69,7 +67,6 @@ try
 	{
 		/* #6 */
 		$orgid = FILTER_VAR($_REQUEST["orgid"], FILTER_VALIDATE_INT);
-		initializeDb();
 		displayDbData();
 		buildEmptyArray();
 		populateArray();
@@ -87,17 +84,28 @@ try
 		$org_website = "";
 		$money_url = "";
 		$mission = "";
-		$action = "I"; /* Insert */
+		/* if this happens, then we are creating a new org
+		tied to an existing user, so fill in the user data */
+		if (isset($_SESSION["user_id"]))
+		{
+    	    $action = "O"; /* This means inserting org only (user already exists) */
+    	    getUserInfo();
+    	    $goto_page = -1;
+		}
+		else 
+		{
+		    $action = "I"; /* Insert org and user simultaneously */
+	    }
 		$abbreviated_name = "";
 		$active_ind = "checked";
 		$admin_contact = "";
 		$customer_contact = "";
 		$customer_notice = "";
 		$zip_array = array(); /* empty array */
-		initializeDb();
 		buildEmptyArray();
-		buildCsrfToken();
 	}
+	buildCsrfToken();
+
 }
 catch (Exception $e)
 {
@@ -386,8 +394,8 @@ function performUpdate()
 
         assert(isset($dbh));
 
-        /* make sure orgid from session matches org ID requested */
-        if ($_SESSION["orgid"] != $orgid)
+        /* make sure org ID requested is in the session variable with authorized orgs */
+        if (!in_array($orgid, $_SESSION["orgids"]))
         {
             error_log("Unauthorized org ID requested. Possible parameter tampering.");
 			throw new Exception("Unauthorized org ID requested. Possible parameter tampering.");
@@ -395,7 +403,7 @@ function performUpdate()
         }
 
         $stmt = $dbh->prepare("CALL updateOrganization(:orgid, :org_name, :person_name, :org_website, :money_url, " . 
-			":mission, :active_ind, :abbreviated_name, :customer_contact, :customer_notice, :admin_contact, :pwhash, :email); " );
+			":mission, :active_ind, :abbreviated_name, :customer_contact, :customer_notice, :admin_contact, :pwhash, :email, :user_id); " );
             /* first query doesn't update email because it might get updated in a different window/browser/device */
             /* next query only updates password if a new one was entered */
             /* if email is changed, and it was previously verified, then set it to unverified */
@@ -442,7 +450,7 @@ function performUpdate()
         }
 
         $stmt->bindValue(':pwhash', $pwhash, PDO::PARAM_STR);
-		
+		$stmt->bindValue(':user_id', $_SESSION["user_id"]);
 		//echo "<!-- ";
 		//$stmt->debugDumpParams();
 		//echo " -->\n";
@@ -495,7 +503,7 @@ function performInsert()
         /* this is a new record, so do the insert */
         global $dbh, $orgid, $goto_page, $action, $success_msg, $email_unverified;
         $stmt = $dbh->prepare("CALL insertOrganization(:org_name, :person_name, :org_website, :money_url, " . 
-			":mission, :active_ind, :abbreviated_name, :customer_contact, :customer_notice, :admin_contact, :pwhash, :email); " );
+			":mission, :active_ind, :abbreviated_name, :customer_contact, :customer_notice, :admin_contact, :pwhash, :email, :user_id); " );
 
         $stmt->bindValue(':org_name', filter_var($_POST["org_name"], FILTER_SANITIZE_STRING, FILTER_FLAG_NO_ENCODE_QUOTES + 
             FILTER_FLAG_STRIP_LOW + FILTER_FLAG_STRIP_HIGH + FILTER_FLAG_STRIP_BACKTICK), PDO::PARAM_STR);
@@ -505,7 +513,16 @@ function performInsert()
         $stmt->bindValue(':email', $email_unverified, PDO::PARAM_STR);
         $stmt->bindValue(':org_website', filter_var($_POST["org_website"], FILTER_SANITIZE_URL), PDO::PARAM_STR);
         $stmt->bindValue(':money_url', filter_var($_POST["money_url"], FILTER_SANITIZE_URL), PDO::PARAM_STR);
-        $pwhash = password_hash($_POST["password1"], PASSWORD_BCRYPT);
+ 
+        /* udpate password if a new one specified */
+        if (strlen($_POST["password1"]) > 0)
+        {
+            $pwhash = password_hash($_POST["password1"], PASSWORD_BCRYPT);
+        }
+        else
+        {
+            $pwhash = null;
+        }
         $stmt->bindValue(':pwhash', $pwhash, PDO::PARAM_STR);
         $stmt->bindValue(':mission', filter_var($_POST["mission"], FILTER_SANITIZE_STRING, FILTER_FLAG_NO_ENCODE_QUOTES + 
             FILTER_FLAG_STRIP_LOW + FILTER_FLAG_STRIP_HIGH + FILTER_FLAG_STRIP_BACKTICK), PDO::PARAM_STR);
@@ -527,6 +544,8 @@ function performInsert()
             $stmt->bindValue(':active_ind', 0, PDO::PARAM_INT);
         }
 
+        $stmt->bindValue(':user_id', ($action == "O" ? $_SESSION["user_id"] : 0), PDO::PARAM_INT);
+        
         $stmt->execute();
 
         if ($stmt->errorCode() != "00000") 
@@ -542,18 +561,20 @@ function performInsert()
 			$goto_page = 0;
 		}
 		
-		$orgid = $stmt->fetchColumn(); /* insert ID is returned as a row set from the SP */
+		$row = $stmt->fetch(PDO::FETCH_ASSOC); /* insert ID is returned as a row set from the SP */
 		
-		
-        if ($orgid == FALSE) 
+        if ($row == FALSE) 
         {
 			error_log("Failed to get the inserted ID# in org.php");
 			throw new Exception("An unknown error was encountered (14). Please attempt to reauthenticate.");
 			exit();
         }
 
+		$orgid = $row["orgid"];
         /* place the org ID into session */
-        $_SESSION["orgid"] = $orgid;
+        $_SESSION["orgids"] = array($orgid);
+        $_SESSION["user_id"] = $row["user_id"];
+        
         /* change the action to update, now that the record was successfully inserted */
         $action = "U";
 
@@ -588,7 +609,7 @@ function displayDbData()
         global $dbh, $orgid;
 
         /* make sure orgid from session matches org ID requested */
-        if ($_SESSION["orgid"] != $orgid)
+        if (!in_array($orgid, $_SESSION["orgids"]))
         {
             error_log("Unauthorized org ID requested. Possible parameter tampering.");
 			throw new Exception("Unauthorized org ID requested. Possible parameter tampering.");
@@ -1115,21 +1136,23 @@ function sendVerificationEmail()
 
 function buildEmailVerificationUrl()
 {
-	global $orgid, $csrf_salt, $email_unverified;
+	global $csrf_salt, $email_unverified;
+	$user_id = $_SESSION["user_id"];
+	
 	/* use a hash in the URL to ensure the sendverifyemail.php isn't called maliciously */
 	$link_expdate = new DateTime(NULL, new DateTimeZone("UTC"));
 	$link_expdate->add(new DateInterval("PT4H")); /* the window to send the email expires in 4 hours */
 	/* that should be fine since this is done almost completely programmatically */
 	/* either when the record is first added, or when the button on page 1 is clicked */
 	
-	$input = $_SERVER["SERVER_NAME"] . $email_unverified . $orgid . 
+	$input = $_SERVER["SERVER_NAME"] . $email_unverified . $user_id . 
 		"sendverifyemail.php" . $link_expdate->format('U') . $csrf_salt;
 	$token = hash("sha256", $input);
 
 	//$url = sprintf("http://%s/mmatch/service/sendverifyemail.php?email=%s&token=%s&orgid=%d&date=%s", 
 	//	$_SERVER["SERVER_NAME"], urlencode($email_unverified), $token, $orgid, $link_expdate->format('U'));
-	$url = sprintf("service/sendverifyemail.php?email=%s&token=%s&orgid=%d&date=%s", 
-		urlencode($email_unverified), $token, $orgid, $link_expdate->format('U'));
+	$url = sprintf("service/sendverifyemail.php?email=%s&token=%s&user_id=%d&date=%s", 
+		urlencode($email_unverified), $token, $user_id, $link_expdate->format('U'));
 	/* TODO: Handle the determination of http/https in the URL */
 	return $url;
 }
@@ -1204,6 +1227,84 @@ function zipArrayToDb()
 		exit();
     }
 }
+
+
+
+function getUserInfo()
+{
+
+    try {
+
+        global $dbh;
+
+        $user_id = $_SESSION["user_id"];
+        
+        $stmt = $dbh->prepare("CALL selectUserInfo(:user_id);");
+        $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
+
+        $stmt->execute();
+
+        if ($stmt->errorCode() != "00000") 
+        {
+            $erinf = $stmt->errorInfo();
+			error_log("SELECT user failed in org.php: " . $stmt->errorCode() . " " . $erinf[2]);
+			throw new Exception("An unknown error was encountered (33). Please attempt to reauthenticate.");
+            exit();
+        }
+		
+
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+
+        if (isset($row))
+        {
+            global $person_name;
+
+            global $email_verified;
+            global $email_unverified;
+            global $email;
+
+            $person_name = htmlspecialchars($row["person_name"]);
+
+            $email_verified = htmlspecialchars($row["email_verified"]);
+            $email_unverified = htmlspecialchars($row["email_unverified"]);
+            
+            if (strlen($email_verified) > 0)
+            {
+                $email = $email_verified;
+            }
+            else
+            {
+                $email = $email_unverified;
+            }
+
+        }
+        else
+        {
+			error_log("Failed to get the user record with that ID.");
+			throw new Exception("An unknown error was encountered (34). Please attempt to reauthenticate.");
+            exit();
+        }
+        $stmt->closeCursor();
+
+        
+    }
+    catch (PDOException $e)
+    {
+        error_log("Database error during SELECT query in org.php: " . $e->getMessage());
+        throw new Exception("An unknown error was encountered (35). Please attempt to reauthenticate.");
+		exit();
+    }
+    catch(Exception $e)
+    {
+        error_log("Error during database SELECT query in org.php: " . $e->getMessage());
+		/* We most likely got here from the SQL error above, so just bubble up the exception */
+        throw new Exception("An unknown error was encountered (36). Please attempt to reauthenticate.");
+		exit();
+    }
+
+}
+
 
 
 ?>
@@ -1282,7 +1383,7 @@ function zipArrayToDb()
     </div>
 
    <div class="form-group">
-        <label for="password1"><?php if ($action == "U") { echo "Update Password:"; } else { echo "Set Password:"; } ?></label>
+        <label for="password1"><?php if ($action != "I") { echo "Update Password:"; } else { echo "Set Password:"; } ?></label>
         <input class="form-control" type="password" id="password1" maxlength="128" name="password1" value="" <?php if ($action == "I") { echo "required"; } ?> />
     </div> <!-- form-group -->
 
@@ -1418,7 +1519,23 @@ function zipArrayToDb()
         arrayToHtml($page_num);
     }
 ?>
-        <button id="save_data" type="submit" class="btn btn-default btn-lg">Save data</button>
+
+<button id="save_data" type="submit" class="btn btn-default btn-lg">Save data</button>
+<a href="login.php" class="btn btn-default btn-lg" >Log Off</a>
+
+<?php
+/* if there is more than 1 organization possible, display a link to navigate to the org list */
+
+if (isset($_SESSION["orgids"]))
+{
+    if (count($_SESSION["orgids"]) > 1)
+    {
+        $user_id = $_SESSION["user_id"];
+        echo "<a href='orgList.php?user_id=$user_id' class='btn btn-default btn-lg' >Back to List</a>";
+    }
+}
+
+?>
 
 	<?php if (isset($success_msg))
 	{

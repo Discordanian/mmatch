@@ -24,11 +24,21 @@ try
 		
 		if (validatePostData())
 		{
-			if (authenticateCredentials())
+		    $orgs = authenticateCredentials();
+		    
+			if (isset($orgs))
 			{
 				/* flow #3 */
-				redirectToPage();
-			}
+				
+				if (count($orgs) == 1)
+				{
+    				redirectToOrg($orgs[0]);
+				}
+				else 
+				{
+				    redirectToList();
+    			}
+    		}
 			else
 			{
 				/* set the auth error message */
@@ -142,7 +152,7 @@ function validatePostData()
 
 function authenticateCredentials()
 {
-	global $dbh, $orgid, $email, $pwhash;
+	global $dbh, $email, $user_id, $pwhash;
 
 	initializeDb(); /* I want this outside the try since it has its own exception handler, which I want bubbled up */
 
@@ -152,9 +162,6 @@ function authenticateCredentials()
         $stmt = $dbh->prepare("CALL selectLoginInfo(:email);" );
         $stmt->bindParam(':email', $email);
 		
-		//echo "<!-- ";
-		//$stmt->debugDumpParams();
-		//echo " -->\n";
 		
 	    $stmt->execute();
 
@@ -166,22 +173,32 @@ function authenticateCredentials()
             exit();
         }
 
-        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        /* retrieve all rows and columns at once, this should be a pretty small dataset, so should not be a problem */
+        $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
 
-
-        if (isset($row))
+        if (count($results) > 0)
 		{
-            $pwhash = $row["pwhash"];
+            $pwhash = $results[0]["pwhash"];
 
 
             if (password_verify($_POST["password"], $pwhash))
             {
-                $orgid = $row["orgid"];
+                //$orgid = $row["orgid"];
                 //$email = $row["email_verified"];
-                return filter_var($orgid, FILTER_VALIDATE_INT); /* just double check the org ID is a valid int */
+                $orgs = array_column($results, "orgid");
+		//echo "<!-- ";
+		//var_dump($orgs);
+		//echo " -->\n";
+                session_start();
+                $user_id = $results[0]["user_id"];
+                $_SESSION["user_id"] = $user_id;
+                $_SESSION["orgids"] = $orgs;
+                return $orgs;
             }
         }
 
+        return NULL;
 
     }
     catch (PDOException $e)
@@ -228,15 +245,17 @@ function clearSession()
 }
 
 
-function redirectToPage()
+function redirectToOrg($orgid)
 {
-    session_start();
-    global $orgid;
-    $_SESSION["orgid"] = $orgid;
 	header("Location: org.php?orgid=$orgid");
-    
 }
 
+function redirectToList()
+{
+    global $user_id;
+
+	header("Location: orgList.php?user_id=$user_id");
+}
 
 
 ?>
