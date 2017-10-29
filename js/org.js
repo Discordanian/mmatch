@@ -366,6 +366,6 @@ function resetInactivityTimer()
 
     clearTimeout(inactivityTimer);
         
-    inactivityTimer = setTimeout(backToLogoutPage, 60 * 1000); /* logout after 4 hours of nothing */
+    inactivityTimer = setTimeout(backToLogoutPage, 4 * 60 * 60 * 1000); /* logout after 4 hours of nothing */
 
 }
