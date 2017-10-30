@@ -37,8 +37,9 @@ try
 			translatePostIntoArray();
 			zipPostToArray();
 			displayPostData();
-		} elseif ($_POST["action"] != "U")
+		} elseif ($_POST["action"] != "U") /* adding a new org */
 		{
+			$goto_page = -1; /* show the identifier data instead of person data */
 			/* #3 */
 			performInsert();
 			buildEmptyArray();
@@ -49,7 +50,7 @@ try
 			displayDbData();
 			populateArray();
 		}
-		elseif ($_POST["action"] == "U")
+		elseif ($_POST["action"] == "U") /* updating an org */
 		{
 			/* #5 */
 			performUpdate();
@@ -95,6 +96,7 @@ try
 		else 
 		{
 		    $action = "I"; /* Insert org and user simultaneously */
+			$_SESSION["orgids"] = array(); /* initialize session variable */
 	    }
 		$abbreviated_name = "";
 		$active_ind = "checked";
@@ -105,6 +107,9 @@ try
 		buildEmptyArray();
 	}
 	buildCsrfToken();
+	//echo "<!-- \n ";
+	//var_dump($_SESSION);
+	//echo " --> \n";
 
 }
 catch (Exception $e)
@@ -112,7 +117,7 @@ catch (Exception $e)
 	/* errors just redirect the user back to the login page */
 	/* TODO: There are certain errors that might warrant a redisplay 
 	or a retry rather than just blowing up back to the login page */
-	header("Location: login.php?errmsg=9"); /* the #9 means nothing, maybe at some point it will mean something */
+	//header("Location: login.php?errmsg=9"); /* the #9 means nothing, maybe at some point it will mean something */
 	exit();
 }
 
@@ -180,9 +185,10 @@ function checkCsrfToken()
 
 function validatePostData()
 {
-    global $email_msg, $orgid, $goto_page, $org_website_msg, $money_url_msg, $pwd_msg, $org_name_msg;
+    global $email_msg, $orgid, $goto_page, $org_website_msg, $money_url_msg, $pwd_msg, $org_name_msg, $action;
     $orgid = FILTER_VAR($_REQUEST["orgid"], FILTER_VALIDATE_INT);
-
+	$action = substr(strtoupper($_POST["action"]), 0, 1); /* trim action to 1 character */
+	
     if (!($orgid >= 0))
     {
         error_log("Parameter tampering detected (validatePostData) orgid.");
@@ -451,8 +457,8 @@ function performUpdate()
 
         $stmt->bindValue(':pwhash', $pwhash, PDO::PARAM_STR);
 		$stmt->bindValue(':user_id', $_SESSION["user_id"]);
-		//echo "<!-- ";
-		//$stmt->debugDumpParams();
+		//echo "<!-- performUpdate ";
+		//var_dump($_SESSION);
 		//echo " -->\n";
 		
 	    $stmt->execute();
@@ -544,6 +550,9 @@ function performInsert()
             $stmt->bindValue(':active_ind', 0, PDO::PARAM_INT);
         }
 
+		//echo "<!-- performInsert ";
+		//var_dump($_SESSION);
+		//echo " -->\n";
         $stmt->bindValue(':user_id', ($action == "O" ? $_SESSION["user_id"] : 0), PDO::PARAM_INT);
         
         $stmt->execute();
@@ -557,7 +566,7 @@ function performInsert()
         }
 		else
 		{
-			$success_msg = "Record successfully inserted. An email has been sent to validate the email.";
+			$success_msg = "Record successfully inserted.";
 			$goto_page = 0;
 		}
 		
@@ -572,15 +581,19 @@ function performInsert()
 
 		$orgid = $row["orgid"];
         /* place the org ID into session */
-        $_SESSION["orgids"] = array($orgid);
+        array_push($_SESSION["orgids"], $orgid);
         $_SESSION["user_id"] = $row["user_id"];
         
-        /* change the action to update, now that the record was successfully inserted */
-        $action = "U";
 
         $stmt->closeCursor();
 
-        sendVerificationEmail();
+		if ($action == "I") /* only send the verification email when the user record was inserted */
+		{
+			sendVerificationEmail();
+		}
+		
+        /* change the action to update, now that the record was successfully inserted */
+        $action = "U";
 
     }
     catch (PDOException $e)
@@ -1521,18 +1534,15 @@ function getUserInfo()
 ?>
 
 <button id="save_data" type="submit" class="btn btn-default btn-lg">Save data</button>
-<a href="login.php" class="btn btn-default btn-lg" >Log Off</a>
+<a href="login.php?errmsg=7" class="btn btn-default btn-lg" >Log Off</a>
 
 <?php
-/* if there is more than 1 organization possible, display a link to navigate to the org list */
 
-if (isset($_SESSION["orgids"]))
+
+if (isset($_SESSION["orgids"]) && isset($_SESSION["user_id"]))
 {
-    if (count($_SESSION["orgids"]) > 1)
-    {
-        $user_id = $_SESSION["user_id"];
-        echo "<a href='orgList.php?user_id=$user_id' class='btn btn-default btn-lg' >Back to List</a>";
-    }
+	$user_id = $_SESSION["user_id"];
+	echo "<a href='orgList.php?user_id=$user_id' class='btn btn-default btn-lg' >Back to List</a>";
 }
 
 ?>

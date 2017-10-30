@@ -107,6 +107,7 @@ function dumpResults()
 </div>
 </center>
 <a href="org.php" class="btn btn-default btn-lg" >Create a new Organization record</a>
+<a href="login.php?errmsg=7" class="btn btn-default btn-lg" >Log Off</a>
 
   <table class="table table-hover">
     <thead>
