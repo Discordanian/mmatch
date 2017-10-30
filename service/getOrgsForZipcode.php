@@ -18,12 +18,12 @@ if (array_key_exists("zip_code", $_GET) && isset($_GET["zip_code"])
     {
         if ($e->getMessage() == "No data was found for that criteria.")
         {
-    	header("HTTP/1.0 404 Not found", true, 404);
+			header("HTTP/1.0 404 Not found", true, 404);
         }
         else 
         {
-        error_log("Error while retrieving org data: " . $e->getMessage());
-    	header("HTTP/1.0 500 Server Error", true, 500);
+			error_log("Error while retrieving org data: " . $e->getMessage());
+			header("HTTP/1.0 500 Server Error", true, 500);
         }
     }
 }
