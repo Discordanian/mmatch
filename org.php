@@ -117,7 +117,7 @@ catch (Exception $e)
 	/* errors just redirect the user back to the login page */
 	/* TODO: There are certain errors that might warrant a redisplay 
 	or a retry rather than just blowing up back to the login page */
-	//header("Location: login.php?errmsg=9"); /* the #9 means nothing, maybe at some point it will mean something */
+	header("Location: login.php?errmsg=9"); /* the #9 means nothing, maybe at some point it will mean something */
 	exit();
 }
 
