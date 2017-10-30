@@ -12,7 +12,7 @@ require_once('../include/initializeDb.php');
 try 
 {
 	
-	if (isset($_GET["email"]) && isset($_GET["token"]) && isset($_GET["orgid"]) && isset($_GET["date"]))
+	if (isset($_GET["email"]) && isset($_GET["token"]) && isset($_GET["user_id"]) && isset($_GET["date"]))
 	{
 		checkValidRequest();
 		initializeDb();
@@ -35,9 +35,9 @@ catch(Exception $e)
 
 function checkValidRequest()
 {
-	global $csrf_salt, $orgid, $email;
+	global $csrf_salt, $user_id, $email;
 
-    $orgid = filter_var($_GET["orgid"], FILTER_VALIDATE_INT);
+    $user_id = filter_var($_GET["user_id"], FILTER_VALIDATE_INT);
     $email = filter_var($_GET["email"], FILTER_SANITIZE_EMAIL);
 	$dateint = filter_var($_GET["date"], FILTER_VALIDATE_INT);
 	
@@ -65,7 +65,7 @@ function checkValidRequest()
 	/* perform basic verification that */
 	/* the request came from a valid source and not a random person */
 
-	$input = $_SERVER["SERVER_NAME"] . $_GET["email"] . $_GET["orgid"] . 
+	$input = $_SERVER["SERVER_NAME"] . $_GET["email"] . $_GET["user_id"] . 
 		"sendverifyemail.php" . $dateint . $csrf_salt;
 	$token = hash("sha256", $input);
 	/* verify that the token that we calculate equals the token that was passed in */
@@ -85,10 +85,10 @@ function lookupEmail()
 
     try {
 
-        global $dbh, $orgid, $email;
+        global $dbh, $user_id, $email;
 
-        $stmt = $dbh->prepare("CALL selectEmailInfo(:orgid, :email);");
-        $stmt->bindValue(':orgid', $orgid);
+        $stmt = $dbh->prepare("CALL selectEmailInfo(:user_id, :email);");
+        $stmt->bindValue(':user_id', $user_id);
 		$stmt->bindValue(':email', $email);
         $stmt->execute();
 
@@ -131,7 +131,7 @@ function lookupEmail()
 
 function sendVerificationEmail()
 {
-    global $email, $csrf_salt, $orgid;
+    global $email, $csrf_salt, $user_id;
 
     /* calculate the date 3 days into the future */
     /* TODO: use different time zones depending upon the locality of the organization ? */
@@ -143,14 +143,14 @@ function sendVerificationEmail()
     /* TODO: make expiration date of link parameter driven */
     $datetext = $expdate->format("U");
 
-    $input = $_SERVER["SERVER_NAME"] . urlencode($email) . $datetext . $orgid . "emailverify.php" . $csrf_salt;
+    $input = $_SERVER["SERVER_NAME"] . urlencode($email) . $datetext . $user_id . "emailverify.php" . $csrf_salt;
     $token = substr(hash("sha256", $input), 0, 18); /* pull out only the 1st 18 digits of the hash, make it a typable link? */
     /* have to do some gymnastics here to make sure to get a nice fully qualified absolute URL */
     
     $path = str_replace("/service/sendverifyemail.php", "/emailverify.php", $_SERVER["PHP_SELF"]);
 
-    $link = sprintf("%s://%s%s?email=%s&token=%s&orgid=%d&date=%s", 
-        $_SERVER["REQUEST_SCHEME"], $_SERVER["HTTP_HOST"], $path, urlencode($email), $token, $orgid, $datetext);
+    $link = sprintf("%s://%s%s?email=%s&token=%s&user_id=%d&date=%s", 
+        $_SERVER["REQUEST_SCHEME"], $_SERVER["HTTP_HOST"], $path, urlencode($email), $token, $user_id, $datetext);
 
 	//echo "<!-- $input -->\n"; /* TODO: This is a cheat and a security vulnerability. Remove it */
 	echo "<!-- $link -->\n"; /* TODO: This is a cheat so I don't have to actually send/receive the email. Remove this eventually */
