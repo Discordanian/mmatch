@@ -96,7 +96,7 @@ function getZipCodeData($get_zipcode, $get_range_miles)
 
             $stmt->closeCursor();
 			
-			if ($i <= 0)
+			if ($i < 0)
 			{
         		throw new Exception("No data was found for that criteria.");
 				return;
