@@ -14,7 +14,7 @@ Needs serious security review */
 
 try
 {
-	if (isset($_GET["email"]) && isset($_GET["token"]) && isset($_GET["orgid"]) && isset($_GET["date"]))
+	if (isset($_GET["email"]) && isset($_GET["token"]) && isset($_GET["user_id"]) && isset($_GET["date"]))
 	{
 		testToken();
 	}
@@ -33,18 +33,18 @@ catch(Exception $e)
 
 function testToken()
 {
-    global $orgid, $email, $csrf_salt, $err_msg;
+    global $user_id, $email, $csrf_salt, $err_msg;
 
     /* sanitize these values brought in before I do any processing based upon them */
 	//echo "<!-- getemail = " . $_GET["email"] . " --> \n";
 
-    $orgid = filter_var($_GET["orgid"], FILTER_VALIDATE_INT);
+    $user_id = filter_var($_GET["user_id"], FILTER_VALIDATE_INT);
     $email = filter_var($_GET["email"], FILTER_SANITIZE_EMAIL);
 	$dateint = filter_var($_GET["date"], FILTER_VALIDATE_INT);
 
 	//echo "<!-- email = " . $email . " --> \n";
 
-    if (($orgid <= 0) || (strlen($email) <= 0) || ($dateint == false))
+    if (($user_id <= 0) || (strlen($email) <= 0) || ($dateint == false))
     {
         $err_msg = "Unable to verify based upon the information provided (2). Please try to log in again and request another email.";
         throw new Exception("Unable to verify based upon the information provided (2). Please try to log in again and request another email");
@@ -67,7 +67,7 @@ function testToken()
      
     $datetext = $expdate->format("U");
 
-    $input = $_SERVER["SERVER_NAME"] . urlencode($email) . $datetext . $orgid . "emailverify.php" . $csrf_salt;
+    $input = $_SERVER["SERVER_NAME"] . urlencode($email) . $datetext . $user_id . "emailverify.php" . $csrf_salt;
     $token = substr(hash("sha256", $input), 0, 18); /* pull out only the 1st 18 digits of the hash */
 
 	//echo "<!-- input = " . $input . " --> \n";
@@ -97,14 +97,14 @@ function verifyEmail()
 {
     try
     {
-        global $dbh, $orgid, $success_msg, $err_msg, $email;
+        global $dbh, $user_id, $success_msg, $err_msg, $email;
 
 
 
-        $stmt = $dbh->prepare("CALL verifyEmail(:orgid, :email);");
+        $stmt = $dbh->prepare("CALL verifyEmail(:user_id, :email);");
 
         $stmt->bindValue(':email', $email);
-        $stmt->bindValue(':orgid', $orgid);
+        $stmt->bindValue(':user_id', $user_id);
 
 	    $stmt->execute();
 

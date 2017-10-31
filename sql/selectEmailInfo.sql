@@ -1,9 +1,9 @@
 DROP PROCEDURE IF EXISTS selectEmailInfo;
 
 DELIMITER $$
-CREATE PROCEDURE selectEmailInfo(p_orgid INT UNSIGNED, p_email VARCHAR(255))
+CREATE PROCEDURE selectEmailInfo(p_user_id INT UNSIGNED, p_email VARCHAR(255))
 BEGIN
-	SELECT orgid, email_unverified FROM org WHERE orgid = p_orgid AND email_unverified = p_email; 
+	SELECT user_id, email_unverified FROM app_user WHERE user_id = p_user_id AND email_unverified = p_email; 
 END
 $$
 
