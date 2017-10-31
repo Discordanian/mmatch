@@ -10,3 +10,8 @@ input:invalid {
 input:focus:invalid {
   outline: none;
 }
+
+.bgimg {
+	background-image: url('../img/bg.jpg');
+	background-repeat: no-repeat;
+}
