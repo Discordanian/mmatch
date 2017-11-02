@@ -45,20 +45,6 @@ function validate()
         return false;
     }
 
-
-    if ($("#password").val().length < 1)
-    {
-        $("#auth_fail_msg").text("A password is required in order to authenticate.");
-        $("#auth_fail_msg").show();
-        return false;
-    }
-    
-    if ($("#password").val().length > 128)
-    {
-        $("#auth_fail_msg").text("The maximum length of a password is 128 characters.");
-        $("#auth_fail_msg").show();
-        return false;
-    }
     
     $("#auth_fail_msg").hide();
     return true;

@@ -153,7 +153,7 @@ function sendVerificationEmail()
         $_SERVER["REQUEST_SCHEME"], $_SERVER["HTTP_HOST"], $path, urlencode($email), $token, $user_id, $datetext);
 
 	//echo "<!-- $input -->\n"; /* TODO: This is a cheat and a security vulnerability. Remove it */
-	echo "<!-- $link -->\n"; /* TODO: This is a cheat so I don't have to actually send/receive the email. Remove this eventually */
+	//echo "<!-- $link -->\n"; /* TODO: This is a cheat so I don't have to actually send/receive the email. Remove this eventually */
 	
     $message = sprintf("You apparently registered an account with movementmatch.org.\n" .
         "Click on the following link in order to verify that this was intended: \n" .
@@ -162,7 +162,7 @@ function sendVerificationEmail()
         "If you did not intend to register an account, just ignore and delete this message. \n", $link);
 
 	/* send the verification email */
-    $res = mail($email, "Verify your account with movementmatch.org", $message, "From: admin@movementmatch.org");
+    $res = mail($email, "Verify your account with movementmatch.org", $message, "From: admin@movementmatch.org\r\n");
 	/* I think on CentOS or other SELinux enabled systems, this will not work until you run: #setsebool -P httpd_can_sendmail=1 */
 	/* TODO: handle various return values here. At this point, I am not sure how to respond to various failures */
 }

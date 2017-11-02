@@ -1376,7 +1376,7 @@ function getUserInfo()
 
     <div class="form-group">
         <label for="email">Email address:</label>
-        <input class="form-control" type="email" id="email" maxlength="128" name="email" value="<?php echo $email; ?>"  required />
+        <input class="form-control" type="email" id="email" maxlength="255" name="email" value="<?php echo $email; ?>" required />
 
         <?php
             if (strlen($email_unverified) > 0)

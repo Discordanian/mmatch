@@ -174,9 +174,9 @@ function validate_email()
     }
 
 
-    if ($("#email").val().length > 128)
+    if ($("#email").val().length > 255)
     {
-        $("#email_invalid_msg").text("Email address should not exceed 128 characters in length.");
+        $("#email_invalid_msg").text("Email address should not exceed 255 characters in length.");
         $("#email_invalid_msg").show();
         $("#intro1").collapse("show");
         return false;
