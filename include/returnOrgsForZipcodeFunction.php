@@ -82,6 +82,9 @@ function getZipCodeData($get_zipcode, $get_range_miles)
 		        $org->org_name = $row["org_name"];
 		        $org->distance = round($row["distance"] / 1.609, 2); /* stored procedure works in km, return information in miles */
 		        $org->customer_notice = $row["customer_notice"];
+				$org->mission = $row["mission"];
+				$org->customer_contact = $row["customer_contact"];
+				$org->abbreviated_name = $row["abbreviated_name"];
 		        		        
                 
 		        $org->questions = $questions;
