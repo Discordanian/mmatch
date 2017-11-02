@@ -40,6 +40,7 @@ var mm = {
     showNoOrgs: function() {
         $("#no_orgs").removeClass("hidden").addClass("visible");
 	mm.hideAllFiltered();
+        $("#toggle").removeClass("visible").addClass("hidden");
     },
     showAllFiltered: function() {
         $("#all_filtered").removeClass("hidden").addClass("visible");

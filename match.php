@@ -78,7 +78,7 @@ $mconfig['answers'] = getAnswers($mconfig['jsondata']);
   <!-- /End of Progress Bar -->
 
   <!-- Form Start  -->
-  <form class="form form-horizontal">
+  <form  class="bgimg form form-horizontal">
 
 
     <!-- /Limited Multiple Select -->
