@@ -5,8 +5,8 @@ require_once('include/secrets.php');
 require_once('include/initializeDb.php');
 
 /* #1 Cold session, no incoming data, no data to retrieve, clear all cookies, and show defaults on page */
-/* #2 Credentials entered, authentication fails, redisplay blank form, along with error message */
-/* #3 Credentials entered, authentication succeeds, setup session, redirect to org.php */
+/* #2 Email entered, email not found, log and display error message */
+/* #3 Email entered, email found, send email and display confirmation message */
 
 /* TODO: This code may be vulnerable to XSS 
 and probably a bunch of other attacks
@@ -18,61 +18,30 @@ try
 {
 	buildCsrfToken(); /* We need this built in most cases, so go ahead and build it */
 
-	if (isset($_POST["password"])) /* credentials were submitted */
+	if (isset($_POST["email"])) /* email address submitted */
 	{
 		checkCsrfToken();
 		
 		if (validatePostData())
 		{
-		    $orgs = authenticateCredentials();
-		    
-			if (isset($orgs))
+			if ($user_id = verifyEmail())
 			{
 				/* flow #3 */
-				
-				/* if (count($orgs) == 1)
-				{
-    				redirectToOrg($orgs[0]);
-				} 
-				else *I think I want to show the list page no matter what, at least for now */
-				{
-				    redirectToList();
-    			}
+				sendPasswordResetLink($user_id);
     		}
 			else
 			{
 				/* set the auth error message */
-				$auth_fail_msg = "Those credentials are not valid. Please try again.";
+				$fail_msg = "That email address was not found.";
 			}
 		}
 
 	}
 
-	if ((!isset($_POST["password"])) || (isset($auth_fail_msg)))
-
-	{
-		/* Flow #1, or #2, display blank form */
-
-		clearSession();
-
-		if (isset($_GET["errmsg"]))
-		{
-		    switch ($_GET["errmsg"])
-		    {
-		        /* TODO: make these codes more organized. Right now they are just random numbers and
-		        there's not much rhyme or reason as to what means what */
-		        case "7" : $auth_fail_msg = "Successfully logged off. You can now log on again.";
-		          break;
-		        case "8" : $auth_fail_msg = "Due to inactivity you have been logged off. Please log on again";
-		          break;
-		        default : $auth_fail_msg = "An unknown error occurred. Please attempt to log on again";
-		    }
-		}
-	}
 }
 catch (Exception $e)
 {
-	$auth_fail_msg = $e->getMessage();
+	$fail_msg = $e->getMessage();
 }
 
 
@@ -89,7 +58,6 @@ function buildCsrfToken()
 	$csrf_expdate = new DateTime(NULL, new DateTimeZone("UTC"));
 	$csrf_expdate->add(new DateInterval("PT30M")); /* CSRF token expires in 30 minutes */
     $token = $_SERVER['SERVER_SIGNATURE'] . $_SERVER['SCRIPT_FILENAME'] . $csrf_expdate->format('U') . $csrf_salt;
-    //echo "<!-- DEBUG build token = $token -->\n";
     $csrf_nonce = hash("sha256", $token);
 }
 
@@ -100,7 +68,7 @@ function checkCsrfToken()
 
 	if (!array_key_exists("csrf_expdate", $_POST) || !array_key_exists("nonce", $_POST))
 	{
-		error_log("POST parameters missing in login.php. Possible tampering detected.");
+		error_log("POST parameters missing in forgotPassword.php. Possible tampering detected.");
 		throw new Exception("An unknown error occurred (1). Please attempt to authenticate again.");
 		exit(); /* this should not be run, but just in case, we do not want to continue */
 	}
@@ -110,7 +78,7 @@ function checkCsrfToken()
 	//echo "<!-- DEBUG Check Token = $token -->\n";
     if (hash("sha256", $token) != $_POST["nonce"])
     {
-		error_log("csrf token mismatch in login.php. Possible tampering detected.");
+		error_log("csrf token mismatch in forgotPassword.php. Possible tampering detected.");
 		throw new Exception("An unknown error occurred (2). Please attempt to authenticate again.");
 		exit(); /* this should not be run, but just in case, we do not want to continue */
     }
@@ -119,7 +87,7 @@ function checkCsrfToken()
 	
 	if ($dateint == FALSE)
 	{
-		error_log("expdate does not follow proper format in login.php. Possible tampering detected.");
+		error_log("expdate does not follow proper format in forgotPassword.php. Possible tampering detected.");
 		throw new Exception("An unknown error occurred (3). Please attempt to authenticate again.");
 		exit(); /* this should not be run, but just in case, we do not want to continue */
 	}
@@ -130,7 +98,7 @@ function checkCsrfToken()
 		
 	if ($expdate < $today)
 	{
-		error_log("CSRF token expired in login.php");
+		error_log("CSRF token expired in forgotPassword.php");
 		throw new Exception("An unknown error occurred (4). Please attempt to authenticate again.");
 		exit(); /* this should not be run, but just in case, we do not want to continue */
 		
@@ -152,9 +120,9 @@ function validatePostData()
 
 
 
-function authenticateCredentials()
+function verifyEmail()
 {
-	global $dbh, $email, $user_id, $pwhash;
+	global $dbh, $email, $user_id;
 
 	initializeDb(); /* I want this outside the try since it has its own exception handler, which I want bubbled up */
 
@@ -170,38 +138,23 @@ function authenticateCredentials()
         if ($stmt->errorCode() != "00000") 
         {
             $erinf = $stmt->errorInfo();
-			error_log("SELECT failed: " . $stmt->errorCode() . " " . $erinf[2]);
+			error_log("Query failed: " . $stmt->errorCode() . " " . $erinf[2]);
 			throw new Exception("An unknown error was encountered (8). Please attempt to reauthenticate.");
             exit();
         }
 
-        /* retrieve all rows and columns at once, this should be a pretty small dataset, so should not be a problem */
-        $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        
-
-        if (count($results) > 0)
+        /* if any rows are returned at all, that means that the email is recognized, so proceed with sending the email */
+		/* TODO: only send password resets to "verified" email addresses */
+        if ($row = $stmt->fetch(PDO::FETCH_ASSOC))
 		{
-            $pwhash = $results[0]["pwhash"];
-
-
-            if (password_verify($_POST["password"], $pwhash))
-            {
-                //$orgid = $row["orgid"];
-                //$email = $row["email_verified"];
-                $orgs = array_column($results, "orgid");
-		//echo "<!-- ";
-		//var_dump($orgs);
-		//echo " -->\n";
-                session_start();
-                $user_id = $results[0]["user_id"];
-                $_SESSION["user_id"] = $user_id;
-                $_SESSION["orgids"] = $orgs;
-                return $orgs;
-            }
-        }
-
-        return NULL;
-
+			return $row["user_id"];
+		}
+		else
+		{
+			return false;
+		}
+		
+ 
     }
     catch (PDOException $e)
     {
@@ -219,44 +172,55 @@ function authenticateCredentials()
 
 }
 
-function clearSession()
+function sendPasswordResetLink()
 {
-    /* The following was copied from php.net */
-    /* The goal is to clear all cookies when the login page is shown
-        which mitigates against some session hijacking and fixation threats */
-    // Initialize the session.
-    // If you are using session_name("something"), don't forget it now!
-    session_start();
+    global $email, $csrf_salt, $user_id, $success_msg, $fail_msg;
 
-    // Unset all of the session variables. (server side)
-    $_SESSION = array();
+    /* calculate the date 1 hour into the future */
+    /* TODO: use different time zones depending upon the locality of the user/organization ? */
+    /* Or just use eastern time for everything, or UTC/GMT */
+    $expdate = new DateTime(NULL, new DateTimeZone("UTC"));
+    $din = new DateInterval("PT1H"); /* email verification link expires in 1 hour */
+    $expdate->add($din);
+    /* TODO: make expiration date of link parameter driven */
+    $datetext = $expdate->format("U");
 
-    // If it's desired to kill the session, also delete the session cookie.
-    // Note: This will destroy the session, and not just the session data!
-    if (ini_get("session.use_cookies")) 
-    {
-        $params = session_get_cookie_params();
-        setcookie(session_name(), '', time() - 42000,
-            $params["path"], $params["domain"],
-            $params["secure"], $params["httponly"]
-        );
-    }
+    $input = $_SERVER["SERVER_NAME"] . urlencode($email) . $datetext . $user_id . "passwordReset.php" . $csrf_salt;
+    $token = substr(hash("sha256", $input), 0, 22); /* pull out only the 1st 22 digits of the hash, make it a typable link? */
+	/* echo "<!-- input = " . $input . " --> \n"; This is a cheat and a security vulnerability */
+	/* echo "<!-- token = " . $token . " --> \n"; This is a cheat and a security vulnerability */
+	
+    /* have to do some gymnastics here to make sure to get a nice fully qualified absolute URL */
+    
+    $path = str_replace("/forgotPassword.php", "/passwordReset.php", $_SERVER["PHP_SELF"]);
 
-    // Finally, destroy the session.
-    session_destroy();
-}
+    $link = sprintf("%s://%s%s?email=%s&token=%s&user_id=%d&date=%s", 
+        $_SERVER["REQUEST_SCHEME"], $_SERVER["HTTP_HOST"], $path, urlencode($email), $token, $user_id, $datetext);
 
+	echo "<!-- $link -->\n"; /* TODO: This is a cheat so I don't have to actually send/receive the email. Remove this eventually */
+	
+    $message = sprintf("You apparently requested for your password to be reset on the site movementmatch.org.\n" .
+        "Click on the following link in order to verify that this is correct and reset your password: \n" .
+        "\t%s\n" .
+        "This link will expire within 1 hour. \n" .
+        "If you did not initiate this reset, please ignore and delete this message. \n", $link);
 
-function redirectToOrg($orgid)
-{
-	header("Location: org.php?orgid=$orgid");
-}
-
-function redirectToList()
-{
-    global $user_id;
-
-	header("Location: orgList.php?user_id=$user_id");
+	/* send the verification email */
+    $res = mail($email, "Reset your account with movementmatch.org", $message, "From: admin@movementmatch.org");
+	/* I think on CentOS or other SELinux enabled systems, this will not work until you run: #setsebool -P httpd_can_sendmail=1 */
+	/* TODO: handle various return values here. At this point, I am not sure how to respond to various failures */
+	
+	if ($res == FALSE)
+	{
+		$fail_msg = "An unknown error was encountered while attempting to send the email.";
+	}
+	else
+	{
+		$success_msg = "A password reset email was sent to the email address entered. " .
+			"Please check your email and navigate to the link supplied in the email in order to reset your password.";			
+	}
+		
+	
 }
 
 
@@ -265,14 +229,14 @@ function redirectToList()
 <html lang="en" >
 <head>
     <meta charset="UTF-8">
-    <title>Movement Match - Organization</title>
+    <title>Movement Match - Forgot Password</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
     <link rel="stylesheet" href="css/style.css">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
-    <script src="js/login.js"></script>
+    <script src="js/forgotPassword.js"></script>
   
 </head>
 
@@ -283,11 +247,11 @@ function redirectToList()
 <center>
 <div class="page-header">
     <h1>Movement Match</h1>
-    <h2>Organization Login</h2>
+    <h2>Forgot Password</h2>
 </div>
 </center>
 
-<form method="POST" action="login.php" id="login_form" >
+<form method="POST" action="forgotPassword.php" id="login_form" >
 <input type="hidden" id="nonce" name="nonce" value="<?php echo $csrf_nonce; ?>" />
 <input type="hidden" id="csrf_expdate" name="csrf_expdate" value="<?php echo $csrf_expdate->format('U'); ?>" />
 
@@ -297,18 +261,17 @@ function redirectToList()
         <input class="form-control" type="email" id="email" maxlength="255" name="email" value="" />
     </div> <!-- form-group -->
 
-   <div class="form-group">
-        <label for="password">Password:</label>
-        <input class="form-control" type="password" id="password" maxlength="128" name="password" value="" />
-    </div> <!-- form-group -->
-
   
-    <div class="alert alert-danger" <?php if (!isset($auth_fail_msg)) echo "hidden='true'"; ?> id="auth_fail_msg" >
-        <?php if (isset($auth_fail_msg)) echo $auth_fail_msg; ?>
+    <div class="alert alert-danger" <?php if (!isset($fail_msg)) echo "hidden='true'"; ?> id="fail_msg" >
+        <?php if (isset($fail_msg)) echo $fail_msg; ?>
     </div>
+	
+
+	<div class="alert alert-success" <?php if (!isset($success_msg)) echo "hidden='true'"; ?> id="success_msg" >
+		<?php if (isset($success_msg)) echo $success_msg; ?>
+	</div>
 
     <button type="submit" class="btn btn-default btn-lg" id="submit">Submit</button>
-	<a href="forgotPassword.php" class="btn btn-default btn-lg" >Forgot Password?</a>
 
 
 </form>
