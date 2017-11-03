@@ -1,8 +1,8 @@
 // MM Configuration Object
 // http://javascript.crockford.com/code.html
 var config = {
-    debug: true,
-    thresh: 2
+    debug: false,
+    thresh: 4
 };
 
 // If debug is enabled and we have a console log, write to console log
