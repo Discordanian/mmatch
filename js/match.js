@@ -11,6 +11,13 @@ var logger = function(e) {
         console.log(e);
     }
 };
+var hrefWebsite =  function() {
+	orgs.forEach(function(org) {
+		if (!org.org_website) { org.org_website = "#"; }
+		let url = org.org_website;
+		org.org_website = "<a href=\""+url+"\">"+url+"</a>";
+        });
+};
 
 // given a DOM id (question_1234) return "1234";
 var getKey = function(x) {
@@ -47,7 +54,7 @@ var mm = {
     },
     hideAllFiltered: function() {
         $("#all_filtered").removeClass("visible").addClass("hidden");
-    },
+    }, 
     filterResults: function(x) {
         var retval = true;
         /*
@@ -150,6 +157,7 @@ $(function() {
     }); // end Show Me function binding
 
     // Update the progress bar on page load
+    hrefWebsite();
     mm.updateProgress();
     // Change this to selectpicker and we break the UI
     // Any change in the UI and we update the progress bar
