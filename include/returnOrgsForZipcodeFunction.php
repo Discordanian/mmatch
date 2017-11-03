@@ -85,6 +85,8 @@ function getZipCodeData($get_zipcode, $get_range_miles)
 				$org->mission = $row["mission"];
 				$org->customer_contact = $row["customer_contact"];
 				$org->abbreviated_name = $row["abbreviated_name"];
+				$org->org_website = $row["org_website"];
+				$org->money_url = $row["money_url"];
 		        		        
                 
 		        $org->questions = $questions;
