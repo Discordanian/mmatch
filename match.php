@@ -48,20 +48,46 @@ $mconfig['answers'] = getAnswers($mconfig['jsondata']);
   <meta charset="UTF-8">
   <title>AZ MM Search</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  
+
 <link rel='stylesheet prefetch' href='https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/css/bootstrap.min.css'>
 <link rel='stylesheet prefetch' href='https://fonts.googleapis.com/css?family=Lato:300,400,700,300italic,400italic,700italic'>
 <link rel='stylesheet prefetch' href='https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.2/css/bootstrap-select.css'>
 <link rel='stylesheet prefetch' href='https://cdnjs.cloudflare.com/ajax/libs/bootstrap-table/1.11.1/bootstrap-table.css'>
 
-      <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/style.css">
 
-  
+
 </head>
 
-<body>
-  <center>
-  <h1>Movement Match</h1></center>
+<body  style="background-color:#FFDFDD">
+
+    <div class="container">
+     <div id="header">
+       <div class="container">
+         <div class="row">
+            <div class="col-sm-2 nopadding">
+            </div>
+           <div class="col-sm-2 nopadding">
+             <img src="img/logo.png" vspace="20" height=70 width=70>
+           </div>
+           <div class="col-sm-6" align="left"><br>
+            <h1>Movement Match</h1>
+            </div>
+         </div>
+         <div class="row">
+           <h3>
+             You may select multiple answers to any question, using control click:
+           <h3>
+         </div>
+      </div>
+    </div>
+
+
+  </div>
+
+
+     <center>
+
 
 <!-- Wrapping Form and Progres Bar in Continer TOP -->
 <div class="container">
@@ -88,7 +114,7 @@ echo dropDowns($mconfig['questions'], $mconfig['answers']); ?>
 $mconfig['questionid'] = questionIDs($mconfig['questions'], $mconfig['answers']); ?>
 
 
-    <button id="toggle" type="submit" class="btn btn-default">Just Show Me</button>
+    <button id="toggle" type="submit" class="btn btn-default">Show My Results</button>
 
 
   </form>
@@ -150,6 +176,9 @@ echo "var qids = " . json_encode($mconfig['questionid']) . ";"; ?>
 <script src='https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.2/js/bootstrap-select.min.js'></script>
 <script src='https://cdnjs.cloudflare.com/ajax/libs/bootstrap-table/1.11.1/bootstrap-table.min.js'></script>
 <script src="js/match.js"></script>
+
+Share your match on social media with #movementmatch
+Contact us at <a href="movementmatch@gmail.com">movementmatch@gmail.com></a>
 
 </body>
 </html>
