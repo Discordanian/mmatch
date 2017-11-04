@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <title>AZ MM Search</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  
+
         <link rel='stylesheet prefetch' href='https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/css/bootstrap.min.css'>
         <link rel='stylesheet prefetch' href='https://fonts.googleapis.com/css?family=Lato:300,400,700,300italic,400italic,700italic'>
         <link rel='stylesheet prefetch' href='https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.2/css/bootstrap-select.css'>
@@ -13,35 +13,149 @@
 
 </head>
 
-<body>
-  <center>
-  <h1>Movement Match</h1></center>
+<body  style="background-color:#FFDFDD">
+
+  <div class="container">
+   <div id="header">
+     <div class="container">
+       <div class="row">
+          <div class="col-sm-2 nopadding">
+          </div>
+         <div class="col-sm-2 nopadding">
+           <img src="img/logo.png" vspace="20" height=70 width=70>
+         </div>
+         <div class="col-sm-6" align="left"><br>
+          <h1>Movement Match</h1>
+          </div>
+       </div>
+       </div>
+   </div>
+   <center>
+         <div id="top-text">
+      			<div class="container">
+      				<div class="row">
+                <div class="col-sm-2 nopadding">
+                </div>
+      					<div  class="col-sm-8 nopadding">
+      						<h2>
+      							Have you been upset about the election?
+      							</h2>
+      						</div>
+      					</div>
+      				<div class="row">
+                <div class="col-sm-2 nopadding">
+                </div>
+      					<div class="col-sm-8 nopadding">
+      						<h3>Here's something you can do.</h3>
+                </div>
+      				</div>
+      				<div class="row">
+                <div class="col-sm-2 nopadding">
+                </div>
+      					<div class="col-sm-8 nopadding">
+                  <br>
+                  <h4>
+                    People are imperfect. Organizations are imperfect. Movements are imperfect.
+                  </h4>
+                  <h4>
+                    ​Now is not the time for perfectionism.<br>
+                    Now is the time to find your group, hunker down, and start planning the long game.
+                  </h4>
+                  <br>
+                </div>
+
+      				</div>
+      			</div>
+      		</div>
 
 <!-- TODO Shouldn't span entire page, but looks good on mobile so leaving it for now. -->
 <!-- Wrapping Form and Progres Bar in Continer TOP -->
-<div class="container">
+
+		<div class="container">
+
+			<form action="match.php" method="get">
+				<div class="form-group row">
+					<div class="col-6">
+						<label for="zipcode" class="col-6 col-form-label">
+							Please enter your zip code to find an organization that works near you:
+						</label>
+					</div>
+          <div class="col-xs-4">
+					</div>
+					<div class="col-xs-4 nopadding">
+						<input class="form-control" type="text" value="85001" maxlength=5 name="zipcode" id="zipcode">
+					</div><!-- form-group row zipcode -->
+				</div>
+
+				<div class="form-group row">
+					<div class="col-6">
+						<label for="distance" class="col-6 col-form-label">
+							Distance in Miles from the zip code you would like to search:
+						</label>
+					</div>
+          <div class="col-xs-4  ">
+					</div>
+					<div class="col-xs-4 nopadding ">
+						<input class="form-control" type="number" value="100" id="distance" name="distance">
+					</div>
+				</div><!-- form-group row distance -->
+
+				<div class="form-group row">
+					<div class="col-6  nopadding">
+						<input id="submit" type="submit" label="Start Match" value="Start Match" class="btn btn-primary">
+					</div>
+				</div>
+
+			</form>
+		</div>
 
 
-  <!-- Form Start  -->
-<form action="match.php" method="get">
-<div class="form-group row">
-  <label for="example-text-input" class="col-2 col-form-label">Zip Code</label>
-  <div class="col-10">
-    <input class="form-control" type="text" value="85001" maxlength=5 name="zipcode" id="zipcode">
-  </div>
-</div><!-- form-group row zipcode -->
-<div class="form-group row">
-  <label for="example-search-input" class="col-2 col-form-label">Distance in Miles</label>
-  <div class="col-10">
-    <input class="form-control" type="number" value="100" id="distance" name="distance">
-  </div>
-</div><!-- form-group row distance -->
+		<div id="bottom-text">
+			<div class="container">
+				<div class="row">
+          <div class="col-sm-2 nopadding">
+          </div>
+					<div  class="col-sm-8 nopadding">
+						<h3  align="left">
+							This project started as a small group trying to brainstorm about these issues:
+						</h3>
+					</div>
+				</div>
+				<div class="row">
+          <div class="col-sm-2 nopadding">
+          </div>
+          <div class="col-sm-8 nopadding">
+						<h4 align="left">
+							1. Trump just got elected. A lot of things have already been hard, but it's going to get worse.
+							<br><br>
+							2. New people are fired up and ready to fight the Trump administration! We need ways to direct this new energy and power.
+							<br><br>
+							3. We need to fight complacency and normalization. We need ways for people to stay involved after inauguration.
+							<br><br>
+							4. We need to be ready for a long fight. How will we get this amazing mass of newly energized people trained and ready to fight for the long haul?
+							<br><br>
+							5. We don't need to start from scratch. How can we support all of the amazing organizations who have already been in this fight for the long haul?
+							<br><br>
 
-<input id="submit" type="submit" label="Start Match" value="Start Match" class="btn btn-primary">
-</form>
+              #MovementMatch was born from these questions.
+              <br>
+              <br>
 
-  <!-- /End of Form  -->
-</div><!-- /Container TOP -->
+              One thing we know for sure is that there are many groups and organizations that are ready to provide the training, community, and accountability that we’ll need to stay strong for the work ahead.
+              <br>
+              <br>
+
+              Our goal is to connect more people to existing activist powerhouses before the inauguration to further build the strength of our movement and fight isolation, alienation, and complacency.
+              <br>
+              <br>
+						</h4>
+          </div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+</center>
 
 	<!-- Not using any of these in this form BUT it will load them to cache in advance of the next page -->
         <script src='https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.0/jquery.min.js'></script>
