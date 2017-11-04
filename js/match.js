@@ -2,7 +2,7 @@
 // http://javascript.crockford.com/code.html
 var config = {
     debug: false,
-    thresh: 4
+    thresh: 5
 };
 
 // If debug is enabled and we have a console log, write to console log
