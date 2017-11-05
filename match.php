@@ -128,7 +128,6 @@ $mconfig['questionid'] = questionIDs($mconfig['questions'], $mconfig['answers'])
 <div class="alert alert-info" id="disclaimer">
 <p>Choices are not comprehensive. You may not find what you are looking for. If you do not see what you want, it is because none of the organizations in your area created that choice you are looking for. Skip any question that does not help you to match to an activist organization.</p>
 </div>
-<div class="container border hidden" id="debug">
 <div class="container border" id="footer">
 <a href="index.html" class="btn btn-info" role="button">Pick a New ZipCode or Distance</a>
 </div>
