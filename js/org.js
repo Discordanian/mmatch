@@ -23,6 +23,23 @@ $(function(){
 
     $("#zip_unselect").click(remove_zip);
     
+	/* change the icon for the collapse elements that are opened, not collapsed */
+	/* identify those with the class of "in", and then navigate up through the DOM */
+	/* to get to the span that has the icon in it */
+	$("div.collapse.in").prev().children("h4.panel-title").children("a").children("span").removeClass("glyphicon-plus");
+	$("div.collapse.in").prev().children("h4.panel-title").children("a").children("span").addClass("glyphicon-minus");
+
+	/* then set up events to switch the icon when hidden/shown */
+	$("div.collapse").on("hide.bs.collapse", function(){
+		$(this).prev().children("h4.panel-title").children("a").children("span").removeClass("glyphicon-minus");
+		$(this).prev().children("h4.panel-title").children("a").children("span").addClass("glyphicon-plus");
+	});
+
+	$("div.collapse").on("show.bs.collapse", function(){
+		$(this).prev().children("h4.panel-title").children("a").children("span").removeClass("glyphicon-plus");
+		$(this).prev().children("h4.panel-title").children("a").children("span").addClass("glyphicon-minus");
+	});
+	
     inactivityTimer = setTimeout(backToLogoutPage, 4 * 60 * 60 * 1000); /* logout after 4 hours of nothing */
     
     /* reset the timer on mostly everything on the page */
