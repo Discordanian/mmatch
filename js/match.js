@@ -14,7 +14,7 @@ var logger = function(e) {
 var hrefWebsite =  function() {
 	orgs.forEach(function(org) {
 		if (!org.org_website) { org.org_website = "#"; }
-		let url = org.org_website;
+		var url = org.org_website;
 		org.org_website = "<a href=\""+url+"\">"+url+"</a>";
         });
 };
@@ -22,7 +22,7 @@ var hrefWebsite =  function() {
 // given a DOM id (question_1234) return "1234";
 var getKey = function(x) {
     return x.split("_")[1];
-}
+};
 
 var mm = {
     resultsVisible: false,
