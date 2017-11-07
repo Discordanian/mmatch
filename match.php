@@ -46,7 +46,7 @@ $mconfig['answers'] = getAnswers($mconfig['jsondata']);
 <html >
 <head>
   <meta charset="UTF-8">
-  <title>AZ MM Search</title>
+  <title>Movement Match</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   
 <link rel='stylesheet prefetch' href='https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/css/bootstrap.min.css'>
@@ -78,7 +78,7 @@ $mconfig['answers'] = getAnswers($mconfig['jsondata']);
   <!-- /End of Progress Bar -->
 
   <!-- Form Start  -->
-  <form  class="bgimg form form-horizontal">
+  <form  class="form form-horizontal">
 
 
     <!-- /Limited Multiple Select -->
@@ -105,16 +105,16 @@ $mconfig['questionid'] = questionIDs($mconfig['questions'], $mconfig['answers'])
   <table data-toggle="table" id="table_results" class="table">
     <thead>
       <tr>
-        <th data-field="orgid">ID</th>
         <th data-field="org_name">Organization</th>
-        <th data-field="customer_notice">Blurb</th>
+        <th data-field="mission">Mission Statement</th>
+        <th data-field="org_website">Website</th>
       </tr>
     </thead>
     <tbody>
       <tr>
-        <td>1</td>
-        <td>Walk a Dog</td>
-        <td>St Louis</td>
+        <td>Nothing</td>
+        <td>Sometihng went Wrong</td>
+        <td>Try reloading a new Zip and Distance</td>
       </tr>
     </tbody>
   </table>
@@ -124,6 +124,9 @@ $mconfig['questionid'] = questionIDs($mconfig['questions'], $mconfig['answers'])
 </div>
 <div class="alert alert-danger hidden" id="all_filtered">
     <strong>All Organizations have been filtered out.  No Organizations match the combination of zipcode,distance and choice of answers selected</strong>
+</div>
+<div class="alert alert-info" id="disclaimer">
+<p>Choices are not comprehensive. You may not find what you are looking for. If you do not see what you want, it is because none of the organizations in your area created that choice you are looking for. Skip any question that does not help you to match to an activist organization.</p>
 </div>
 <div class="container border" id="footer">
 <a href="index.html" class="btn btn-info" role="button">Pick a New ZipCode or Distance</a>
