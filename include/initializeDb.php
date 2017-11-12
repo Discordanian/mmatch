@@ -11,7 +11,8 @@ global $dbh;
     {
         if (!isset($dbh))
         {
-            $dbh = new PDO(DATABASE_DSN , DATABASE_USER, DATABASE_PASSWORD);
+            $dbh = new PDO(DATABASE_DSN , DATABASE_USER, DATABASE_PASSWORD,
+				array(PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION));
         }
     }
     catch (PDOException $e)
