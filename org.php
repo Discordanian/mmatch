@@ -114,11 +114,24 @@ try
 }
 catch (Exception $e)
 {
-	/* errors just redirect the user back to the login page */
-	/* TODO: There are certain errors that might warrant a redisplay 
-	or a retry rather than just blowing up back to the login page */
-	header("Location: login.php?errmsg=9"); /* the #9 means nothing, maybe at some point it will mean something */
-	exit();
+	
+	switch ($e->getMessage())
+	{
+	    case DUPLICATE_ORG_NAME_ERROR : 
+	       $org_name_msg = "The organization name entered was a duplicate.";
+	       $goto_page = -1;
+	    break;
+	    
+	}
+
+	buildEmptyArray();
+	translatePostIntoArray();
+	zipPostToArray();
+	displayPostData();
+    buildCsrfToken();
+    
+//	header("Location: login.php?errmsg=9"); /* the #9 means nothing, maybe at some point it will mean something */
+//	exit();
 }
 
 /* end of global section, now fall through to HTML */
@@ -484,9 +497,19 @@ function performUpdate()
     }
     catch (PDOException $e)
     {
-        error_log("Database error during UPDATE query in org.php: " . $e->getMessage());
-        throw new Exception("An unknown error was encountered (11). Please attempt to reauthenticate.");
-		exit();
+        if ($e->getCode() == "23000") /* integrity constraint violation, so I want to present a user friendly error message */
+        {
+            if (strpos($e->getMessage(), "for key 'ix_org_org_name_unique'") !== FALSE)
+            {
+                throw new Exception(DUPLICATE_ORG_NAME_ERROR);
+            }
+        }
+        else 
+        {
+            error_log("Database error during UPDATE query in org.php: " . $e->getMessage());
+            throw new Exception("An unknown error was encountered (11). Please attempt to reauthenticate.");
+    		exit();
+        }
     }
     catch(Exception $e)
     {
@@ -598,9 +621,19 @@ function performInsert()
     }
     catch (PDOException $e)
     {
-        error_log("Database error during INSERT query in org.php: " . $e->getMessage());
-        throw new Exception("An unknown error was encountered (15). Please attempt to reauthenticate.");
-		exit();
+        if ($e->getCode() == "23000") /* integrity constraint violation, so I want to present a user friendly error message */
+        {
+            if (strpos($e->getMessage(), "for key 'ix_org_org_name_unique'") !== FALSE)
+            {
+                throw new Exception(DUPLICATE_ORG_NAME_ERROR);
+            }
+        }
+        else 
+        {
+            error_log("Database error during INSERT query in org.php: " . $e->getMessage());
+            throw new Exception("An unknown error was encountered (15). Please attempt to reauthenticate.");
+    		exit();
+    	}
     }
     catch(Exception $e)
     {
@@ -939,8 +972,8 @@ function arrayToHtml($pagenum)
         echo "\t\t<option value='NULL'>&lt;No selection&gt;</option>\n";
         foreach($question as $choice_id => $choice)
         {
-
-            if ($choice["selected"] == "1")
+            /* the selected value could either come from the database or from the user agent POST */
+            if ($choice["selected"] == "1" || $choice["new_selected"] == 1)
             {
                 $selected = " selected ";
             }
@@ -1047,6 +1080,10 @@ function translatePostIntoArray()
             
         }    
     }
+
+echo "<!-- translatePostIntoArray \n ";
+var_dump($qu_aire);
+echo " --> \n ";
 
 }
 
@@ -1499,11 +1536,21 @@ function getUserInfo()
         <div class="col-xs-7" >
             <select multiple name="zip_list[]" id="zip_list" class="form-control" > <!-- Must include the brackets in the name to force browser to send an array -->
 <?php
+            echo "<!-- \n";
+            var_dump($zip_array);
+            echo " --> \n";
                     if (count($zip_array) > 0)
                     {
                         foreach($zip_array as $zipnum => $cityState)
                         {
-                            printf("\t\t\t\t<option value='%05u' >%05u - %s, %s</option>\n", $zipnum, $zipnum, $cityState[0][0], $cityState[0][1]);
+                            if (is_array($cityState)) /* the array looks different depending upon whether */
+                            { /* it came from the DB from the fetchAll statement */
+                                printf("\t\t\t\t<option value='%05u' >%05u - %s, %s</option>\n", $zipnum, $zipnum, $cityState[0][0], $cityState[0][1]);    
+                            }
+                            else 
+                            { /* or it came from a postback, in which case we forgot the city/state */
+                                printf("\t\t\t\t<option value='%05u' >%05u</option>\n", $cityState, $cityState);    
+                            }
                         }
                     }
                     else
