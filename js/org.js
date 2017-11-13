@@ -19,6 +19,9 @@ $(function(){
         $(this).val($(this).val().trim());
     });
 
+    $("#org_website").blur(addhttp);
+    $("#money_url").blur(addhttp);
+    
 	$("#zip_select").click(select_zip);
 
     $("#zip_unselect").click(remove_zip);
@@ -385,4 +388,18 @@ function resetInactivityTimer()
         
     inactivityTimer = setTimeout(backToLogoutPage, 4 * 60 * 60 * 1000); /* logout after 4 hours of nothing */
 
+}
+
+function addhttp()
+{
+    if ($(this).val().substr(0, 4) != "http" && $(this).val().length > 0)
+    {
+        $(this).val("http://" + $(this).val());
+    }
+    
+    /* if the value is just the protocol and nothing else, just blank it out */
+    if ($(this).val() == "http://")
+    {
+        $(this).val("");
+    }
 }
