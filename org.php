@@ -1549,7 +1549,7 @@ function getUserInfo()
                             }
                             else 
                             { /* or it came from a postback, in which case we forgot the city/state */
-                                printf("\t\t\t\t<option value='%05u' >%05u</option>\n", $cityState, $cityState);    
+                                printf("\t\t\t\t<option value='%05u' >%05u </option>\n", $cityState, $cityState);    
                             }
                         }
                     }
