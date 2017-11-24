@@ -36,37 +36,55 @@ function getZipCodeData()
     {
 
 		initializeDb();
-        $stmt = $dbh->prepare("CALL selectZipcodeInfo(:zip_code);");
-
-        $stmt->bindValue(':zip_code', $zipcode);
-
-	    $stmt->execute();
-
-        if ($stmt->errorCode() != "00000") 
-        {
-            $erinf = $stmt->errorInfo();
-            error_log("Query failed. Error code:" . $stmt->errorCode() . $erinf[2]); /* the error message in the returned error info */
-			header("HTTP/1.0 500 Server Error", true, 500);
-			echo "An unknown error (3) occurred trying to look up the zip code.";
-        }
-		else
-		{
-			$row = $stmt->fetch(PDO::FETCH_ASSOC);
-			
-			if (isset($row) && ($row != false))
-			{
-				//printf("%05u - %s, %s", $row["zip_code"], $row["city"], $row["state"]); /* do we need to sanitize here?, asking for a friend */
-				echo(json_encode($row));
-			}
-			else
-			{
-				header("HTTP/1.0 404 Not found", true, 404);
-				echo(json_encode(array($zipcode, "Not found")));
-				//printf("%05u - That zip code was not found.", $zipcode);;
-			}
-		}
 		
-        $stmt->closeCursor();
+		try 
+		{
+            $stmt = $dbh->prepare("CALL selectZipcodeInfo(:zip_code);");
+    
+            $stmt->bindValue(':zip_code', $zipcode);
+    
+    	    $stmt->execute();
+    
+            if ($stmt->errorCode() != "00000") 
+            {
+                $erinf = $stmt->errorInfo();
+                error_log("Query failed. Error code:" . $stmt->errorCode() . $erinf[2]); /* the error message in the returned error info */
+    			header("HTTP/1.0 500 Server Error", true, 500);
+    			echo "An unknown error (3) occurred trying to look up the zip code.";
+            }
+    		else
+    		{
+    			$row = $stmt->fetch(PDO::FETCH_ASSOC);
+    			
+    			if (isset($row) && ($row != false))
+    			{
+    				//printf("%05u - %s, %s", $row["zip_code"], $row["city"], $row["state"]); /* do we need to sanitize here?, asking for a friend */
+    				echo(json_encode($row));
+    			}
+    			else
+    			{
+    				header("HTTP/1.0 404 Not found", true, 404);
+    				echo(json_encode(array($zipcode, "Not found")));
+    				//printf("%05u - That zip code was not found.", $zipcode);;
+    			}
+    		}
+    		
+            $stmt->closeCursor();
+        }
+        catch (PDOException $e)
+        {
+            error_log("Database error during SELECT query in zipcode.php: " . $e->getMessage());
+        	header("HTTP/1.0 500 Server Error", true, 500);
+    		echo "An unknown error (4) occurred trying to look up the zip code.";
+    		exit();
+        }
+        catch(Exception $e)
+        {
+            error_log("Error during database SELECT query in zipcode.php: " . $e->getMessage());
+        	header("HTTP/1.0 500 Server Error", true, 500);
+    		echo "An unknown error (5) occurred trying to look up the zip code.";
+    		exit();
+        }
     }
 }
 

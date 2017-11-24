@@ -8,7 +8,7 @@ CREATE TABLE `org_zip_code` (
   KEY `fk_org_zip_code_org_id` (`org_id`),
   KEY `fk_org_zip_code_zip_code` (`zip_code`),
   CONSTRAINT `fk_org_zip_code_org_id` FOREIGN KEY (`org_id`) REFERENCES `org` (`orgid`),
-  CONSTRAINT `fk_org_zip_code_zip_code` FOREIGN KEY (`zip_code`) REFERENCES `postal_code_ref` (`postal_code`)
+  CONSTRAINT `fk_org_zip_code_zip_code` FOREIGN KEY (`zip_code`) REFERENCES `postcode.postal_code_ref` (`postal_code`)
 ) ENGINE=InnoDB  DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
