@@ -69,8 +69,8 @@ FROM /*get the orgnaizations in range */
 		MIN(geo_distance(pcr1.latitude, pcr1.longitude, pcr2.latitude, pcr2.longitude)) AS distance 
 		FROM org 
 		INNER JOIN org_zip_code ozc ON org.orgid = ozc.org_id
-		INNER JOIN postcode.postal_code_ref pcr2 ON pcr2.postal_code = ozc.zip_code
-		INNER JOIN postcode.postal_code_ref pcr1 ON pcr1.postal_code = ',zipcode,'
+		INNER JOIN shared_db.postal_code_ref pcr2 ON pcr2.postal_code = ozc.zip_code
+		INNER JOIN shared_db.postal_code_ref pcr1 ON pcr1.postal_code = ',zipcode,'
         WHERE org.active_ind = 1 AND org.admin_active_ind = 1
 		GROUP BY org.orgid
 		HAVING distance <= ',max_range,'
