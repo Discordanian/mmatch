@@ -3,10 +3,6 @@
 CREATE TABLE `org` (
   `orgid` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `org_name` varchar(128) DEFAULT NULL,
-  `person_name` varchar(128) NULL,
-  `email_verified` varchar(255) DEFAULT NULL,
-  `email_unverified` varchar(255) DEFAULT NULL,
-  `pwhash` varchar(128) NOT NULL,
   `org_website` varchar(255) DEFAULT NULL,
   `money_url` varchar(255) DEFAULT NULL,
   `mission` text,
