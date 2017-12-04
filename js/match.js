@@ -87,7 +87,9 @@ var mm = {
                         var answerMatches = false;
                         selectedA.forEach(function(a) {
                             // See if answer 'a' is in the array for this org.
-                            if (orgAnswers.includes(a)) {
+                            // Was using 'includes' but older versions of IE didnt' suport it.
+                            // KAS - I know that indexOf has problems with undefined and NaN but hope that we don't hit that.
+                            if (orgAnswers.indexOf(a) > -1) {
                                 answerMatches = true;
                                 logger("Match for answer " + x.org_name + " " + key);
                             }
