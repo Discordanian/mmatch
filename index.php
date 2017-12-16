@@ -39,7 +39,7 @@
   </div>
 </div><!-- form-group row distance -->
 
-<input id="submit" type="submit" label="Next" value="Start Match" class="btn btn-primary">
+<input id="submit" type="submit" label="Next" value="Next" class="btn btn-primary">
 </form>
 
   <!-- /End of Form  -->
