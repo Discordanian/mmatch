@@ -13,9 +13,14 @@ var logger = function(e) {
 };
 var hrefWebsite =  function() {
 	orgs.forEach(function(org) {
-		if (!org.org_website) { org.org_website = "#"; }
-		var url = org.org_website;
-		org.org_website = "<a href=\""+url+"\">"+url+"</a>";
+		var url = "";
+		if (org.money_url) { 
+		url = "Donate: <a href=\""+org.money_url+"\">"+org.money_url+"</a><br />";
+		}
+		if (org.org_website) { 
+		url += "Info: <a href=\""+org.org_website+"\">"+org.org_website+"</a>";
+		}
+		org.org_website = url;
         });
 };
 
