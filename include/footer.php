@@ -75,6 +75,6 @@
         </div>
     </div>
 
-    <div id="email_encoded" hidden="" ><?php echo CONTACT_EMAIL ?></div>
+    <div id="email_encoded" hidden="" ><?php echo base64_encode(CONTACT_EMAIL); ?></div>
     
 </div>
