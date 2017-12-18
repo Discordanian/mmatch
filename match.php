@@ -88,7 +88,7 @@ echo dropDowns($mconfig['questions'], $mconfig['answers']); ?>
 $mconfig['questionid'] = questionIDs($mconfig['questions'], $mconfig['answers']); ?>
 
 
-    <button id="toggle" type="submit" class="btn btn-default">Just Show Me</button>
+    <button id="toggle" type="submit" class="btn btn-default">Display/Hide Organizations</button>
 
 
   </form>
