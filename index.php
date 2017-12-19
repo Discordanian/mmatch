@@ -12,7 +12,6 @@
 		crossorigin="anonymous">        
 	<link rel="stylesheet prefetch" 
 		href="https://fonts.googleapis.com/css?family=Lato:300,400,700,300italic,400italic,700italic" 
-		integrity="sha384-PdI8qH6YNBn1jWAfCzzp1yNj2pVVQmsxb+Y57JfyzXVwa8ihDTQUOeHqGWbxcspJ" 
 		crossorigin="anonymous">
 <!--        <link rel='stylesheet prefetch' 
 	href='https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.2/css/bootstrap-select.css'> -->
