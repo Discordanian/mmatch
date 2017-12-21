@@ -1,6 +1,6 @@
 <?php
 
-ini_set('display_errors', 'On');
+ini_set('display_errors', 'Off');
 ini_set('session.cookie_httponly', 'On');
 ini_set('session.cookie_lifetime', '14400');
 ini_set('session.gc_maxlifetime', '86400');
