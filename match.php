@@ -141,11 +141,10 @@ $mconfig['questionid'] = questionIDs($mconfig['questions'], $mconfig['answers'])
 </pre>
 </div>
 <!-- /Results Table -->
-<script type="text/javascript">
 <?php
-echo "var orgs = {$mconfig['jsonraw']};"; ?>
-<?php
-echo "var qids = " . json_encode($mconfig['questionid']) . ";"; ?>
+echo "<script type='text/javascript' nonce='{$csp_nonce}'>\n";
+echo "var orgs = {$mconfig['jsonraw']};\n"; 
+echo "var qids = " . json_encode($mconfig['questionid']) . ";\n"; ?>
 </script>
 <script src='https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.0/jquery.min.js'></script>
 <script src='https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.0/jquery-ui.min.js'></script>

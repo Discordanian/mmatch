@@ -12,5 +12,15 @@ error_reporting(E_ALL | E_STRICT);
 define("DUPLICATE_ORG_NAME_ERROR", "The organization name entered was a duplicate.");
 define("USER_NOT_LOGGED_IN_ERROR", "The user must log in to perform this function. Please log in.");
 
+$csp_nonce = substr(base64_encode(hash("sha256", $_SERVER["UNIQUE_ID"] . $_SERVER["REQUEST_TIME_FLOAT"] . openssl_random_pseudo_bytes(6), true)), 0, 20); /* generate a nonce which should be completely unpredictable, for use by inline script tags */
+
+$csp = "Content-Security-Policy: default-src 'none'; " .
+    "connect-src 'self'; img-src 'self'; " .
+    "font-src https://cdnjs.cloudflare.com https://maxcdn.bootstrapcdn.com; " .
+    "script-src 'self' 'nonce-{$csp_nonce}'  https://cdnjs.cloudflare.com https://maxcdn.bootstrapcdn.com https://ajax.googleapis.com; " .
+    "style-src 'self' https://cdnjs.cloudflare.com https://maxcdn.bootstrapcdn.com https://ajax.googleapis.com https://fonts.googleapis.com;";
+
+header($csp);
+
 ?>
 

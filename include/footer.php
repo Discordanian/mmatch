@@ -1,17 +1,17 @@
 <script src="js/footer.js" ></script>
 
-<div id="footer-html" style="padding-top:50px">
-    <a data-toggle="modal" href="#aboutModal" style="padding:0% 10% 0% 5%;">About Movement Match</a>
-    <a data-toggle="modal" href="#privacyModal" style="padding:0% 10% 0% 5%;">Privacy Policy</a>
-    <a data-toggle="modal" href="#contactModal" style="padding:0% 10% 0% 5%;">Contact Us</a>
+<div id="footer-html" class="mm-footer-padding">
+    <a data-toggle="modal" href="#aboutModal" class="mm-footer-spacing">About Movement Match</a>
+    <a data-toggle="modal" href="#privacyModal" class="mm-footer-spacing">Privacy Policy</a>
+    <a data-toggle="modal" href="#contactModal" class="mm-footer-spacing">Contact Us</a>
     
     <div id="aboutModal" class="modal fade" role="dialog">
         <div class="modal-dialog">
-          <div class="modal-header" style="background-color:powderblue;">
+          <div class="modal-header mm-modal" >
             <button type="button" class="close" data-dismiss="modal">&times;</button>
             <h4 class="modal-title">About Movement Match</h4>
           </div>
-          <div class="modal-body" style="background-color:powderblue;">
+          <div class="modal-body mm-modal" >
             <h4>This project started as a small group trying to brainstorm about these issues: </h4>
             
             <ol>
@@ -35,11 +35,11 @@
     
     <div id="privacyModal" class="modal fade" role="dialog">
         <div class="modal-dialog">
-          <div class="modal-header" style="background-color:powderblue;">
+          <div class="modal-header mm-modal" >
             <button type="button" class="close" data-dismiss="modal">&times;</button>
             <h4 class="modal-title">Privacy Policy</h4>
           </div>
-          <div class="modal-body" style="background-color:powderblue;">
+          <div class="modal-body mm-modal" >
             <h4>This is our privacy policy. It's simple: </h4>
             <p><b>We do not collect any identifying information,</b> so you don't have to trust us.</p>
             <p>Some of the questions that are asked on the questionnaire can be considered private.
@@ -65,11 +65,11 @@
 
     <div id="contactModal" class="modal fade" role="dialog">
         <div class="modal-dialog">
-          <div class="modal-header" style="background-color:powderblue;">
+          <div class="modal-header mm-modal" >
             <button type="button" class="close" data-dismiss="modal">&times;</button>
             <h4 class="modal-title">Contact Information</h4>
           </div>
-          <div class="modal-body" style="background-color:powderblue;">
+          <div class="modal-body mm-modal" >
           <p>Email: <a href="mailto:donotreply@movementmatch.org" id="email_decoded" ></a></p>
           </div>
         </div>

@@ -15,3 +15,15 @@ input:focus:invalid {
 	background-image: url('../img/bg.jpg');
 	background-repeat: no-repeat;
 }
+
+.mm-footer-padding {
+    padding-top:50px;
+}
+
+.mm-footer-spacing {
+    padding:0% 10% 0% 5%;
+}
+
+.mm-modal {
+    background-color:powderblue;
+}
