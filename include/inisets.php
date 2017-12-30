@@ -9,6 +9,8 @@ ini_set('session.cookie_secure', 'On');
 
 error_reporting(E_ALL | E_STRICT);
 
+define("SUCCESSFULLY_LOGGED_OFF", "Successfully logged off. You can now log on again.");
+define("LOGGED_OFF_INACTIVITY", "Due to inactivity you have been logged off. Please log on again");
 define("DUPLICATE_ORG_NAME_ERROR", "The organization name entered was a duplicate.");
 define("USER_NOT_LOGGED_IN_ERROR", "The user must log in to perform this function. Please log in.");
 
