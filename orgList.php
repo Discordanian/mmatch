@@ -17,9 +17,22 @@ try
 }
 catch(Exception $e)
 {
-    error_log("Error getting organization list: " . $e->getMessage());
-	header("Location: login.php?errmsg=9"); /* the #9 means nothing, maybe at some point it will mean something */
-	exit();
+	switch ($e->getMessage())
+	{
+	    case DUPLICATE_ORG_NAME_ERROR : 
+	       $org_name_msg = "The organization name entered was a duplicate.";
+	       $goto_page = -1;
+	    break;
+	    case USER_NOT_LOGGED_IN_ERROR:
+	       header("Location: login.php?errmsg=USER_NOT_LOGGED_IN_ERROR");
+	       exit();
+        break;
+	    default:
+           error_log("Error getting organization list: " . $e->getMessage());
+	       header("Location: login.php?errmsg=true");
+	       exit();
+	    
+	}
 }
 
 
@@ -34,6 +47,12 @@ function validatePostData()
     }
     
     $user_id = filter_var($_GET["user_id"], FILTER_SANITIZE_NUMBER_INT);
+    
+    if (!array_key_exists("user_id", $_SESSION))
+    {
+        throw new Exception(USER_NOT_LOGGED_IN_ERROR);
+        exit;
+    }
     
     if ($user_id != $_SESSION["user_id"])
     {
@@ -114,7 +133,7 @@ function dumpResults()
 </div>
 </center>
 <a href="org.php" class="btn btn-default btn-lg" >Create a new Organization record</a>
-<a href="login.php?errmsg=7" class="btn btn-default btn-lg" >Log Off</a>
+<a href="login.php?errmsg=SUCCESSFULLY_LOGGED_OFF" class="btn btn-default btn-lg" >Log Off</a>
 
   <table class="table table-hover">
     <thead>
@@ -130,6 +149,8 @@ function dumpResults()
     
     </tbody>
   </table>
+
+  <?php require('include/footer.php'); ?>
 
 </div> <!-- Container fluid -->
 

@@ -79,8 +79,6 @@ try
 		$orgid = 0;
 		$person_name = "";
 		$org_name = "";
-		$email_verified = "";
-		$email_unverified = "";
 		$email = "";
 		$org_website = "";
 		$money_url = "";
@@ -95,8 +93,9 @@ try
 		}
 		else 
 		{
-		    $action = "I"; /* Insert org and user simultaneously */
-			$_SESSION["orgids"] = array(); /* initialize session variable */
+		    //$action = "I"; /* Insert org and user simultaneously */
+			//$_SESSION["orgids"] = array(); /* initialize session variable */
+			throw new Exception(USER_NOT_LOGGED_IN_ERROR);
 	    }
 		$abbreviated_name = "";
 		$active_ind = "checked";
@@ -121,6 +120,13 @@ catch (Exception $e)
 	       $org_name_msg = "The organization name entered was a duplicate.";
 	       $goto_page = -1;
 	    break;
+	    case USER_NOT_LOGGED_IN_ERROR:
+	       header("Location: login.php?errmsg=USER_NOT_LOGGED_IN_ERROR");
+	       exit();
+        break;
+	    default:
+	       header("Location: login.php?errmsg=true");
+	       exit();
 	    
 	}
 
@@ -421,17 +427,11 @@ function performUpdate()
 			exit();
         }
 
-        $stmt = $dbh->prepare("CALL updateOrganization(:orgid, :org_name, :person_name, :org_website, :money_url, " . 
-			":mission, :active_ind, :abbreviated_name, :customer_contact, :customer_notice, :admin_contact, :pwhash, :email, :user_id); " );
-            /* first query doesn't update email because it might get updated in a different window/browser/device */
-            /* next query only updates password if a new one was entered */
-            /* if email is changed, and it was previously verified, then set it to unverified */
-            /* OR if email is changed, and it was not previously verified, then changed it and keep it unverified */
-        $stmt->bindValue(':org_name', filter_var($_POST["org_name"], FILTER_SANITIZE_STRING, FILTER_FLAG_NO_ENCODE_QUOTES + 
+        $stmt = $dbh->prepare("CALL updateOrganization(:orgid, :org_name, :org_website, :money_url, " . 
+			":mission, :active_ind, :abbreviated_name, :customer_contact, :customer_notice, :admin_contact, :user_id); " );
+
+			$stmt->bindValue(':org_name', filter_var($_POST["org_name"], FILTER_SANITIZE_STRING, FILTER_FLAG_NO_ENCODE_QUOTES + 
             FILTER_FLAG_STRIP_LOW + FILTER_FLAG_STRIP_HIGH + FILTER_FLAG_STRIP_BACKTICK), PDO::PARAM_STR);
-        $stmt->bindValue(':person_name', filter_var($_POST["person_name"], FILTER_SANITIZE_STRING, FILTER_FLAG_NO_ENCODE_QUOTES + 
-            FILTER_FLAG_STRIP_LOW + FILTER_FLAG_STRIP_HIGH + FILTER_FLAG_STRIP_BACKTICK), PDO::PARAM_STR);
-        $stmt->bindValue(':email', filter_var(strtolower($_POST["email"]), FILTER_SANITIZE_EMAIL), PDO::PARAM_STR);
         $stmt->bindValue(':org_website', filter_var($_POST["org_website"], FILTER_SANITIZE_URL), PDO::PARAM_STR);
         $stmt->bindValue(':money_url', filter_var($_POST["money_url"], FILTER_SANITIZE_URL), PDO::PARAM_STR);
             /* TODO: SANITIZE_URL lets some interesting things through. May not be a threat, but worth investigation */
@@ -457,18 +457,7 @@ function performUpdate()
         {
             $stmt->bindValue(':active_ind', 0, PDO::PARAM_INT);
         }
- 
-        /* udpate password if a new one specified */
-        if (strlen($_POST["password1"]) > 0)
-        {
-            $pwhash = password_hash($_POST["password1"], PASSWORD_BCRYPT);
-        }
-        else
-        {
-            $pwhash = null;
-        }
 
-        $stmt->bindValue(':pwhash', $pwhash, PDO::PARAM_STR);
 		$stmt->bindValue(':user_id', $_SESSION["user_id"]);
 		//echo "<!-- performUpdate ";
 		//var_dump($_SESSION);
@@ -530,29 +519,15 @@ function performInsert()
         /* TODO: first check to see if a record under this email address already exists? */
 
         /* this is a new record, so do the insert */
-        global $dbh, $orgid, $goto_page, $action, $success_msg, $email_unverified;
-        $stmt = $dbh->prepare("CALL insertOrganization(:org_name, :person_name, :org_website, :money_url, " . 
-			":mission, :active_ind, :abbreviated_name, :customer_contact, :customer_notice, :admin_contact, :pwhash, :email, :user_id); " );
+        global $dbh, $orgid, $goto_page, $action, $success_msg, $email;
+        $stmt = $dbh->prepare("CALL insertOrganization(:org_name, :org_website, :money_url, " . 
+			":mission, :active_ind, :abbreviated_name, :customer_contact, :customer_notice, :admin_contact, :user_id); " );
 
         $stmt->bindValue(':org_name', filter_var($_POST["org_name"], FILTER_SANITIZE_STRING, FILTER_FLAG_NO_ENCODE_QUOTES + 
             FILTER_FLAG_STRIP_LOW + FILTER_FLAG_STRIP_HIGH + FILTER_FLAG_STRIP_BACKTICK), PDO::PARAM_STR);
-        $stmt->bindValue(':person_name', filter_var($_POST["person_name"], FILTER_SANITIZE_STRING, FILTER_FLAG_NO_ENCODE_QUOTES + 
-            FILTER_FLAG_STRIP_LOW + FILTER_FLAG_STRIP_HIGH + FILTER_FLAG_STRIP_BACKTICK), PDO::PARAM_STR);
-        $email_unverified = filter_var(strtolower($_POST["email"]), FILTER_SANITIZE_EMAIL, PDO::PARAM_STR);
-        $stmt->bindValue(':email', $email_unverified, PDO::PARAM_STR);
         $stmt->bindValue(':org_website', filter_var($_POST["org_website"], FILTER_SANITIZE_URL), PDO::PARAM_STR);
         $stmt->bindValue(':money_url', filter_var($_POST["money_url"], FILTER_SANITIZE_URL), PDO::PARAM_STR);
  
-        /* udpate password if a new one specified */
-        if (strlen($_POST["password1"]) > 0)
-        {
-            $pwhash = password_hash($_POST["password1"], PASSWORD_BCRYPT);
-        }
-        else
-        {
-            $pwhash = null;
-        }
-        $stmt->bindValue(':pwhash', $pwhash, PDO::PARAM_STR);
         $stmt->bindValue(':mission', filter_var($_POST["mission"], FILTER_SANITIZE_STRING, FILTER_FLAG_NO_ENCODE_QUOTES + 
             FILTER_FLAG_STRIP_LOW + FILTER_FLAG_STRIP_HIGH + FILTER_FLAG_STRIP_BACKTICK), PDO::PARAM_STR);
 
@@ -573,10 +548,8 @@ function performInsert()
             $stmt->bindValue(':active_ind', 0, PDO::PARAM_INT);
         }
 
-		//echo "<!-- performInsert ";
-		//var_dump($_SESSION);
-		//echo " -->\n";
-        $stmt->bindValue(':user_id', ($action == "O" ? $_SESSION["user_id"] : 0), PDO::PARAM_INT);
+
+        $stmt->bindValue(':user_id', $_SESSION["user_id"], PDO::PARAM_INT);
         
         $stmt->execute();
 
@@ -605,7 +578,7 @@ function performInsert()
 		$orgid = $row["orgid"];
         /* place the org ID into session */
         array_push($_SESSION["orgids"], $orgid);
-        $_SESSION["user_id"] = $row["user_id"];
+        //$_SESSION["user_id"] = $row["user_id"];
         
 
         $stmt->closeCursor();
@@ -684,8 +657,7 @@ function displayDbData()
             global $org_name;
             global $person_name;
 
-            global $email_verified;
-            global $email_unverified;
+            global $email_is_verified;
             global $email;
 
             global $org_website;
@@ -698,17 +670,9 @@ function displayDbData()
             $org_name = htmlspecialchars($row["org_name"]);
             $person_name = htmlspecialchars($row["person_name"]);
 
-            $email_verified = htmlspecialchars($row["email_verified"]);
-            $email_unverified = htmlspecialchars($row["email_unverified"]);
+            $email_is_verified = $row["email_is_verified"];
+            $email = htmlspecialchars($row["email"]);
             
-            if (strlen($email_verified) > 0)
-            {
-                $email = $email_verified;
-            }
-            else
-            {
-                $email = $email_unverified;
-            }
 
             $org_website = htmlspecialchars($row["org_website"]);
             $money_url = htmlspecialchars($row["money_url"]);
@@ -776,7 +740,7 @@ function displayPostData()
 {
     /* an error was encountered, so repopulate the fields from the POST */
     global $email; 
-    global $email_unverified;
+    global $email_is_verified;
     global $person_name;
     global $org_name;
     global $org_website;
@@ -787,7 +751,7 @@ function displayPostData()
 
     $email = htmlspecialchars(filter_var($_POST["email"], FILTER_SANITIZE_EMAIL)); 
         /* TODO: don't know if the email is verified or not yet not sure how to handle this */
-    $email_unverified = "";
+    $email_is_verified = 0;
 
     $person_name = htmlspecialchars(filter_var($_POST["person_name"], FILTER_SANITIZE_STRING, FILTER_FLAG_NO_ENCODE_QUOTES + 
             FILTER_FLAG_STRIP_LOW + FILTER_FLAG_STRIP_HIGH + FILTER_FLAG_STRIP_BACKTICK));
@@ -1186,7 +1150,7 @@ function sendVerificationEmail()
 
 function buildEmailVerificationUrl()
 {
-	global $csrf_salt, $email_unverified;
+	global $csrf_salt, $email;
 	$user_id = $_SESSION["user_id"];
 	
 	/* use a hash in the URL to ensure the sendverifyemail.php isn't called maliciously */
@@ -1195,14 +1159,14 @@ function buildEmailVerificationUrl()
 	/* that should be fine since this is done almost completely programmatically */
 	/* either when the record is first added, or when the button on page 1 is clicked */
 	
-	$input = $_SERVER["SERVER_NAME"] . $email_unverified . $user_id . 
+	$input = $_SERVER["SERVER_NAME"] . $email . $user_id . 
 		"sendverifyemail.php" . $link_expdate->format('U') . $csrf_salt;
 	$token = hash("sha256", $input);
 
 	//$url = sprintf("http://%s/mmatch/service/sendverifyemail.php?email=%s&token=%s&orgid=%d&date=%s", 
 	//	$_SERVER["SERVER_NAME"], urlencode($email_unverified), $token, $orgid, $link_expdate->format('U'));
 	$url = sprintf("service/sendverifyemail.php?email=%s&token=%s&user_id=%d&date=%s", 
-		urlencode($email_unverified), $token, $user_id, $link_expdate->format('U'));
+		urlencode($email), $token, $user_id, $link_expdate->format('U'));
 	/* TODO: Handle the determination of http/https in the URL */
 	return $url;
 }
@@ -1310,23 +1274,14 @@ function getUserInfo()
         {
             global $person_name;
 
-            global $email_verified;
-            global $email_unverified;
             global $email;
+            global $email_is_verified;
 
             $person_name = htmlspecialchars($row["person_name"]);
 
-            $email_verified = htmlspecialchars($row["email_verified"]);
-            $email_unverified = htmlspecialchars($row["email_unverified"]);
+            $email = htmlspecialchars($row["email"]);
+            $email_is_verified = $row["email_is_verified"];
             
-            if (strlen($email_verified) > 0)
-            {
-                $email = $email_verified;
-            }
-            else
-            {
-                $email = $email_unverified;
-            }
 
         }
         else
@@ -1365,10 +1320,17 @@ function getUserInfo()
     <title>Movement Match - Organization</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+	<link rel="stylesheet prefetch" 
+		href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/css/bootstrap.min.css" 
+		integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" 
+		crossorigin="anonymous">
     <link rel="stylesheet" href="css/style.css">
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.0/jquery.min.js" 
+		integrity="sha384-nrOSfDHtoPMzJHjVTdCopGqIqeYETSXhZDFyniQ8ZHcVy08QesyHcnOUpMpqnmWq" 
+		crossorigin="anonymous"></script>        
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js" 
+		integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" 
+		crossorigin="anonymous"></script>
     <script src="js/org.js"></script>
   
 </head>
@@ -1416,9 +1378,9 @@ function getUserInfo()
         <input class="form-control" type="email" id="email" maxlength="255" name="email" value="<?php echo $email; ?>" required />
 
         <?php
-            if (strlen($email_unverified) > 0)
+            if ($email_is_verified == 0)
             {
-                echo "<div class='alert alert-info' id='email_unverified_msg' >The email address: $email_unverified has not been verified yet. \n";
+                echo "<div class='alert alert-info' id='email_unverified_msg' >The email address: $email has not been verified yet. \n";
 				echo "<input type='button' id='generateVerificationEmail' value='Click here to request a new verification email.'></input></div>\n";
 				echo "<div hidden='true' id='generateVerficationEmailUrl' >";
 				echo buildEmailVerificationUrl();
@@ -1581,7 +1543,7 @@ function getUserInfo()
 ?>
 
 <button id="save_data" type="submit" class="btn btn-default btn-lg">Save data</button>
-<a href="login.php?errmsg=7" class="btn btn-default btn-lg" >Log Off</a>
+<a href="login.php?errmsg=SUCCESSFULLY_LOGGED_OFF" class="btn btn-default btn-lg" >Log Off</a>
 
 <?php
 
@@ -1594,16 +1556,18 @@ if (isset($_SESSION["orgids"]) && isset($_SESSION["user_id"]))
 
 ?>
 
-	<?php if (isset($success_msg))
-	{
-		echo "<div class='alert alert-success alert-dismissable' id='general_alert_msg' >\n";
-		echo "<a href='#' class='close' data-dismiss='alert' aria-label='close'>×</a>\n";
-		echo "$success_msg\n</div>";
-	}
-	?>
 	
 
 </form>
+
+<?php require('include/footer.php'); ?>
+<?php if (isset($success_msg))
+{
+	echo "<div class='alert alert-success alert-dismissable' id='general_alert_msg' >\n";
+	echo "<a href='#' class='close' data-dismiss='alert' aria-label='close'>×</a>\n";
+	echo "$success_msg\n</div>";
+}
+?>
 
 </div> <!-- Container fluid -->
 

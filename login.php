@@ -30,14 +30,7 @@ try
 			{
 				/* flow #3 */
 				
-				/* if (count($orgs) == 1)
-				{
-    				redirectToOrg($orgs[0]);
-				} 
-				else *I think I want to show the list page no matter what, at least for now */
-				{
-				    redirectToList();
-    			}
+				redirectToList();
     		}
 			else
 			{
@@ -61,12 +54,11 @@ try
 		    {
 		        /* TODO: make these codes more organized. Right now they are just random numbers and
 		        there's not much rhyme or reason as to what means what */
-		        case "7" : $auth_fail_msg = "Successfully logged off. You can now log on again.";
+		        case "SUCCESSFULLY_LOGGED_OFF" : $auth_fail_msg = SUCCESSFULLY_LOGGED_OFF;
 		          break;
-		        case "8" : $auth_fail_msg = "Due to inactivity you have been logged off. Please log on again";
+		        case "LOGGED_OFF_INACTIVITY" : $auth_fail_msg = LOGGED_OFF_INACTIVITY;
 		          break;
-		        case "USER_NOT_LOGGED_IN_ERROR":
-		          $auth_fail_msg = USER_NOT_LOGGED_IN_ERROR;
+		        case "USER_NOT_LOGGED_IN_ERROR" : $auth_fail_msg = USER_NOT_LOGGED_IN_ERROR;
 		          break;
 		        default : $auth_fail_msg = "An unknown error occurred. Please attempt to log on again";
 		    }
@@ -322,6 +314,8 @@ function redirectToList()
 
 
 </form>
+
+<?php require('include/footer.php'); ?>
 
 </div> <!-- Container fluid -->
 

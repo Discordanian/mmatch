@@ -365,7 +365,7 @@ function closeAlertMsg()
 function backToLogoutPage()
 {
 
-    window.location.replace("login.php?errmsg=8");
+    window.location.replace("login.php?errmsg=LOGGED_OFF_INACTIVITY");
 
 }
 

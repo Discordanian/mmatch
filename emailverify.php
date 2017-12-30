@@ -194,6 +194,7 @@ function verifyEmail()
     <?php if (isset($err_msg)) echo $err_msg; ?>
 </div>
 
+<?php require('include/footer.php'); ?>
 
 </div> <!-- Container fluid -->
 
