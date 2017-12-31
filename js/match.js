@@ -15,10 +15,10 @@ var hrefWebsite =  function() {
 	orgs.forEach(function(org) {
 		var url = "";
 		if (org.money_url) { 
-		url = "Donate: <a href=\""+org.money_url+"\">"+org.money_url+"</a><br />";
+		url = "Donate: <a href=\""+org.money_url+"\" target='_blank' rel='noopener'>"+org.money_url+"</a><br />";
 		}
 		if (org.org_website) { 
-		url += "Info: <a href=\""+org.org_website+"\">"+org.org_website+"</a>";
+		url += "Info: <a href=\""+org.org_website+"\" target='_blank' rel='noopener'>"+org.org_website+"</a>";
 		}
 		org.org_website = url;
         });
