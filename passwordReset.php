@@ -3,8 +3,8 @@
 require_once('include/inisets.php');
 require_once('include/secrets.php');
 require_once('include/initializeDb.php');
+require_once('include/utility_functions.php');
 
-define("ERROR_TOKEN_EXPIRED", "Date token expired in passwordReset.php.");
 
 /* Only one way this page goes, take input from GET request, validate */
 /* If valid, then switch email to verified */
@@ -85,7 +85,7 @@ function testToken()
     if ($token == $_GET["token"])
     {
 	    initializeDb();
-       authenticate();
+        authenticate();
     }
     else 
     {
@@ -117,7 +117,7 @@ function authenticate()
         if ($stmt->errorCode() != "00000") 
         {
             $erinf = $stmt->errorInfo();
-				error_log("Query failed in passwordReset.php: " . $stmt->errorCode() . " " . $erinf[2]);
+			error_log("Query failed in passwordReset.php: " . $stmt->errorCode() . " " . $erinf[2]);
             $err_msg = "An unknown error (4) occurred trying to verify the email using that link. Please try to request another email link.";
 			throw new Exception("Query failed in passwordReset.php");
             exit();
@@ -133,9 +133,10 @@ function authenticate()
 				{
 					/* set up the session just like the user had logged in */
 					$orgs = array_column($results, "orgid");
-					session_start();
-					$_SESSION["user_id"] = $user_id;
+					my_session_start();
+					$_SESSION["my_user_id"] = $user_id;
 					$_SESSION["orgids"] = $orgs;
+					$_SESSION["admin_user_ind"] = $results[0]["admin_user_ind"];
 				}
 			}
 		}

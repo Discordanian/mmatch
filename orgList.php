@@ -3,6 +3,7 @@
 require_once('include/inisets.php');
 require_once('include/secrets.php');
 require_once('include/initializeDb.php');
+require_once('include/utility_functions.php');
 
 
 /* TODO: This code may be vulnerable to XSS 
@@ -40,7 +41,7 @@ function validatePostData()
 {
     global $user_id;
     
-    if (!array_key_exists("user_id", $_GET) || !isset($_GET["user_id"]))
+    if (!array_key_exists("user_id", $_GET) || strlen($_GET["user_id"]) == 0)
     {
         throw new Exception("Required user ID was not supplied.");
         exit;
@@ -48,13 +49,13 @@ function validatePostData()
     
     $user_id = filter_var($_GET["user_id"], FILTER_SANITIZE_NUMBER_INT);
     
-    if (!array_key_exists("user_id", $_SESSION))
+    if (!array_key_exists("my_user_id", $_SESSION))
     {
         throw new Exception(USER_NOT_LOGGED_IN_ERROR);
         exit;
     }
     
-    if ($user_id != $_SESSION["user_id"])
+    if ($user_id != $_SESSION["my_user_id"] && $_SESSION["admin_user_ind"] == FALSE)
     {
         throw new Exception("Requested data for unauthorized user ID. Possible parameter tampering.");
         exit;
@@ -132,7 +133,7 @@ function dumpResults()
     <h2>Organization List</h2>
 </div>
 </center>
-<a href="org.php" class="btn btn-default btn-lg" >Create a new Organization record</a>
+<a href="org.php?user_id=<?php echo $user_id; ?>" class="btn btn-default btn-lg" >Create a new Organization record</a>
 <a href="login.php?errmsg=SUCCESSFULLY_LOGGED_OFF" class="btn btn-default btn-lg" >Log Off</a>
 
   <table class="table table-hover">

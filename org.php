@@ -41,6 +41,7 @@ try
 		{
 			$goto_page = -1; /* show the identifier data instead of person data */
 			/* #3 */
+			updateUser();
 			performInsert();
 			buildEmptyArray();
 			translatePostIntoArray();
@@ -53,6 +54,7 @@ try
 		elseif ($_POST["action"] == "U") /* updating an org */
 		{
 			/* #5 */
+			updateUser();
 			performUpdate();
 			//buildEmptyArray();
 			populateArray();
@@ -83,26 +85,24 @@ try
 		$org_website = "";
 		$money_url = "";
 		$mission = "";
-		/* if this happens, then we are creating a new org
-		tied to an existing user, so fill in the user data */
-		if (isset($_SESSION["user_id"]))
-		{
-    	    $action = "O"; /* This means inserting org only (user already exists) */
-    	    getUserInfo();
-    	    $goto_page = -1;
-		}
-		else 
-		{
-		    //$action = "I"; /* Insert org and user simultaneously */
-			//$_SESSION["orgids"] = array(); /* initialize session variable */
-			throw new Exception(USER_NOT_LOGGED_IN_ERROR);
-	    }
+    	$goto_page = -1;
+    	$user_id = filter_var($_GET["user_id"], FILTER_VALIDATE_INT);
+   	    $action = "O"; /* This means inserting org only (user already exists) */
 		$abbreviated_name = "";
 		$active_ind = "checked";
 		$admin_contact = "";
 		$customer_contact = "";
 		$customer_notice = "";
 		$zip_array = array(); /* empty array */
+
+		if (!array_key_exists("my_user_id", $_SESSION))
+		{
+			throw new Exception(USER_NOT_LOGGED_IN_ERROR);
+		}
+
+		/* if this happens, then we are creating a new org
+		tied to an existing user, so fill in the user data */
+   	    getUserInfo();
 		buildEmptyArray();
 	}
 	buildCsrfToken();
@@ -408,6 +408,85 @@ function validatePostData()
 }
 
 
+function updateUser()
+{
+    try
+    {
+        /* no ability to create users on this page, only thing we can do is update */
+        global $dbh, $user_id, $goto_page;
+
+        $user_id = filter_var($_POST["user_id"], FILTER_VALIDATE_INT);
+        
+        if ($user_id != $_SESSION["my_user_id"] && $_SESSION["admin_user_ind"] == FALSE)
+        {
+            error_log("Unauthorized user ID passed. Possible parameter tampering.");
+			throw new Exception("Unauthorized user ID. Possible parameter tampering.");
+			exit();
+        }
+
+        $stmt = $dbh->prepare("CALL updateUser(:user_id, :person_name, :email, :pwhash, :active_ind, :admin_active_ind, :admin_user_ind); ");
+		
+        $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
+
+		$stmt->bindValue(':person_name', filter_var($_POST["person_name"], FILTER_SANITIZE_STRING, FILTER_FLAG_NO_ENCODE_QUOTES + 
+            FILTER_FLAG_STRIP_LOW + FILTER_FLAG_STRIP_HIGH + FILTER_FLAG_STRIP_BACKTICK), PDO::PARAM_STR);
+
+        $stmt->bindValue(':email', filter_var(strtolower($_POST["email"]), FILTER_SANITIZE_EMAIL), PDO::PARAM_STR);
+		
+        /* udpate password if a new one specified */
+        if (strlen($_POST["password1"]) > 0)
+        {
+            $pwhash = password_hash($_POST["password1"], PASSWORD_BCRYPT);
+        }
+        else
+        {
+            $pwhash = null;
+        }
+ 
+        $stmt->bindValue(':pwhash', $pwhash, PDO::PARAM_STR);
+        
+        /* For now, these values will not be updated from this page, so just set the parameters to NULL */
+        $stmt->bindValue(':active_ind', NULL, PDO::PARAM_INT);
+        $stmt->bindValue(':admin_active_ind', NULL, PDO::PARAM_INT);
+        $stmt->bindValue(':admin_user_ind', NULL, PDO::PARAM_INT);
+        
+	    $stmt->execute();
+
+		global $success_msg;
+		$success_msg = "Record successfully updated.";
+		$goto_page = 0;
+		
+        $stmt->closeCursor();
+
+        /* TODO: detect email change and add verification email */
+		/* TODO: check for parameter tampering in user ID */
+		/* TODO: Add unique index on email */
+    }
+    catch (PDOException $e)
+    {
+        if ($e->getCode() == "23000") /* integrity constraint violation, so I want to present a user friendly error message */
+        {
+            if (strpos($e->getMessage(), "for key 'ix_app_user_email_unique'") !== FALSE)
+            {
+                throw new Exception(DUPLICATE_EMAIL_ERROR);
+            }
+        }
+        else 
+        {
+            error_log("Database error during UPDATE query in org.php: " . $e->getMessage());
+            throw new Exception("An unknown error was encountered (11). Please attempt to reauthenticate.");
+    		exit();
+        }
+    }
+    catch(Exception $e)
+    {
+        error_log("Error during database UPDATE query in org.php: " . $e->getMessage());
+        throw new Exception("An unknown error was encountered (12). Please attempt to reauthenticate.");
+		exit();
+    }
+
+}
+
 
 
 function performUpdate()
@@ -415,22 +494,31 @@ function performUpdate()
     try
     {
         /* this is an update, so must do a save */
-        global $dbh, $orgid, $goto_page;
-
-        assert(isset($dbh));
+        global $dbh, $orgid, $goto_page, $user_id;
 
         /* make sure org ID requested is in the session variable with authorized orgs */
-        if (!in_array($orgid, $_SESSION["orgids"]))
+        /* or if the user is an admin, then that authorizes them as well */
+        if (!in_array($orgid, $_SESSION["orgids"]) && $_SESSION["admin_user_ind"] == FALSE)
         {
             error_log("Unauthorized org ID requested. Possible parameter tampering.");
 			throw new Exception("Unauthorized org ID requested. Possible parameter tampering.");
 			exit();
         }
 
+        /* make sure the user ID that we are putting on the org is authorized */
+        if ($user_id != $_SESSION["my_user_id"] && $_SESSION["admin_user_ind"] == FALSE)
+        {
+            error_log("Unauthorized User ID requested. Possible parameter tampering.");
+			throw new Exception("Unauthorized User ID requested. Possible parameter tampering.");
+			exit();
+        }
+
+
         $stmt = $dbh->prepare("CALL updateOrganization(:orgid, :org_name, :org_website, :money_url, " . 
 			":mission, :active_ind, :abbreviated_name, :customer_contact, :customer_notice, :admin_contact, :user_id); " );
 
-			$stmt->bindValue(':org_name', filter_var($_POST["org_name"], FILTER_SANITIZE_STRING, FILTER_FLAG_NO_ENCODE_QUOTES + 
+		$stmt->bindValue(':user_id', $user_id);
+		$stmt->bindValue(':org_name', filter_var($_POST["org_name"], FILTER_SANITIZE_STRING, FILTER_FLAG_NO_ENCODE_QUOTES + 
             FILTER_FLAG_STRIP_LOW + FILTER_FLAG_STRIP_HIGH + FILTER_FLAG_STRIP_BACKTICK), PDO::PARAM_STR);
         $stmt->bindValue(':org_website', filter_var($_POST["org_website"], FILTER_SANITIZE_URL), PDO::PARAM_STR);
         $stmt->bindValue(':money_url', filter_var($_POST["money_url"], FILTER_SANITIZE_URL), PDO::PARAM_STR);
@@ -458,7 +546,6 @@ function performUpdate()
             $stmt->bindValue(':active_ind', 0, PDO::PARAM_INT);
         }
 
-		$stmt->bindValue(':user_id', $_SESSION["user_id"]);
 		//echo "<!-- performUpdate ";
 		//var_dump($_SESSION);
 		//echo " -->\n";
@@ -519,7 +606,8 @@ function performInsert()
         /* TODO: first check to see if a record under this email address already exists? */
 
         /* this is a new record, so do the insert */
-        global $dbh, $orgid, $goto_page, $action, $success_msg, $email;
+        global $dbh, $orgid, $goto_page, $action, $success_msg, $email, $user_id;
+        
         $stmt = $dbh->prepare("CALL insertOrganization(:org_name, :org_website, :money_url, " . 
 			":mission, :active_ind, :abbreviated_name, :customer_contact, :customer_notice, :admin_contact, :user_id); " );
 
@@ -549,7 +637,15 @@ function performInsert()
         }
 
 
-        $stmt->bindValue(':user_id', $_SESSION["user_id"], PDO::PARAM_INT);
+        /* make sure the user ID that we are putting on the org is authorized */
+        if ($user_id != $_SESSION["my_user_id"] && $_SESSION["admin_user_ind"] == FALSE)
+        {
+            error_log("Unauthorized User ID requested. Possible parameter tampering.");
+			throw new Exception("Unauthorized User ID requested. Possible parameter tampering.");
+			exit();
+        }
+
+		$stmt->bindValue(':user_id', $user_id);
         
         $stmt->execute();
 
@@ -582,11 +678,6 @@ function performInsert()
         
 
         $stmt->closeCursor();
-
-		if ($action == "I") /* only send the verification email when the user record was inserted */
-		{
-			sendVerificationEmail();
-		}
 		
         /* change the action to update, now that the record was successfully inserted */
         $action = "U";
@@ -628,7 +719,7 @@ function displayDbData()
         global $dbh, $orgid;
 
         /* make sure orgid from session matches org ID requested */
-        if (!in_array($orgid, $_SESSION["orgids"]))
+        if (!in_array($orgid, $_SESSION["orgids"]) && $_SESSION["admin_user_ind"] == FALSE)
         {
             error_log("Unauthorized org ID requested. Possible parameter tampering.");
 			throw new Exception("Unauthorized org ID requested. Possible parameter tampering.");
@@ -666,7 +757,7 @@ function displayDbData()
             global $action;
             global $zip_array;
 
-            global $abbreviated_name, $customer_notice, $customer_contact, $admin_contact, $active_ind;
+            global $abbreviated_name, $customer_notice, $customer_contact, $admin_contact, $active_ind, $user_id;
             $org_name = htmlspecialchars($row["org_name"]);
             $person_name = htmlspecialchars($row["person_name"]);
 
@@ -682,6 +773,8 @@ function displayDbData()
             $customer_notice = htmlspecialchars($row["customer_notice"]);
             $customer_contact = htmlspecialchars($row["customer_contact"]);
             $admin_contact = htmlspecialchars($row["admin_contact"]);
+            $user_id = htmlspecialchars($row["user_id"]);
+            
             $active_ind = ($row["active_ind"] == 1 ? "checked" : " ");
             $action = "U";
             buildCsrfToken();
@@ -1045,9 +1138,9 @@ function translatePostIntoArray()
         }    
     }
 
-echo "<!-- translatePostIntoArray \n ";
-var_dump($qu_aire);
-echo " --> \n ";
+//echo "<!-- translatePostIntoArray \n ";
+//var_dump($qu_aire);
+//echo " --> \n ";
 
 }
 
@@ -1134,24 +1227,11 @@ function updateQuestionnaireData()
     }
 }
 
-function sendVerificationEmail()
-{
-
-	/* the sendverifyemail.php page is called both here and from the AJAX portion of org.php */
-	/* since this is not very security critical use case, it just sends an email */
-	/* but we do build a hash into the URL to help ensure it isn't called maliciously */
-	$ch = curl_init(buildEmailVerificationUrl());
-	curl_setopt ($ch, CURLOPT_RETURNTRANSFER, 1) ;
-	/* I actually don't care about what's in the return value, it doesn't return anything of value */
-	$res = curl_exec($ch);
-	/* TODO: Check for errors? Hard to imagine what actionable information could be returned */
-	curl_close($ch);
-}
 
 function buildEmailVerificationUrl()
 {
-	global $csrf_salt, $email;
-	$user_id = $_SESSION["user_id"];
+	global $csrf_salt, $email, $user_id;
+	//$user_id = $_SESSION["user_id"];
 	
 	/* use a hash in the URL to ensure the sendverifyemail.php isn't called maliciously */
 	$link_expdate = new DateTime(NULL, new DateTimeZone("UTC"));
@@ -1167,7 +1247,6 @@ function buildEmailVerificationUrl()
 	//	$_SERVER["SERVER_NAME"], urlencode($email_unverified), $token, $orgid, $link_expdate->format('U'));
 	$url = sprintf("service/sendverifyemail.php?email=%s&token=%s&user_id=%d&date=%s", 
 		urlencode($email), $token, $user_id, $link_expdate->format('U'));
-	/* TODO: Handle the determination of http/https in the URL */
 	return $url;
 }
 
@@ -1249,9 +1328,7 @@ function getUserInfo()
 
     try {
 
-        global $dbh;
-
-        $user_id = $_SESSION["user_id"];
+        global $dbh, $user_id;
         
         $stmt = $dbh->prepare("CALL selectUserInfo(:user_id);");
         $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
@@ -1351,6 +1428,7 @@ function getUserInfo()
 <input type="hidden" id="csrf_expdate" name="csrf_expdate" value="<?php echo $csrf_expdate->format('U'); ?>" />
 <input type="hidden" id="action" name="action" value="<?php echo $action; ?>" />
 <input type="hidden" id="orgid" name="orgid" value="<?php echo $orgid; ?>" />
+<input type="hidden" id="user_id" name="user_id" value="<?php echo $user_id ?>" />
 
 <div class="panel-group">
  <div class="panel panel-default">
@@ -1363,7 +1441,7 @@ function getUserInfo()
 <div id="intro1" class="panel-collapse collapse <?php if ($goto_page == -2) echo "in"; ?> "  >
 
 <div class="panel-body">
-
+    
     <div class="form-group">
         <label for="person_name">Name:</label>
         <input class="form-control" type="text" id="person_name" maxlength="128" name="person_name" value="<?php echo $person_name ?>"  required />
@@ -1544,19 +1622,8 @@ function getUserInfo()
 
 <button id="save_data" type="submit" class="btn btn-default btn-lg">Save data</button>
 <a href="login.php?errmsg=SUCCESSFULLY_LOGGED_OFF" class="btn btn-default btn-lg" >Log Off</a>
+<a href='orgList.php?user_id=<?php echo $user_id ?>' class='btn btn-default btn-lg' >Back to List</a>
 
-<?php
-
-
-if (isset($_SESSION["orgids"]) && isset($_SESSION["user_id"]))
-{
-	$user_id = $_SESSION["user_id"];
-	echo "<a href='orgList.php?user_id=$user_id' class='btn btn-default btn-lg' >Back to List</a>";
-}
-
-?>
-
-	
 
 </form>
 

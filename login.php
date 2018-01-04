@@ -24,9 +24,7 @@ try
 		
 		if (validatePostData())
 		{
-		    $orgs = authenticateCredentials();
-		    
-			if (isset($orgs))
+			if (authenticateCredentials())
 			{
 				/* flow #3 */
 				
@@ -189,13 +187,15 @@ function authenticateCredentials()
 		//echo " -->\n";
                 session_start();
                 $user_id = $results[0]["user_id"];
-                $_SESSION["user_id"] = $user_id;
+                $_SESSION["my_user_id"] = $user_id;
                 $_SESSION["orgids"] = $orgs;
-                return $orgs;
+                $_SESSION["admin_user_ind"] = $results[0]["admin_user_ind"];
+                
+                return TRUE;
             }
         }
 
-        return NULL;
+        return FALSE;
 
     }
     catch (PDOException $e)
