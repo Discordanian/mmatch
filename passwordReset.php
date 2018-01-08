@@ -176,7 +176,7 @@ function authenticate()
 <?php 
 	if (!isset($err_msg)) 
 	{
-		printf("\t<meta http-equiv='REFRESH' content='5;URL=orgList.php?user_id=%d' >\n", $user_id);
+		printf("\t<meta http-equiv='REFRESH' content='5;URL=user.php?user_id=%d' >\n", $user_id);
 	}
 ?>
 	<link rel="stylesheet prefetch" 
@@ -195,11 +195,12 @@ function authenticate()
 
 <body>
 
+<?php require('include/unauth_nav_bar.php'); ?>
+
 <div class="container-fluid">
 
 <center>
 <div class="page-header">
-    <h1>Movement Match</h1>
     <h2>Reset Password</h2>
 </div>
 </center>
@@ -215,6 +216,7 @@ function authenticate()
     <?php if (isset($err_msg)) echo $err_msg; ?>
 </div>
 
+<?php require('include/footer.php'); ?>
 
 </div> <!-- Container fluid -->
 

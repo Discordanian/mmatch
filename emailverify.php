@@ -174,12 +174,11 @@ function verifyEmail()
 </head>
 
 <body>
-
+<?php require('include/unauth_nav_bar.php'); ?>
 <div class="container-fluid">
 
 <center>
 <div class="page-header">
-    <h1>Movement Match</h1>
     <h2>Verify Email</h2>
 </div>
 </center>

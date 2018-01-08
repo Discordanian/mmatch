@@ -23,6 +23,8 @@ $goto_page = -2;
 
 try
 {
+    $highlight_tab = "ORGS";
+
 	initializeDb();
 	
 	if (isset($_POST["action"]))
@@ -78,6 +80,7 @@ try
 	{
 		/* #1 */
 		/* Build default screen data */
+		$highlight_tab = "NEWORG";
 		$orgid = 0;
 		$person_name = "";
 		$org_name = "";
@@ -89,7 +92,7 @@ try
     	$user_id = filter_var($_GET["user_id"], FILTER_VALIDATE_INT);
    	    $action = "O"; /* This means inserting org only (user already exists) */
 		$abbreviated_name = "";
-		$active_ind = "checked";
+		$active_ind = TRUE;
 		$admin_contact = "";
 		$customer_contact = "";
 		$customer_notice = "";
@@ -424,7 +427,7 @@ function updateUser()
 			exit();
         }
 
-        $stmt = $dbh->prepare("CALL updateUser(:user_id, :person_name, :email, :pwhash, :active_ind, :admin_active_ind, :admin_user_ind); ");
+        $stmt = $dbh->prepare("CALL updateUser(:user_id, :person_name, :email, :pwhash, :active_ind, :admin_user_ind); ");
 		
         $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
 
@@ -447,7 +450,6 @@ function updateUser()
         
         /* For now, these values will not be updated from this page, so just set the parameters to NULL */
         $stmt->bindValue(':active_ind', NULL, PDO::PARAM_INT);
-        $stmt->bindValue(':admin_active_ind', NULL, PDO::PARAM_INT);
         $stmt->bindValue(':admin_user_ind', NULL, PDO::PARAM_INT);
         
 	    $stmt->execute();
@@ -775,7 +777,7 @@ function displayDbData()
             $admin_contact = htmlspecialchars($row["admin_contact"]);
             $user_id = htmlspecialchars($row["user_id"]);
             
-            $active_ind = ($row["active_ind"] == 1 ? "checked" : " ");
+            $active_ind = $row["active_ind"];
             $action = "U";
             buildCsrfToken();
         }
@@ -865,7 +867,7 @@ function displayPostData()
         FILTER_FLAG_STRIP_LOW + FILTER_FLAG_STRIP_HIGH + FILTER_FLAG_STRIP_BACKTICK));
     $customer_notice = htmlspecialchars(filter_var($_POST["customer_notice"], FILTER_SANITIZE_STRING, FILTER_FLAG_NO_ENCODE_QUOTES + 
         FILTER_FLAG_STRIP_LOW + FILTER_FLAG_STRIP_HIGH + FILTER_FLAG_STRIP_BACKTICK));
-    $active_ind = ($_POST["active_ind"] == "on" ? "checked" : " " );
+    $active_ind = checkPostForCheckbox("active_ind");
 
     $action = strtoupper(substr($_POST["action"], 0, 1)); /* on error, always retain the same action that was posted */
 
@@ -1414,11 +1416,12 @@ function getUserInfo()
 
 <body>
 
+<?php require('include/admin_nav_bar.php'); ?>
+
 <div class="container-fluid">
 
 <center>
 <div class="page-header">
-    <h1>Movement Match</h1>
     <h2>Organization Setup</h2>
 </div>
 </center>
@@ -1516,7 +1519,7 @@ function getUserInfo()
 
     <div class="form-group row">
         <div class="col-xs-5" for="active_ind"><p><strong>Set this Organization to Active:</strong></p><p><small class="text-muted">This is required in order to be shown to the public.</small></p></div>
-        <div class="col-xs-1" ><input class="" type="checkbox" id="active_ind" name="active_ind" <?php echo $active_ind ?> /></div>
+        <div class="col-xs-1" ><input class="" type="checkbox" id="active_ind" name="active_ind" <?php echo ($active_ind == TRUE ? "checked" : ""); ?> /></div>
     </div> <!-- form-group -->
 
     <div class="form-group">
@@ -1621,8 +1624,6 @@ function getUserInfo()
 ?>
 
 <button id="save_data" type="submit" class="btn btn-default btn-lg">Save data</button>
-<a href="login.php?errmsg=SUCCESSFULLY_LOGGED_OFF" class="btn btn-default btn-lg" >Log Off</a>
-<a href='orgList.php?user_id=<?php echo $user_id ?>' class='btn btn-default btn-lg' >Back to List</a>
 
 
 </form>
