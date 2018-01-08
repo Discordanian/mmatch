@@ -13,6 +13,12 @@ $(document).ready(function(){
     $("input#email").blur(function(){
         $(this).val($(this).val().trim());
     });
+    
+    /* must trim the password values here because they get trimmed on the pw set page */
+    $("input#password").blur(function(){
+        $(this).val($(this).val().trim());
+    });
+    
 
 });
 

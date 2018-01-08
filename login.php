@@ -24,9 +24,7 @@ try
 		
 		if (validatePostData())
 		{
-		    $orgs = authenticateCredentials();
-		    
-			if (isset($orgs))
+			if (authenticateCredentials())
 			{
 				/* flow #3 */
 				
@@ -189,13 +187,15 @@ function authenticateCredentials()
 		//echo " -->\n";
                 session_start();
                 $user_id = $results[0]["user_id"];
-                $_SESSION["user_id"] = $user_id;
+                $_SESSION["my_user_id"] = $user_id;
                 $_SESSION["orgids"] = $orgs;
-                return $orgs;
+                $_SESSION["admin_user_ind"] = $results[0]["admin_user_ind"];
+                
+                return TRUE;
             }
         }
 
-        return NULL;
+        return FALSE;
 
     }
     catch (PDOException $e)
@@ -251,7 +251,14 @@ function redirectToList()
 {
     global $user_id;
 
-	header("Location: orgList.php?user_id=$user_id");
+    if ($_SESSION["admin_user_ind"] == TRUE) /* admins go to user list page, they probably don't want to work on orgs */
+    {
+       	header("Location: userList.php");
+    }
+    else /* regular users get the organization list by default */
+    {
+       	header("Location: orgList.php?user_id=$user_id");
+	}
 }
 
 
@@ -280,11 +287,15 @@ function redirectToList()
 
 <body>
 
+<?php 
+$highlight_tab = "LOGIN";
+require('include/unauth_nav_bar.php'); ?>
+
+
 <div class="container-fluid">
 
 <center>
 <div class="page-header">
-    <h1>Movement Match</h1>
     <h2>Organization Login</h2>
 </div>
 </center>
@@ -310,7 +321,6 @@ function redirectToList()
     </div>
 
     <button type="submit" class="btn btn-default btn-lg" id="submit">Submit</button>
-	<a href="forgotPassword.php" class="btn btn-default btn-lg" >Forgot Password?</a>
 
 
 </form>

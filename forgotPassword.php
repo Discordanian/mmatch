@@ -197,7 +197,9 @@ function sendPasswordResetLink()
     $link = sprintf("%s://%s%s?email=%s&token=%s&user_id=%d&date=%s", 
         $_SERVER["REQUEST_SCHEME"], $_SERVER["HTTP_HOST"], $path, urlencode($email), $token, $user_id, $datetext);
 
-	echo "<!-- $link -->\n"; /* TODO: This is a cheat so I don't have to actually send/receive the email. Remove this eventually */
+	//echo "<!-- $link -->\n"; /* TODO: This is a cheat so I don't have to actually send/receive the email. Remove this eventually */
+	/* This is another cheat in case I don't have the email. The link will be in the log which is only available to superusers */
+    error_log("Password reset requested: " . $link);	
 	
     $message = sprintf("You apparently requested for your password to be reset on the site movementmatch.org.\n" .
         "Click on the following link in order to verify that this is correct and reset your password: \n" .
@@ -249,11 +251,14 @@ function sendPasswordResetLink()
 
 <body>
 
+<?php 
+$highlight_tab = "FORGOT";
+require('include/unauth_nav_bar.php'); ?>
+
 <div class="container-fluid">
 
 <center>
 <div class="page-header">
-    <h1>Movement Match</h1>
     <h2>Forgot Password</h2>
 </div>
 </center>
@@ -282,6 +287,8 @@ function sendPasswordResetLink()
 
 
 </form>
+
+<?php require('include/footer.php'); ?>
 
 </div> <!-- Container fluid -->
 

@@ -11,4 +11,23 @@ function my_session_start()
     setcookie($_sess_name, $_sess_id, time() + (60 * 60 * 4), "/");    
 }
 
+function checkPostForCheckbox($identifier)
+{
+    if (array_key_exists($identifier, $_POST))
+    {
+        if ($_POST[$identifier] == "on")
+        {
+            return TRUE;
+        }
+        else 
+        {
+            return FALSE;
+        }
+    }
+    else 
+    {
+        return FALSE;
+    }
+}
+
 ?>

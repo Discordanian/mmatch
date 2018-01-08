@@ -12,10 +12,10 @@ Needs serious security review */
 
 try
 {
-    $highlight_tab = "ORGS";
+    $highlight_tab = "USERS";
     
     session_start();
-    validatePostData();
+    validateAuthorization();
     initializeDb();
 }
 catch(Exception $e)
@@ -27,7 +27,7 @@ catch(Exception $e)
 	       exit();
         break;
 	    default:
-           error_log("Error getting organization list: " . $e->getMessage());
+           error_log("Error getting user list: " . $e->getMessage());
 	       header("Location: login.php?errmsg=true");
 	       exit();
 	    
@@ -35,25 +35,16 @@ catch(Exception $e)
 }
 
 
-function validatePostData()
+function validateAuthorization()
 {
-    global $user_id;
     
-    if (!array_key_exists("user_id", $_GET) || strlen($_GET["user_id"]) == 0)
-    {
-        throw new Exception("Required user ID was not supplied.");
-        exit;
-    }
-    
-    $user_id = filter_var($_GET["user_id"], FILTER_SANITIZE_NUMBER_INT);
-    
-    if (!array_key_exists("my_user_id", $_SESSION))
+    if (!array_key_exists("admin_user_ind", $_SESSION))
     {
         throw new Exception(USER_NOT_LOGGED_IN_ERROR);
         exit;
     }
-    
-    if ($user_id != $_SESSION["my_user_id"] && $_SESSION["admin_user_ind"] == FALSE)
+        
+    if ($_SESSION["admin_user_ind"] == FALSE)
     {
         throw new Exception("Requested data for unauthorized user ID. Possible parameter tampering.");
         exit;
@@ -62,17 +53,16 @@ function validatePostData()
 
 function dumpResults()
 {
-    global $user_id, $dbh;
+    global $dbh;
     
-    $stmt = $dbh->prepare("CALL selectOrganizationList(:user_id);");
-    $stmt->bindValue(":user_id", $user_id);
+    $stmt = $dbh->prepare("CALL selectUserList();");
     
     $stmt->execute();
     
     if ($stmt->errorCode() != "00000") 
     {
         $erinf = $stmt->errorInfo();
-		error_log("Query failed in orgList.php: " . $stmt->errorCode() . " " . $erinf[2]);
+		error_log("Query failed in userList.php: " . $stmt->errorCode() . " " . $erinf[2]);
 		throw new Exception("An unknown error was encountered (10). Please attempt to reauthenticate.");
         exit();
     }
@@ -81,11 +71,15 @@ function dumpResults()
     {
         echo "<tr>\n";
         echo "<td>";
-        echo htmlentities($row["org_name"]);
+        echo htmlentities($row["person_name"]);
         echo "</td>\n<td>";
-        echo htmlentities($row["abbreviated_name"]);
-        echo "</td>\n<td><a href='org.php?orgid=";
-        echo $row["orgid"];
+        echo htmlentities($row["email"]);
+        echo "</td>\n<td>";
+        echo ($row["admin_user_ind"] ? "Yes" : "No");
+        echo "</td>\n<td>";
+        echo ($row["active_ind"] ? "Yes" : "No");
+        echo "</td>\n<td><a href='user.php?user_id=";
+        echo $row["user_id"];
         echo "' class='btn btn-default btn-lg'>Edit</a></td>\n</tr>\n";
  
     }
@@ -103,7 +97,7 @@ function dumpResults()
 <html lang="en" >
 <head>
     <meta charset="UTF-8">
-    <title>Movement Match - Organization</title>
+    <title>Movement Match - Users</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
 	<link rel="stylesheet prefetch" 
@@ -129,15 +123,17 @@ function dumpResults()
 
 <center>
 <div class="page-header">
-    <h2>Organization List</h2>
+    <h2>User List</h2>
 </div>
 </center>
 
   <table class="table table-hover">
     <thead>
       <tr>
-        <th>Organization Name</th>
-        <th>Abbreviation</th>
+        <th>Name</th>
+        <th>Email Address</th>
+        <th>Administrator?</th>
+        <th>Enabled?</th>
         <th> </th>
       </tr>
     </thead>

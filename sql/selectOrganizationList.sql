@@ -5,7 +5,8 @@ CREATE PROCEDURE selectOrganizationList(p_user_id INT(10) UNSIGNED)
 BEGIN
 	SELECT orgid, org_name, abbreviated_name 
 	FROM org 
-	WHERE org.user_id = p_user_id; 
+	WHERE org.user_id = p_user_id
+	ORDER BY org_name; 
 END
 $$
 
