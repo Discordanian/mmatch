@@ -63,6 +63,8 @@ function save_data_click()
             so that they get submitted with the POST */
         $("#zip_list > option").prop("selected", "true");
 
+        $("#save_data").prop("disabled", "true");
+        
         $("form#org_save_form").submit();
     }    
     else

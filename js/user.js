@@ -34,6 +34,8 @@ function save_data_click()
     /* validate all data points */
     if (validate_person_name() && validate_email() && validate_password() ) 
     {
+        $("#save_data").prop("disabled", "true");
+        
         $("form#org_save_form").submit();
     }    
     else
