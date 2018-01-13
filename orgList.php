@@ -38,6 +38,13 @@ catch(Exception $e)
 function validatePostData()
 {
     global $user_id;
+
+    /* check for existence of proper session cookie */    
+    if (!array_key_exists("my_user_id", $_SESSION))
+    {
+        throw new Exception(USER_NOT_LOGGED_IN_ERROR);
+        exit;
+    }
     
     if (!array_key_exists("user_id", $_GET) || strlen($_GET["user_id"]) == 0)
     {
@@ -46,12 +53,6 @@ function validatePostData()
     }
     
     $user_id = filter_var($_GET["user_id"], FILTER_SANITIZE_NUMBER_INT);
-    
-    if (!array_key_exists("my_user_id", $_SESSION))
-    {
-        throw new Exception(USER_NOT_LOGGED_IN_ERROR);
-        exit;
-    }
     
     if ($user_id != $_SESSION["my_user_id"] && $_SESSION["admin_user_ind"] == FALSE)
     {
