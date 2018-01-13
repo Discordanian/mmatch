@@ -40,24 +40,17 @@
             <h4 class="modal-title">Privacy Policy</h4>
           </div>
           <div class="modal-body mm-modal" >
-            <h4>This is our privacy policy. It's simple: </h4>
-            <p><b>We do not collect any identifying information,</b> so you don't have to trust us.</p>
-            <p>Some of the questions that are asked on the questionnaire can be considered private.
-            Everyone should feel comfortable answering these questions because, outside of the
-            location information, none of the answers ever leaves the browser.
-            </p>
-            <p>Of course, we use the location information (primarily zip code) to drive the search algorithm
-            and try to only show those organizations that are physically located close to the user.
-            If you, as a user, decline to provide that information, that is your right, but it gets
-            difficult to provide meaningful search results.</p>
+            <h4>This is our privacy policy. It&apos;s simple: </h4>
+            <p><b>We do not collect any personal identifying information,</b> so you don&apos;t have to trust us.</p>
+            <p>None of the answers you give on the questionnaire ever leave your computer or device.</p>
+            <p>What we do see: The zip code and possibly location information may be shared with us,
+            which are used to narrow down the list of organizations to those which are physically nearby.
+            Also, every web site you use needs to use your IP address in order to interact with you, 
+			and we capture your IP address in our logs.</p>
             <p>We do not have any trackers, ads, bugs, frames, 
             or these types of things that modern web sites use to
-            unmask their users' identities.</p>
-            <p>In order to send these web pages to our users, we always must have
-            their IP address, because it is basically impossible to have a web site without knowing that much.
-            We may log that IP address along with which resources are accessed in order to help us run the site,
-            but we always purge that information within 30 days.</p>
-            <h4>That's it.</h4>
+            unmask their users&apos; identities.</p>
+            <h4>That&apos;s it.</h4>
           </div>
         </div>
     </div>
