@@ -63,11 +63,15 @@
             <h4 class="modal-title">Contact Information</h4>
           </div>
           <div class="modal-body mm-modal" >
-          <p>Email: <a href="mailto:donotreply@movementmatch.org" id="email_decoded" ></a></p>
+		  <input type="hidden" id="email_encoded" name="email_encoded" value="<?php echo base64_encode(CONTACT_EMAIL); ?>" />
+		  <p>Email: <a href="mailto:admin@movementmatch.org" id="email_decoded" name="email_decoded">Email</a></p>
+<?php
+	include('contactinfo.html');
+?>
+
           </div>
         </div>
     </div>
 
-    <div id="email_encoded" hidden="" ><?php echo base64_encode(CONTACT_EMAIL); ?></div>
     
 </div>
