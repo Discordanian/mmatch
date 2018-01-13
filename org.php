@@ -843,6 +843,7 @@ function displayPostData()
     global $mission;
     global $action; 
     global $abbreviated_name, $customer_notice, $customer_contact, $admin_contact, $active_ind;
+	global $user_id;
 
     $email = htmlspecialchars(filter_var($_POST["email"], FILTER_SANITIZE_EMAIL)); 
         /* TODO: don't know if the email is verified or not yet not sure how to handle this */
@@ -868,7 +869,7 @@ function displayPostData()
     $customer_notice = htmlspecialchars(filter_var($_POST["customer_notice"], FILTER_SANITIZE_STRING, FILTER_FLAG_NO_ENCODE_QUOTES + 
         FILTER_FLAG_STRIP_LOW + FILTER_FLAG_STRIP_HIGH + FILTER_FLAG_STRIP_BACKTICK));
     $active_ind = checkPostForCheckbox("active_ind");
-
+    $user_id = filter_var($_POST["user_id"], FILTER_VALIDATE_INT);
     $action = strtoupper(substr($_POST["action"], 0, 1)); /* on error, always retain the same action that was posted */
 
     buildCsrfToken();
@@ -1462,7 +1463,7 @@ function getUserInfo()
             if ($email_is_verified == 0)
             {
                 echo "<div class='alert alert-info' id='email_unverified_msg' >The email address: $email has not been verified yet. \n";
-				echo "<input type='button' id='generateVerificationEmail' value='Click here to request a new verification email.'></input></div>\n";
+				echo "<input type='button' id='generateVerificationEmail' value='Click here to request a new verification email.' /></div>\n";
 				echo "<div hidden='true' id='generateVerficationEmailUrl' >";
 				echo buildEmailVerificationUrl();
 				echo "</div>\n";
