@@ -10,7 +10,7 @@ $(function(){
 
 function showEmailAddress() 
 {
-    var email = window.atob($("#email_encoded").text());
+    var email = window.atob($("#email_encoded").val());
     
     $("#email_decoded").text(email);
     $("#email_decoded").attr('href', 'mailto:' + email);
