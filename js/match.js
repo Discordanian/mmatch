@@ -45,8 +45,10 @@ var mm = {
                 orgs.filter(mm.filterResults)
             );
             $("#results").removeClass("hidden").addClass("visible");
+	    document.getElementById('toggle').innerHTML = "Hide Organizations";
         } else {
             $("#results").removeClass("visible").addClass("hidden");
+	    document.getElementById('toggle').innerHTML = "Show Organizations";
         }
     },
     showNoOrgs: function() {
@@ -56,9 +58,11 @@ var mm = {
     },
     showAllFiltered: function() {
         $("#all_filtered").removeClass("hidden").addClass("visible");
+	document.getElementById('toggle').innerHTML = "Hide Organizations";
     },
     hideAllFiltered: function() {
         $("#all_filtered").removeClass("visible").addClass("hidden");
+	document.getElementById('toggle').innerHTML = "Show Organizations";
     }, 
     filterResults: function(x) {
         var retval = true;
