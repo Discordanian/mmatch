@@ -48,15 +48,15 @@
   <!-- Form Start  -->
 <form action="match.php" method="get">
 <div class="form-group row">
-  <label for="zipcode" class="col-2 col-form-label">Enter Zip Code</label>
   <p><small class="text-muted">This allows you to search for organizations based on locality.</small></p>
-  <div class="col-5">
+  <label for="zipcode" class="col-xs-4 col-form-label">Enter Zip Code</label>
+  <div class="col-xs-4">
     <input class="form-control" type="text" value="<?php echo DEFAULT_ZIP ?>" maxlength="5" name="zipcode" id="zipcode">
   </div>
 </div><!-- form-group row zipcode -->
 <div class="form-group row">
-  <label for="distance" class="col-2 col-form-label">Search Radius (in Miles)</label>
-  <div class="col-5">
+  <label for="distance" class="col-xs-4 col-form-label">Search Radius (in Miles)</label>
+  <div class="col-xs-4">
     <input class="form-control" type="number" value="<?php echo DEFAULT_RANGE ?>" min="0" max="99999" id="distance" name="distance">
   </div>
 </div><!-- form-group row distance -->
