@@ -18,7 +18,8 @@ and probably a bunch of other attacks
 Needs serious security review */
 
 my_session_start();
-$goto_page = -2;
+/* default section should be the org details page */
+$goto_page = -1;
 
 
 try
@@ -72,6 +73,11 @@ try
 	{
 		/* #6 */
 		$orgid = FILTER_VAR($_REQUEST["orgid"], FILTER_VALIDATE_INT);
+		if (!array_key_exists("my_user_id", $_SESSION))
+		{
+			throw new Exception("USER_NOT_LOGGED_IN_ERROR");
+		}
+
 		displayDbData();
 		buildEmptyArray();
 		populateArray();
@@ -100,7 +106,7 @@ try
 
 		if (!array_key_exists("my_user_id", $_SESSION))
 		{
-			throw new Exception(USER_NOT_LOGGED_IN_ERROR);
+			throw new Exception("USER_NOT_LOGGED_IN_ERROR");
 		}
 
 		/* if this happens, then we are creating a new org
@@ -119,11 +125,15 @@ catch (Exception $e)
 	
 	switch ($e->getMessage())
 	{
-	    case DUPLICATE_ORG_NAME_ERROR : 
+	    case "DUPLICATE_EMAIL_ERROR" : 
+	       $email_msg = "The email address entered was a duplicate.";
+	       $goto_page = -2;
+	    break;
+	    case "DUPLICATE_ORG_NAME_ERROR" : 
 	       $org_name_msg = "The organization name entered was a duplicate.";
 	       $goto_page = -1;
 	    break;
-	    case USER_NOT_LOGGED_IN_ERROR:
+	    case "USER_NOT_LOGGED_IN_ERROR":
 	       header("Location: login.php?errmsg=USER_NOT_LOGGED_IN_ERROR");
 	       exit();
         break;
@@ -207,8 +217,17 @@ function checkCsrfToken()
 
 function validatePostData()
 {
+	if (!isset($_REQUEST["user_id"]) || !isset($_POST["email"]) || !isset($_POST["person_name"]) 
+		|| !isset($_POST["password1"]) || !isset($_POST["password2"])
+		|| !isset($_POST["org_name"]) || !isset($_POST["org_website"]) || !isset($_POST["money_url"]))
+	{
+        error_log("Parameter tampering detected (validatePostData) Something not posted.");
+        throw new Exception(PARAMETER_TAMPERING);
+        exit();		
+	}
+		
     global $email_msg, $orgid, $goto_page, $org_website_msg, $money_url_msg, $pwd_msg, $org_name_msg, $action;
-    $orgid = FILTER_VAR($_REQUEST["orgid"], FILTER_VALIDATE_INT);
+    $orgid = filter_var($_REQUEST["orgid"], FILTER_VALIDATE_INT);
 	$action = substr(strtoupper($_POST["action"]), 0, 1); /* trim action to 1 character */
 	
     if (!($orgid >= 0))
@@ -220,191 +239,138 @@ function validatePostData()
 
 
     /* first do basic validations before accessing the database */
-    if (isset($_POST["email"])) 
+    $email = $_POST["email"]; 
+    // check if e-mail address is well-formed
+
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) 
     {
-        $email = $_POST["email"]; 
-        // check if e-mail address is well-formed
-
-        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) 
-        {
-            $email_msg = "The email address does not appear to follow the proper form.";
-			$goto_page = -2;
-            return false;
-        }
-
-        if (strlen($email) > 128)
-        {
-            $email_msg = "Email address should not exceed 128 characters in length.";
-			$goto_page = -2;
-            return false;
-        }
-
-        if (strlen($email) < 1) 
-        {
-            $email_msg = "A valid email address is required.";
-			$goto_page = -2;
-            return false;
-        }
-    }
-	else
-	{
-		/* Weird situation because this data field was not even posted.
-		Should probably log it. */
-		$email_msg = "A valid email address is required.";
+        $email_msg = "The email address does not appear to follow the proper form.";
 		$goto_page = -2;
-        error_log("Email not posted. Possible parameter tampering.");
-        throw new Exception("Parameter tampering detected (validatePostData) email missing.");
-		return false;
-	}
-
-
-    if (isset($_POST["org_name"]))
-    {
-        $org_name = $_POST["org_name"];
-        if (strlen($org_name) < 4)
-        {
-            $org_name_msg = "The organization name must have at least 4 characters.";
-            $goto_page = -1;
-            return false;
-        }
-
-        if (strlen($org_name) > 128)
-        {
-            $org_name_msg = "The organization name exceeds the maximum length of 128 characters.";
-            $goto_page = -1;
-            return false;
-        }
-
+        return false;
     }
-	else
+
+    if (strlen($email) > 128)
+    {
+        $email_msg = "Email address should not exceed 128 characters in length.";
+		$goto_page = -2;
+        return false;
+    }
+
+    if (strlen($email) < 1) 
+    {
+        $email_msg = "A valid email address is required.";
+		$goto_page = -2;
+        return false;
+    }
+
+
+    $org_name = $_POST["org_name"];
+    if (strlen($org_name) < 4)
+    {
+        $org_name_msg = "The organization name must have at least 4 characters.";
+        $goto_page = -1;
+        return false;
+    }
+
+    if (strlen($org_name) > 128)
+    {
+        $org_name_msg = "The organization name exceeds the maximum length of 128 characters.";
+        $goto_page = -1;
+        return false;
+    }
+
+	$org_website = filter_var($_POST["org_website"], FILTER_SANITIZE_URL);
+	
+	if (strlen($org_website) > 0) /* web site is optional so skip check if its blank */
 	{
-		/* Weird situation because this data field was not even posted.
-		Should probably log it. */
-		$org_name_msg = "An organization name is required to be supplied.";
-		$goto_page = -1;
-        error_log("Org name not posted. Possible parameter tampering.");
-        throw new Exception("Parameter tampering detected (validatePostData) org_name missing.");
-		return false;
+		
+		//echo "<!-- web site = $website -->\n"; 
+		if (!filter_var($org_website, FILTER_VALIDATE_URL))
+		{
+			$org_website_msg = "The website URL does not follow the proper pattern for a valid URL.";
+			$goto_page = -1;
+			//echo "<!-- URL failed validation -->\n"; 
+			return false;
+		}
+
+		if (strlen($org_website) > 255)
+		{
+			$org_website_msg = "Web site address should not exceed 255 characters in length.";
+			$goto_page = -1;
+			return false;
+		}
 	}
 
-	if ((isset($_POST["password1"]) && (isset($_POST["password2"]))))
+	$money_url = filter_var($_POST["money_url"], FILTER_SANITIZE_URL);
+	//echo "<!-- money url = $money_url -->\n"; 
+	if (strlen($money_url) > 0) /* donations site is optional so skip check if its blank */
 	{
-		if ($_POST["password1"] != $_POST["password2"])
+		
+		if (!filter_var($money_url, FILTER_VALIDATE_URL))
 		{
-			$pwd_msg = "Passwords must match.";
-			$goto_page = -2;
+			$money_url_msg = "The website URL does not follow the proper pattern for a valid URL.";
+			$goto_page = -1;
+			//echo "<!-- failed validation -->\n"; 
 			return false;
 		}
-		
-		if (strlen($_POST["password1"]) > 128)
+
+		if (strlen($money_url) > 255)
 		{
-			$pwd_msg = "Password exceeds the maximum length of 128 characters.";
-			$goto_page = -2;
+			$money_url_msg = "Web site address should not exceed 255 characters in length.";
+			$goto_page = -1;
 			return false;
 		}
 	}
-	else
+
+	$pwd = $_POST["password1"];
+
+	if ($pwd != $_POST["password2"])
 	{
-		/* Weird situation because this data field was not even posted.
-		Should probably log it. */
 		$pwd_msg = "Passwords must match.";
 		$goto_page = -2;
-        error_log("Password not posted. Possible parameter tampering.");
-        throw new Exception("Parameter tampering detected (validatePostData) password not sent.");
 		return false;
 	}
 	
-    /* check to make sure a password was specified if this is first time */
-    if (isset($_POST["action"]))
+	if (strlen($pwd) > 128)
+	{
+		$pwd_msg = "Password exceeds the maximum length of 128 characters.";
+		$goto_page = -2;
+		return false;
+	}
+
+    if (strlen($pwd) < 1)
     {
-        /* on insert, the user must specify a password */
-        if (($_POST["action"] == "I") && strlen($_POST["password1"]) < 1)
-        {
-            $pwd_msg = "Password is required in order to continue.";
-            $goto_page = -2;
-            return false;
-        }
+        /* password was not specified so no reason to check anything else */
+        return true;
     }
-    else
+    	
+	if (strlen($pwd) < 8)
+	{
+		$pwd_msg = "The password must be a minimum length of 8 characters.";
+		$goto_page = -2;
+		return false;
+	}
+
+	/* check complexity requirements */
+	$hasUpperCase = ($pwd != strtolower($pwd) ? 1 : 0); 
+	$hasLowerCase = ($pwd != strtoupper($pwd) ? 1 : 0); 
+	$hasNumbers = preg_match('/[0-9]/', $pwd);
+	$hasNonalphas = preg_match('/\W/', $pwd);
+
+	if ($hasUpperCase + $hasLowerCase + $hasNumbers + $hasNonalphas < 3)
     {
-		/* Weird situation because this data field was not even posted.
-		Should probably log it. */
-		$org_website_msg = "An unknown error occurred. Please try again.";
-		/* $goto_page = 2; Not sure if this matters in this case */
-        error_log("Action not posted. Possible parameter tampering.");
-        throw new Exception("Parameter tampering detected (validatePostData) password missing.");
-		return false;
+        /* TODO: This code was used for debugging */
+        //echo "<!-- Password = $pwd --> \n";
+        //echo "<!-- Upper case = $hasUpperCase --> \n";
+        //echo "<!-- Lower case = $hasLowerCase --> \n";
+        //echo "<!-- Numerals = $hasNumbers --> \n";
+        //echo "<!-- Non alphas = $hasNonalphas --> \n";
+        
+        $pwd_msg = "The password does not meet the complexity rules.";
+		$goto_page = -2;
+        return false;        
     }
-
-
-	if (isset($_POST["org_website"]))
-	{
-		$org_website = filter_var($_POST["org_website"], FILTER_SANITIZE_URL);
-		
-		if (strlen($org_website) > 0) /* web site is optional so skip check if its blank */
-		{
-			
-			//echo "<!-- web site = $website -->\n"; 
-			if (!filter_var($org_website, FILTER_VALIDATE_URL))
-			{
-				$org_website_msg = "The website URL does not follow the proper pattern for a valid URL.";
-				$goto_page = -1;
-				//echo "<!-- URL failed validation -->\n"; 
-				return false;
-			}
-
-			if (strlen($org_website) > 255)
-			{
-				$org_website_msg = "Web site address should not exceed 255 characters in length.";
-				$goto_page = -1;
-				return false;
-			}
-		}
-	}
-	else
-	{
-		/* Weird situation because this data field was not even posted.
-		Should probably log it. */
-		$org_website_msg = "An unknown error occurred. Please try again.";
-		$goto_page = -1;
-        error_log("Website not posted. Possible parameter tampering.");
-        throw new Exception("Parameter tampering detected (validatePostData) website missing.");
-		return false;
-	}
-
-	if (isset($_POST["money_url"]))
-	{
-		$money_url = filter_var($_POST["money_url"], FILTER_SANITIZE_URL);
-		//echo "<!-- money url = $money_url -->\n"; 
-		if (strlen($money_url) > 0) /* donations site is optional so skip check if its blank */
-		{
-			
-			if (!filter_var($money_url, FILTER_VALIDATE_URL))
-			{
-				$money_url_msg = "The website URL does not follow the proper pattern for a valid URL.";
-				$goto_page = -1;
-				//echo "<!-- failed validation -->\n"; 
-				return false;
-			}
-
-			if (strlen($money_url) > 255)
-			{
-				$money_url_msg = "Web site address should not exceed 255 characters in length.";
-				$goto_page = -1;
-				return false;
-			}
-		}
-	}
-	else
-	{
-		/* Weird situation because this data field was not even posted.
-		Should probably log it. */
-		$money_url_msg = "An unknown error occurred. Please try again.";
-		$goto_page = -1;
-        error_log("Donations URL not posted. Possible parameter tampering.");
-        throw new Exception("Parameter tampering detected (validatePostData) money site missing.");
-		return false;
-	}
+	
 
 	//echo "<!-- validatePost passed -->\n";
     return true;
@@ -454,9 +420,9 @@ function updateUser()
         
 	    $stmt->execute();
 
-		global $success_msg;
-		$success_msg = "Record successfully updated.";
-		$goto_page = 0;
+//		global $success_msg;
+//		$success_msg = "Record successfully updated.";
+//		$goto_page = 0;
 		
         $stmt->closeCursor();
 
@@ -468,9 +434,9 @@ function updateUser()
     {
         if ($e->getCode() == "23000") /* integrity constraint violation, so I want to present a user friendly error message */
         {
-            if (strpos($e->getMessage(), "for key 'ix_app_user_email_unique'") !== FALSE)
+            if (strpos($e->getMessage(), "for key 'ix_app_user_email_unique'") != FALSE)
             {
-                throw new Exception(DUPLICATE_EMAIL_ERROR);
+                throw new Exception("DUPLICATE_EMAIL_ERROR");
             }
         }
         else 
@@ -579,7 +545,7 @@ function performUpdate()
         {
             if (strpos($e->getMessage(), "for key 'ix_org_org_name_unique'") !== FALSE)
             {
-                throw new Exception(DUPLICATE_ORG_NAME_ERROR);
+                throw new Exception("DUPLICATE_ORG_NAME_ERROR");
             }
         }
         else 
@@ -691,7 +657,7 @@ function performInsert()
         {
             if (strpos($e->getMessage(), "for key 'ix_org_org_name_unique'") !== FALSE)
             {
-                throw new Exception(DUPLICATE_ORG_NAME_ERROR);
+                throw new Exception("DUPLICATE_ORG_NAME_ERROR");
             }
         }
         else 

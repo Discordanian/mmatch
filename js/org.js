@@ -1,3 +1,5 @@
+'use strict';
+
 var inactivityTimer = 0;
 
 $(function(){
@@ -48,6 +50,13 @@ $(function(){
     /* reset the timer on mostly everything on the page */
     $("div").click(resetInactivityTimer);
     $(":input").focus(resetInactivityTimer);
+    
+	var rules = "<p>Password must be at least 8 characters long and must contain 3 of the following 4 categories:</p>" +
+		"<ol><li>Upper case alphabet characters</li><li>Lower case alphabet characters</li>" +
+		"<li>Numeric digits</li><li>Special (non-alphabet) characters</li></ol>";
+		
+	$("#password1").tooltip({title: rules, html: "true", placement: "auto top", trigger: "focus"});
+	$("#password2").tooltip({title: rules, html: "true", placement: "auto top", trigger: "focus"});
 
 });
 
@@ -218,31 +227,52 @@ function validate_email()
 
 function validate_password()
 {
-	if ($("#password1").val() != $("#password2").val())
+	var password = $("#password1").val();
+
+	/* the password is only required in certain situations /*
+	/* so if it's not specified, and not required, exit */
+	
+    if (password.length < 1)
+    {
+		/* not required and not specified, so nothing to validate */
+		return true;
+    }
+	
+	if (password != $("#password2").val())
 	{
         $("#pwd_msg").text("Passwords must match.");
         $("#pwd_msg").show();
-        $("#intro1").collapse("show");
         return false;
 	}
 	
-	if ($("#password1").val().length > 128)
+	if (password.length > 128)
 	{
         $("#pwd_msg").text("The password exceeds the maximum length of 128 characters.");
         $("#pwd_msg").show();
-        $("#intro1").collapse("show");
+        return false;
+	}
+
+	if (password.length < 8)
+	{
+        $("#pwd_msg").text("The password must be a minimum length of 8 characters.");
+        $("#pwd_msg").show();
         return false;
 	}
 	
-    /* check to make sure a password is specified on insert */
-    if ($("#action").val() == "I" && $("#password1").val().length < 1)
+    
+	/* check password for complexity */
+
+	var hasUpperCase = (password != password.toLowerCase() ? 1 : 0); 
+	var hasLowerCase = (password != password.toUpperCase() ? 1 : 0); 
+	var hasNumbers = /\d/.test(password);
+	var hasNonalphas = /\W/.test(password);
+	if (hasUpperCase + hasLowerCase + hasNumbers + hasNonalphas < 3)
     {
-        $("#pwd_msg").text("A password is required in order to continue.");
+        $("#pwd_msg").text("The password does not meet the complexity rules.");
         $("#pwd_msg").show();
-        $("#intro1").collapse("show");
         return false;        
     }
-    
+	
 	$("#pwd_msg").hide();
     return true;
 }

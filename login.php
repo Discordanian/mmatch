@@ -300,7 +300,7 @@ require('include/unauth_nav_bar.php'); ?>
 </div>
 </center>
 
-<form method="POST" action="login.php" id="login_form" >
+<form method="POST" action="login.php" id="login_form" autocomplete="off" >
 <input type="hidden" id="nonce" name="nonce" value="<?php echo $csrf_nonce; ?>" />
 <input type="hidden" id="csrf_expdate" name="csrf_expdate" value="<?php echo $csrf_expdate->format('U'); ?>" />
 

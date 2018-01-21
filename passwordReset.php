@@ -27,7 +27,7 @@ try
 }
 catch(Exception $e)
 {
-	if ($e->getMessage() == ERROR_TOKEN_EXPIRED)
+	if ($e->getMessage() == "ERROR_TOKEN_EXPIRED")
 	{
 		$err_msg = "The email link appears to have expired. Try requesting another one.";
 	}
@@ -67,7 +67,7 @@ function testToken()
 			
 	if ($expdate < $today)
 	{
-		throw new Exception(ERROR_TOKEN_EXPIRED);
+		throw new Exception("ERROR_TOKEN_EXPIRED");
 		exit(); /* this should not be run, but just in case, we do not want to continue */
 	
 	}
@@ -176,7 +176,7 @@ function authenticate()
 <?php 
 	if (!isset($err_msg)) 
 	{
-		printf("\t<meta http-equiv='REFRESH' content='5;URL=user.php?user_id=%d' >\n", $user_id);
+		printf("\t<meta http-equiv='REFRESH' content='5;URL=user.php?user_id=%d&reset=1' >\n", $user_id);
 	}
 ?>
 	<link rel="stylesheet prefetch" 
