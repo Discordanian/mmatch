@@ -51,6 +51,10 @@ try
 		/* #6 */
 		$user_id = FILTER_VAR($_REQUEST["user_id"], FILTER_VALIDATE_INT);
 		
+		if (!array_key_exists("my_user_id", $_SESSION))
+		{
+			throw new Exception("USER_NOT_LOGGED_IN_ERROR");
+		}
 
 		
 		displayDbData();
@@ -70,7 +74,7 @@ try
         
 		if (!array_key_exists("my_user_id", $_SESSION))
 		{
-			throw new Exception(USER_NOT_LOGGED_IN_ERROR);
+			throw new Exception("USER_NOT_LOGGED_IN_ERROR");
 		}
 
 	}
@@ -82,10 +86,10 @@ catch (Exception $e)
 	
 	switch ($e->getMessage())
 	{
-	    case DUPLICATE_EMAIL_ERROR : 
+	    case "DUPLICATE_EMAIL_ERROR" : 
 	       $email_msg = "The email address entered was a duplicate.";
 	    break;
-	    case USER_NOT_LOGGED_IN_ERROR:
+	    case "USER_NOT_LOGGED_IN_ERROR":
 	       header("Location: login.php?errmsg=USER_NOT_LOGGED_IN_ERROR");
 	       exit();
         break;
@@ -164,6 +168,14 @@ function checkCsrfToken()
 
 function validatePostData()
 {
+	if (!isset($_REQUEST["user_id"]) || !isset($_POST["email"]) || !isset($_POST["person_name"]) 
+		|| !isset($_POST["password1"]) || !isset($_POST["password2"]))
+	{
+        error_log("Parameter tampering detected (validatePostData) Something not posted.");
+        throw new Exception(PARAMETER_TAMPERING);
+        exit();		
+	}
+		
     global $email_msg, $user_id, $pwd_msg, $action;
     $user_id = FILTER_VAR($_REQUEST["user_id"], FILTER_VALIDATE_INT);
 	$action = substr(strtoupper($_POST["action"]), 0, 1); /* trim action to 1 character */
@@ -177,88 +189,75 @@ function validatePostData()
 
 
     /* first do basic validations before accessing the database */
-    if (isset($_POST["email"])) 
-    {
-        $email = $_POST["email"]; 
-        // check if e-mail address is well-formed
+	$email = $_POST["email"]; 
+	// check if e-mail address is well-formed
 
-        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) 
-        {
-            $email_msg = "The email address does not appear to follow the proper form.";
-            return false;
-        }
-
-        if (strlen($email) > 128)
-        {
-            $email_msg = "Email address should not exceed 128 characters in length.";
-            return false;
-        }
-
-        if (strlen($email) < 1) 
-        {
-            $email_msg = "A valid email address is required.";
-            return false;
-        }
-    }
-	else
+	if (!filter_var($email, FILTER_VALIDATE_EMAIL)) 
 	{
-		/* Weird situation because this data field was not even posted.
-		Should probably log it. */
-		$email_msg = "A valid email address is required.";
-        error_log("Email not posted. Possible parameter tampering.");
-        throw new Exception("Parameter tampering detected (validatePostData) email missing.");
+		$email_msg = "The email address does not appear to follow the proper form.";
 		return false;
 	}
 
-
-
-	if ((isset($_POST["password1"]) && (isset($_POST["password2"]))))
+	if (strlen($email) > 128)
 	{
-		if ($_POST["password1"] != $_POST["password2"])
-		{
-			$pwd_msg = "Passwords must match.";
-			return false;
-		}
-		
-		if (strlen($_POST["password1"]) > 128)
-		{
-			$pwd_msg = "Password exceeds the maximum length of 128 characters.";
-			return false;
-		}
+		$email_msg = "Email address should not exceed 128 characters in length.";
+		return false;
 	}
-	else
+
+	if (strlen($email) < 1) 
 	{
-		/* Weird situation because this data field was not even posted.
-		Should probably log it. */
+		$email_msg = "A valid email address is required.";
+		return false;
+	}
+
+	$pwd = $_POST["password1"];
+		
+	if ($_POST["action"] == "U" && !array_key_exists("reset", $_GET) && strlen($pwd) < 1)
+	{
+		/* not specified and not required, so nothing to validate */
+		return true;
+	}
+
+    /* check to make sure a password was specified if this is first time */
+	/* or if the reset parameter was passed */
+	/* on insert, the user must specify a password */
+	if ((($_POST["action"] == "I") || array_key_exists("reset", $_GET)) && strlen($pwd) < 1)
+	{
+		$pwd_msg = "Password is required in order to continue.";
+		return false;		
+	}
+	
+	if ($pwd != $_POST["password2"])
+	{
 		$pwd_msg = "Passwords must match.";
-		$goto_page = -2;
-        error_log("Password not posted. Possible parameter tampering.");
-        throw new Exception("Parameter tampering detected (validatePostData) password not sent.");
 		return false;
 	}
 	
-    /* check to make sure a password was specified if this is first time */
-    if (isset($_POST["action"]))
-    {
-        /* on insert, the user must specify a password */
-        if (($_POST["action"] == "I") && strlen($_POST["password1"]) < 1)
-        {
-            $pwd_msg = "Password is required in order to continue.";
-            return false;
-        }
-    }
-    else
-    {
-		/* Weird situation because this data field was not even posted.
-		Should probably log it. */
-		$org_website_msg = "An unknown error occurred. Please try again.";
-		/* $goto_page = 2; Not sure if this matters in this case */
-        error_log("Action not posted. Possible parameter tampering.");
-        throw new Exception("Parameter tampering detected (validatePostData) password missing.");
+	if (strlen($pwd) > 128)
+	{
+		$pwd_msg = "Password exceeds the maximum length of 128 characters.";
 		return false;
+	}
+	
+	if (strlen($pwd) < 8)
+	{
+		$pwd_msg = "The password must be a minimum length of 8 characters.";
+		return false;
+	}
+
+	/* check complexity requirements */
+	$hasUpperCase = ($pwd != strtolower($pwd) ? 1 : 0); 
+	$hasLowerCase = ($pwd != strtoupper($pwd) ? 1 : 0); 
+	$hasNumbers = preg_match('/[0-9]/', $pwd);
+	$hasNonalphas = preg_match('/\W/', $pwd);
+
+	if ($hasUpperCase + $hasLowerCase + $hasNumbers + $hasNonalphas < 3)
+    {
+        $pwd_msg = "The password does not meet the complexity rules.";
+        return false;        
     }
-
-
+	
+	
 	//echo "<!-- validatePost passed -->\n";
     return true;
 }
@@ -333,7 +332,7 @@ function performUpdate()
         {
             if (strpos($e->getMessage(), "for key 'ix_app_user_email_unique'") !== FALSE)
             {
-                throw new Exception(DUPLICATE_EMAIL_ERROR);
+                throw new Exception("DUPLICATE_EMAIL_ERROR");
             }
         }
         else 
@@ -423,9 +422,9 @@ function performInsert()
     {
         if ($e->getCode() == "23000") /* integrity constraint violation, so I want to present a user friendly error message */
         {
-            if (strpos($e->getMessage(), "for key 'ix_app_user_email_unique'") !== FALSE)
+            if (strpos($e->getMessage(), "for key 'ix_app_user_email_unique'") != FALSE)
             {
-                throw new Exception(DUPLICATE_EMAIL_ERROR);
+                throw new Exception("DUPLICATE_EMAIL_ERROR");
             }
         }
         else 
@@ -661,11 +660,11 @@ function buildEmailVerificationUrl()
             if ($email_is_verified != TRUE)
             {
                 echo "<div class='alert alert-info' id='email_unverified_msg' >The email address: $email has not been verified yet. \n";
-				echo "<input type='button' id='generateVerificationEmail' value='Click here to request a new verification email.'></input></div>\n";
-				echo "<div hidden='true' id='generateVerficationEmailUrl' >";
+				echo "<input type='button' id='generateVerificationEmail' value='Click here to request a new verification email.' /></div>\n";
+				echo "<input type='hidden' id='generateVerficationEmailUrl' name='generateVerficationEmailUrl' value='";
 				echo buildEmailVerificationUrl();
-				echo "</div>\n";
-				/* include the URL with the generated hash in a hidden div so that the URL is available to the AJAX/JS */
+				echo "' form='' action='' />\n";
+				/* include the URL with the generated hash in a hidden field so that the URL is available to the AJAX/JS */
             }
         ?>
     </div> <!-- form-group -->
@@ -676,12 +675,14 @@ function buildEmailVerificationUrl()
 
    <div class="form-group">
         <label for="password1"><?php if ($action != "I") { echo "Update Password:"; } else { echo "Set Password:"; } ?></label>
-        <input class="form-control" type="password" id="password1" maxlength="128" name="password1" value="" <?php echo ($action == "I" ? "required" : ""); ?> />
+        <input class="form-control" type="password" id="password1" maxlength="128" name="password1" value="" 
+			<?php echo (($action == "I") || (array_key_exists("reset", $_GET)) ? "required" : ""); ?> />
     </div> <!-- form-group -->
 
    <div class="form-group">
         <label for="password2">Verify Password:</label>
-        <input class="form-control" type="password" id="password2" maxlength="128" name="password2" value="" <?php echo ($action == "I" ? "required" : ""); ?> />
+        <input class="form-control" type="password" id="password2" maxlength="128" name="password2" value="" 
+			<?php echo (($action == "I") || (array_key_exists("reset", $_GET)) ? "required" : ""); ?> />
     </div> <!-- form-group -->
 
     <div class="alert alert-danger" <?php if (!isset($pwd_msg)) echo "hidden='true'"; ?> id="pwd_msg" >
