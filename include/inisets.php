@@ -22,7 +22,7 @@ $csp_nonce = substr(base64_encode(hash("sha256", $_SERVER["UNIQUE_ID"] . $_SERVE
 
 $csp = "Content-Security-Policy: default-src 'none'; " .
     "connect-src 'self'; img-src 'self'; " .
-    "font-src https://cdnjs.cloudflare.com; " .
+    "font-src https://cdnjs.cloudflare.com https://fonts.gstatic.com; " .
     "script-src 'self' 'nonce-{$csp_nonce}'  https://cdnjs.cloudflare.com https://ajax.googleapis.com; " .
     "style-src 'self' https://cdnjs.cloudflare.com https://ajax.googleapis.com https://fonts.googleapis.com;";
 
