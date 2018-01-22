@@ -3,10 +3,17 @@ DROP PROCEDURE IF EXISTS selectOrganizationList;
 DELIMITER $$
 CREATE PROCEDURE selectOrganizationList(p_user_id INT(10) UNSIGNED)
 BEGIN
-	SELECT orgid, org_name, abbreviated_name 
-	FROM org 
-	WHERE org.user_id = p_user_id
-	ORDER BY org_name; 
+	IF p_user_id IS NULL THEN
+		SELECT orgid, org_name, abbreviated_name 
+		FROM org 
+		ORDER BY org_name; 
+	ELSE		
+		SELECT orgid, org_name, abbreviated_name 
+		FROM org 
+		WHERE org.user_id = p_user_id
+		ORDER BY org_name; 
+	END IF;
+
 END
 $$
 
