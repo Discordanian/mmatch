@@ -7,7 +7,7 @@ CREATE PROCEDURE selectResetLinks(p_timeout_minutes SMALLINT UNSIGNED)
 /* procedure is 65535 minutes, which is just over 45 days. Seems logical. */
 BEGIN
 	DECLARE v_server_name VARCHAR(30);
-	DECLARE v_secret_salt VARCHAR(30);
+	DECLARE v_secret_salt VARCHAR(50);
 	DECLARE v_exp_date INT;
 	DECLARE v_date_text CHAR(10); /* 10 characters for the time stamp will last until 2286 :-( */
 	SET v_server_name = 'mm.movementmatch.org'; /* this should be a FQDN */
@@ -21,7 +21,7 @@ BEGIN
 	/* there is no urlencode function in mysql. To do this right, would need to use or write 1 */
 	SELECT app_user.user_id, app_user.email, 
 	CONCAT('https://', v_server_name, '/passwordReset.php?email=', REPLACE(app_user.email, '@', '%40'), '&token=',
-	LEFT(SHA2(CONCAT(v_server_name, replace(app_user.email, '@', '%40'),v_date_text, app_user.user_id,'passwordReset.php', v_secret_salt), 256), 22),
+	LEFT(SHA2(CONCAT(v_server_name, REPLACE(app_user.email, '@', '%40'),v_date_text, app_user.user_id,'passwordReset.php', v_secret_salt), 256), 22),
 	'&user_id=', app_user.user_id, '&date=', v_date_text) AS link 
 	FROM app_user;
 END
