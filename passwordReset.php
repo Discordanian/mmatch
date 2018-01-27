@@ -7,7 +7,7 @@ require_once('include/utility_functions.php');
 
 
 /* Only one way this page goes, take input from GET request, validate */
-/* If valid, then switch email to verified */
+/* If valid, then log in and set up session */
 /* Otherwise, display an error message */
 
 /* TODO: This code may be vulnerable to XSS 
@@ -22,7 +22,7 @@ try
 	}
 	else
 	{
-		$err_msg = "An unknown error (1) occurred trying to verify the email using that link. Please try to request another email link.";
+		$err_msg = "An unknown error (1) occurred trying to authenticate using that link. Please try to request another email link.";
 	}
 }
 catch(Exception $e)
@@ -33,7 +33,7 @@ catch(Exception $e)
 	}
 	else
 	{
-		$err_msg = "An unknown error (1) occurred trying to verify the email using that link. Please try to request another email link.";
+		$err_msg = "An unknown error (1) occurred trying to authenticate using that link. Please try to request another email link.";
 	}
 }
 
@@ -55,8 +55,8 @@ function testToken()
 
     if (($user_id <= 0) || (strlen($email) <= 0) || ($dateint == false))
     {
-        $err_msg = "Unable to verify based upon the information provided (2). Please try to request another email.";
-        throw new Exception("Unable to verify based upon the information provided (2). Please try to request another email");
+        $err_msg = "Unable to authenticate based upon the information provided (2). Please try to request another email.";
+        throw new Exception("Unable to authenticate based upon the information provided (2). Please try to request another email");
         exit();
     }
     
@@ -90,8 +90,8 @@ function testToken()
     else 
     {
     	/* */
-        $err_msg = "Unable to verify based upon the information provided (3). Please try to request another email link.";
-        throw new Exception("Unable to verify based upon the information provided (3). Please try to request another email link.");
+        $err_msg = "Unable to authenticate based upon the information provided (3). Please try to request another email link.";
+        throw new Exception("Unable to authenticate based upon the information provided (3). Please try to request another email link.");
 		exit(); /* this should not be run, but just in case, we do not want to continue */
     }
 
@@ -118,7 +118,7 @@ function authenticate()
         {
             $erinf = $stmt->errorInfo();
 			error_log("Query failed in passwordReset.php: " . $stmt->errorCode() . " " . $erinf[2]);
-            $err_msg = "An unknown error (4) occurred trying to verify the email using that link. Please try to request another email link.";
+            $err_msg = "An unknown error (4) occurred trying to authenticate using that link. Please try to request another email link.";
 			throw new Exception("Query failed in passwordReset.php");
             exit();
         }
@@ -141,6 +141,14 @@ function authenticate()
 			}
 		}
 		
+		/* check to see if session was set up. */
+		/* it would be set up if everything checked out */
+		/* otherwise, bombs away */
+		if (!isset($_SESSION["my_user_id"]))
+		{
+			throw new Exception("Lookup failed in passwordReset.php");
+            exit();
+		}
 		
         $stmt->closeCursor();
 
@@ -149,14 +157,14 @@ function authenticate()
     catch (PDOException $e)
     {
         error_log("Database error during query in passwordReset.php: " . $e->getMessage());
-        $err_msg = "An unknown error (5) occurred trying to verify the email using that link. Please try to request another email.";
+        $err_msg = "An unknown error (5) occurred trying to authenticate using that link. Please try to request another email.";
         throw new Exception("Database error during query in passwordReset.php");
 		exit();
     }
     catch(Exception $e)
     {
         error_log("Error during query in passwordReset.php: " . $e->getMessage());
-        $err_msg = "An unknown error (6) occurred trying to verify the email using that link. Please try to request another email.";
+        $err_msg = "An unknown error (6) occurred trying to authenticate using that link. Please try to request another email.";
 		/* We most likely got here from the SQL error above, so just bubble up the exception */
         throw new Exception("Error during query in passwordReset.php");
 		exit();
