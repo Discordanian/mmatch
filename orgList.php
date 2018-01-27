@@ -66,7 +66,16 @@ function dumpResults()
     global $user_id, $dbh;
     
     $stmt = $dbh->prepare("CALL selectOrganizationList(:user_id);");
-    $stmt->bindValue(":user_id", $user_id);
+
+    /* if admin user, then don't pass user ID, show all orgs */
+    if ($_SESSION["admin_user_ind"] == TRUE)
+    {
+        $stmt->bindValue(":user_id", NULL);
+    }
+    else
+    {
+        $stmt->bindValue(":user_id", $user_id);
+    }
     
     $stmt->execute();
     

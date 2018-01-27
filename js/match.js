@@ -157,6 +157,14 @@ var mm = {
 
 $(function() {
     // Bind a show all function to the 'Just Show Me' button
+    // Randomize orgs
+    var j,x,i;
+    for ( i = orgs.length - 1; i > 0; i--) {
+	j = Math.floor(Math.random() * (i+1));
+        x = orgs[i];
+        orgs[i] = orgs[j];
+        orgs[j] = x;        
+    }    
     $("#toggle").click(function(e) {
         $("#table_results").bootstrapTable(
             "load",
