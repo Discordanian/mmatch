@@ -657,16 +657,13 @@ function buildEmailVerificationUrl()
         <input class="form-control" type="email" id="email" maxlength="255" name="email" value="<?php echo $email; ?>" required />
 
         <?php
-            if ($email_is_verified != TRUE)
-            {
-                echo "<div class='alert alert-info' id='email_unverified_msg' >The email address: $email has not been verified yet. \n";
-				echo "<input type='button' id='generateVerificationEmail' value='Click here to request a new verification email.' /></div>\n";
-				echo "<input type='hidden' id='generateVerficationEmailUrl' name='generateVerficationEmailUrl' value='";
-				echo buildEmailVerificationUrl();
-				echo "' form='' action='' />\n";
-				/* include the URL with the generated hash in a hidden field so that the URL is available to the AJAX/JS */
-            }
-        ?>
+            if ($email_is_verified == 0) { ?>
+            <div class='alert alert-info' id='email_unverified_msg' >The email address: <?php echo $email; ?> has not been verified yet.
+			<input type='button' id='generateVerificationEmail' value='Click here to request a new verification email.' form='' action='' /></div>
+			<input type='hidden' id='generateVerficationEmailUrl' form='' action='' value="<?php 
+                /* include the URL with the generated hash in a hidden field so that the URL is available to the AJAX/JS */
+				echo buildEmailVerificationUrl(); ?>" />
+        <?php } /*end if */ ?>
     </div> <!-- form-group -->
  
     <div class="alert alert-danger" <?php if (!isset($email_msg)) echo "hidden='true'"; ?> id="email_invalid_msg" >
