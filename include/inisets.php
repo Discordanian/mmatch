@@ -1,11 +1,11 @@
 <?php
 
-ini_set('display_errors', 'Off');
+ini_set('display_errors', 'On');
 ini_set('session.cookie_httponly', 'On');
 ini_set('session.cookie_lifetime', '14400');
 ini_set('session.gc_maxlifetime', '86400');
 ini_set('session.gc_probability', '1');
-ini_set('session.cookie_secure', 'On');
+ini_set('session.cookie_secure', 'Off');
 
 error_reporting(E_ALL | E_STRICT);
 
@@ -26,7 +26,7 @@ $csp = "Content-Security-Policy: default-src 'none'; " .
     "script-src 'self' 'nonce-{$csp_nonce}'  https://cdnjs.cloudflare.com https://ajax.googleapis.com; " .
     "style-src 'self' https://cdnjs.cloudflare.com https://ajax.googleapis.com https://fonts.googleapis.com;";
 
-header($csp);
+//header($csp);
 
 ?>
 

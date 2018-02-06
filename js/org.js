@@ -405,7 +405,7 @@ function generateVerificationEmail()
 {
     /* does an asynchronous get to the URL which was passed from the server and hidden in the DIV */
     /* The reason that it's hidden is not because it needs to remain secret, it's just the user does not need to see it */
-    var url=$("#generateVerficationEmailUrl").text();
+    var url=$("#generateVerficationEmailUrl").val();
 
     $.get(url, function(data, status){
         /* it's almost impossible to have a meaningful return value here */

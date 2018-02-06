@@ -174,7 +174,11 @@ function authenticate()
     <title>Movement Match - Password reset</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
 <?php 
-	if (!isset($err_msg)) 
+	if (isset($err_msg)) 
+	{
+		echo("\t<meta http-equiv='REFRESH' content='5;URL=forgotPassword.php' >\n");
+	}
+	else
 	{
 		printf("\t<meta http-equiv='REFRESH' content='5;URL=user.php?user_id=%d&reset=1' >\n", $user_id);
 	}

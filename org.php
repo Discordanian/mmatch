@@ -1413,9 +1413,10 @@ function getUserInfo()
 <div class="panel-body">
     
     <div class="form-group">
-        <label for="person_name">Name:</label>
-        <input class="form-control" type="text" id="person_name" maxlength="128" name="person_name" value="<?php echo $person_name ?>"  required />
+    <label for="person_name">Name:</label>
+            <input class="form-control" type="text" id="person_name" maxlength="128" name="person_name" value="<?php echo $person_name ?>"  required />
     </div> <!-- form-group -->
+
 
     <div class="alert alert-danger" hidden="true" id="person_name_msg" >
         The name must contain at least 4 characters.
@@ -1426,16 +1427,13 @@ function getUserInfo()
         <input class="form-control" type="email" id="email" maxlength="255" name="email" value="<?php echo $email; ?>" required />
 
         <?php
-            if ($email_is_verified == 0)
-            {
-                echo "<div class='alert alert-info' id='email_unverified_msg' >The email address: $email has not been verified yet. \n";
-				echo "<input type='button' id='generateVerificationEmail' value='Click here to request a new verification email.' /></div>\n";
-				echo "<div hidden='true' id='generateVerficationEmailUrl' >";
-				echo buildEmailVerificationUrl();
-				echo "</div>\n";
-				/* include the URL with the generated hash in a hidden div so that the URL is available to the AJAX/JS */
-            }
-        ?>
+            if ($email_is_verified == 0) { ?>
+            <div class='alert alert-info' id='email_unverified_msg' >The email address: <?php echo $email; ?> has not been verified yet.
+			<input type='button' id='generateVerificationEmail' value='Click here to request a new verification email.' form='' action='' /></div>
+			<input type='hidden' id='generateVerficationEmailUrl' form='' action='' value="<?php 
+                /* include the URL with the generated hash in a hidden field so that the URL is available to the AJAX/JS */
+				echo buildEmailVerificationUrl(); ?>" />
+        <?php } /*end if */ ?>
     </div> <!-- form-group -->
  
     <div class="alert alert-danger" <?php if (!isset($email_msg)) echo "hidden='true'"; ?> id="email_invalid_msg" >
