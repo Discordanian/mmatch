@@ -7,6 +7,7 @@ CREATE TABLE `app_user` (
   `email` varchar(255) NOT NULL,
   `email_is_verified` tinyint(4) NOT NULL DEFAULT '0',
   `admin_user_ind` tinyint(4) DEFAULT '0',
+  `update_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`user_id`),
   UNIQUE KEY `ix_app_user_email_unique` (`email`)
 ) ENGINE=InnoDB  DEFAULT CHARSET=utf8 ;

@@ -13,7 +13,10 @@ CREATE TABLE `org` (
   `admin_contact` varchar(255) NOT NULL DEFAULT '',
   `active_ind` tinyint(4) DEFAULT '1',
   `admin_active_ind` tinyint(4) DEFAULT '1',
-  PRIMARY KEY (`orgid`)
+  `user_id` int(10) unsigned DEFAULT NULL,
+  `update_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`orgid`),
+  UNIQUE KEY `ix_org_org_name_unique` (`org_name`)
 ) ENGINE=InnoDB  DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
