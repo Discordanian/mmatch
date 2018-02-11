@@ -416,11 +416,11 @@ function printQuestionsWithResponses($qr)
         {
             /* 1 row for the question */
             $rcount++; 
-            /* the choices are displayed 3 per row, so count the # of rows required */
-            $rcount+= ceil(count($question) / 3);
+            /* the choices are displayed 2 per row, so count the # of rows required */
+            $rcount+= ceil(count($question) / 2);
         }
 
-        if (($pdf->GetY() + 10 + $rcount * 8) > 264)
+        if (($pdf->GetY() + 10 + $rcount * 10) > 264)
         {
             $pdf->AddPage();
         }
@@ -442,13 +442,13 @@ function printQuestionsWithResponses($qr)
             $i = 0; /* keep track of number of choices */
             foreach($question as $choice_id => $choice)
             {
-                if (($i % 3) == 0)
+                if (($i % 2) == 0)
                 {
-                    $pdf->Ln(8);
+                    $pdf->Ln(10);
                 }
 
                 $pdf->SetFont('Arial','',11);
-                $pdf->SetX(($i % 3) * 60 + 20); 
+                $pdf->SetX(($i % 2) * 90 + 15); 
 
                 if ($choice["selected"] == TRUE)
                 {
