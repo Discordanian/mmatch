@@ -433,6 +433,13 @@ function printQuestionsWithResponses($qr)
 
         foreach($page as $question_id => $question)
         {
+
+            /* check to see if there's room to display this question (along with its choices ) */
+            if (($pdf->GetY() + 10 + (ceil($question) / 2) * 10) > 264)
+            {
+                $pdf->AddPage();
+            }
+
             $saveY = $pdf->GetY(); /* save the Y position for help with creating the border */
             $question_text = current($question)["org_question_text"];
 

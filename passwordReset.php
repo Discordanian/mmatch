@@ -1,5 +1,6 @@
 <?php
 
+require_once('include/csp.php');
 require_once('include/inisets.php');
 require_once('include/secrets.php');
 require_once('include/initializeDb.php');

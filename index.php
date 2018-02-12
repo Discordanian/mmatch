@@ -1,3 +1,4 @@
+<?php require_once('include/csp.php'); ?>
 <?php require_once ('include/inisets.php');?>
 <?php require_once('include/secrets.php'); ?>
 <!DOCTYPE html>
