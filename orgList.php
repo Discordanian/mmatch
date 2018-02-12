@@ -90,15 +90,10 @@ function dumpResults()
     
     while ($row = $stmt->fetch(PDO::FETCH_ASSOC))
     {
-        echo "<tr>\n";
-        echo "<td>";
-        echo htmlentities($row["org_name"]);
-        echo "</td>\n<td>";
-        echo htmlentities($row["abbreviated_name"]);
-        echo "</td>\n<td><a href='org.php?orgid=";
-        echo $row["orgid"];
-        echo "' class='btn btn-default btn-lg'>Edit</a></td>\n</tr>\n";
- 
+        printf("<tr>\n<td>%s</td>\n", htmlentities($row["org_name"]));
+        printf("\t<td>%s<td>\n", htmlentities($row["abbreviated_name"]));
+        printf("\t<td><a href='org.php?orgid=%u' class='btn btn-default btn-lg'><span class='glyphicon glyphicon-pencil'></span> Edit</a></td>\n", $row["orgid"]);
+        printf("\t<td><a href='orgReport.php?orgid=%u' class='btn btn-default btn-lg' target='_blank' ><span class='glyphicon glyphicon-print'></span> Print</a></td>\n</tr>", $row["orgid"]);
     }
     
     $stmt->closeCursor();
@@ -149,6 +144,7 @@ function dumpResults()
       <tr>
         <th>Organization Name</th>
         <th>Abbreviation</th>
+        <th> </th>
         <th> </th>
       </tr>
     </thead>
