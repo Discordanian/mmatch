@@ -96,6 +96,8 @@ try
     // Instanciation of inherited class
     $pdf = new PDF("P", "mm", "Letter");
 
+    /* just put the user ID into the author metadata */
+    $pdf->SetAuthor($_SESSION["my_user_id"]);
     $pdf->setPrintDate(new DateTime());
 
     getParameter(); /* check authorization, get the org ID from the $_GET */
@@ -166,29 +168,26 @@ function printOrgData()
 
         if (isset($row))
         {
-            global $org_name;
-            global $person_name;
-
-            global $email_is_verified;
-            global $email;
-
-            global $org_website;
-            global $money_url;
-            global $mission;
 
             global $abbreviated_name, $customer_notice, $customer_contact, $admin_contact, $active_ind, $user_id;
             $pdf->setOrganizationName($row["org_name"]);
+            $pdf->SetTitle("Movement Match - " . $row["org_name"]);
             $pdf->AddPage();
 
             $pdf->SetLineWidth(0.5);
             $pdf->SetFont('Arial','B',13);
             $pdf->SetFillColor(200, 220, 255);
-            $pdf->Cell(196, 10, "Representative Info", 0, 1, "C", TRUE);
+            $pdf->Cell(196, 10, "Representative Info", 1, 1, "C", TRUE);
 
             $pdf->SetFont('Arial','B',12);
-            $pdf->Cell(45, 10, "Name: ", "TL", 0);
+            $pdf->Cell(45, 10, "User ID: ", "TL", 0);
             $pdf->SetFont('Arial', '', 12);
-            $pdf->Cell(0, 10, $row["person_name"], "TR", 1);
+            $pdf->Cell(0, 10, $row["user_id"], "TR", 1);
+
+            $pdf->SetFont('Arial','B',12);
+            $pdf->Cell(45, 10, "Name: ", "L", 0);
+            $pdf->SetFont('Arial', '', 12);
+            $pdf->Cell(0, 10, $row["person_name"], "R", 1);
             
             $email_is_verified = $row["email_is_verified"];
 
@@ -202,7 +201,12 @@ function printOrgData()
             $pdf->Ln(10);
             $pdf->SetFont('Arial','B',13);
             $pdf->SetFillColor(200, 220, 255);
-            $pdf->Cell(196, 10, "Organization Info", 0, 1, "C", TRUE);
+            $pdf->Cell(196, 10, "Organization Info", 1, 1, "C", TRUE);
+
+            $pdf->SetFont('Arial','B',12);
+            $pdf->Cell(45, 10, "Organization ID: ", "TL", 0);
+            $pdf->SetFont('Arial', '', 12);
+            $pdf->Cell(0, 10, $row["orgid"], "TR", 1);
 
             $pdf->SetFont('Arial','B',12);
             $pdf->Cell(45, 10, "Name: ", 0, 0);
@@ -250,7 +254,7 @@ function printOrgData()
 
             $pdf->SetFont('Arial','B',13);
             $pdf->SetFillColor(200, 220, 255);
-            $pdf->Cell(196, 10, "Mission Statement", 0, 1, "C", TRUE);
+            $pdf->Cell(196, 10, "Mission Statement", 1, 1, "C", TRUE);
 
             $pdf->SetFont('Arial', '', 12);
             $pdf->Write(8, $row["mission"]);
@@ -309,7 +313,7 @@ function printZipcodes()
         $pdf->SetLineWidth(0.5);
         $pdf->SetFont('Arial','B',13);
         $pdf->SetFillColor(200, 220, 255);
-        $pdf->Cell(196, 10, "Selected Localities", 0, 1, "C", TRUE);
+        $pdf->Cell(196, 10, "Selected Localities", 1, 1, "C", TRUE);
         
 
         $i = 0;
@@ -420,7 +424,7 @@ function printQuestionsWithResponses($qr)
             $rcount+= ceil(count($question) / 2);
         }
 
-        if (($pdf->GetY() + 10 + $rcount * 10) > 264)
+        if (($pdf->GetY() + 10 + $rcount * 10) > 262)
         {
             $pdf->AddPage();
         }
@@ -429,13 +433,13 @@ function printQuestionsWithResponses($qr)
 
         $pdf->SetFont('Arial','B',13);
         $pdf->SetFillColor(200, 220, 255);
-        $pdf->Cell(196, 10, $group_text, 0, 1, "C", TRUE);
+        $pdf->Cell(196, 10, $group_text, 1, 1, "C", TRUE);
 
         foreach($page as $question_id => $question)
         {
 
             /* check to see if there's room to display this question (along with its choices ) */
-            if (($pdf->GetY() + 10 + (ceil($question) / 2) * 10) > 264)
+            if (($pdf->GetY() + 10 + (ceil(count($question) / 2) * 10)) > 262)
             {
                 $pdf->AddPage();
             }
@@ -459,30 +463,34 @@ function printQuestionsWithResponses($qr)
 
                 if ($choice["selected"] == TRUE)
                 {
-                    $pdf->SetTextColor(0); /* Black */
-                    $pdf->Write(8, $choice["choice_text"]);
                     $pdf->SetFont('Zapfdingbats','',12);
-                    $pdf->Write(8, " 4"); /* The #4 is the check mark in the zapfdingbats font */
+                    $pdf->Write(8, "4 "); /* The #4 is the check mark in the zapfdingbats font */
+
+                    $pdf->SetFont('Arial','',11);
+                    $pdf->SetTextColor(0); /* Black */
+                    $pdf->Cell(96, 8, $choice["choice_text"]);
+
                 }
                 else if ($choice["org_response_id"] <=  0) /* if the question/choice has never been answered for this org */                
                 {
+                    $pdf->SetTextColor(255, 0, 0); /* Red Text */
+                    $pdf->SetFont('Zapfdingbats','',12);
+                    $pdf->Write(8, "6 "); /* The #6 is the X mark in the zapfdingbats font */
+                    $pdf->setWarningFootnote();
+
                     $pdf->SetFont('Arial','B',11);
                     $pdf->SetTextColor(150); /* Gray Text */
                     //$pdf->SetFillColor(255, 120, 120); /* red/pink background */
-                    $pdf->Write(8, $choice["choice_text"]);
-                    $pdf->SetTextColor(255, 0, 0); /* Red Text */
-                    $pdf->SetFont('Zapfdingbats','',12);
-                    $pdf->Write(8, " 6"); /* The #6 is the X mark in the zapfdingbats font */
-                    $pdf->setWarningFootnote();
+                    $pdf->Cell(96, 8, $choice["choice_text"]);
     
                 }
                 else /* the value is present but it's FALSE so gray it out */
                 {
                     $pdf->SetTextColor(150); /* Gray */
-                    $pdf->Write(8, $choice["choice_text"]);
+                    $pdf->Cell(96, 8, $choice["choice_text"]);
                 }
 
-                $pdf->SetTextColor(0); /* Black */
+                $pdf->SetTextColor(0); /* Back in Black */
 
                 $i++;
 
