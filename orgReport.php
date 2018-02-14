@@ -9,7 +9,6 @@ class PDF extends FPDF
 {
     protected $m_org_name;
     protected $m_print_date;
-    protected $m_footnote = FALSE;
 
     function setOrganizationName($p_orgname)
     {
@@ -18,13 +17,9 @@ class PDF extends FPDF
 
     function setPrintDate($p_print_date)
     {
-        $this->m_print_date = "Generated on: " . $p_print_date->format("Y-m-d H:i:s e");
+        $this->m_print_date = $p_print_date->format("Y-m-d H:i:s e");
     }
 
-    function setWarningFootnote()
-    {
-        $this->m_footnote = TRUE;
-    }
 
     // Page header
     function Header()
@@ -60,28 +55,47 @@ class PDF extends FPDF
     // Page footer
     function Footer()
     {
-        // Position at 1.5 cm from bottom
-        $this->SetY(-15);
+        // Position at bottom
+        $this->SetY(-12);
         // Arial italic 8
         $this->SetFont('Arial','I',8);
-        $this->SetX(0); /* 1.5 cm from right of page */
-        $this->Cell(0, 5, $this->m_print_date, 0, 0, 'C');
+	// print date
+        $this->SetX(160);
+        $this->Cell(40, 6, $this->m_print_date, 0, 0, 'R');
         // Page number
-        $this->SetX(190);
-        $this->Cell(20,5,'Page '.$this->PageNo().'/{nb}',0,0,'R');
+	$this->SetY(-18);
+        $this->SetX(160);
+        $this->Cell(40,6,'Page '.$this->PageNo().'/{nb}', 0, 0,'R');
 
-        /* Show the footnote if necessary */
-        if ($this->m_footnote == TRUE)
-        {
-            $this->SetTextColor(255, 0, 0);
-            $this->SetFont('Zapfdingbats', '', 8);
-            $this->SetX(9);
-            $this->Write(5, "6");
-            $this->SetFont('Arial', 'I', 8);
-            $this->SetTextColor(0); /*back to black text */
-            $this->MultiCell(45, 5, " Indicates no response has been selected for this choice");
-            $this->m_footnote = FALSE;
-        }
+	/* Show the legend */
+
+	$this->SetY(-18);
+	$this->SetFont('Zapfdingbats', '', 8);
+	$this->SetX(10);
+	$this->Write(6, "4");
+	$this->SetFont('Arial', 'I', 8);
+	$this->SetTextColor(0); /*back to black text */
+	$this->MultiCell(45, 6, " Indicates this choice has been selected by the user");
+
+	$this->SetY(-18);
+	$this->SetX(60);
+	$this->SetFont('Arial', 'I', 8);
+	$this->SetTextColor(120); /*gray text */
+	$this->MultiCell(45, 6, " Indicates this choice was available but not chosen");
+
+
+	$this->SetY(-18);
+	$this->SetTextColor(255, 0, 0);
+	$this->SetFont('Zapfdingbats', '', 8);
+	$this->SetX(110);
+	$this->Write(6, "6");
+	$this->SetFont('Arial', 'I', 8);
+	$this->SetTextColor(0); /*back to black text */
+	$this->MultiCell(45, 6, " Indicates this choice was not available at the time of selection");
+
+	/* draw a border around the legend */
+	$this->Rect(10, 260, 195, 15);
+
     }
 }
 
@@ -97,7 +111,7 @@ try
     $pdf = new PDF("P", "mm", "Letter");
 
     /* just put the user ID into the author metadata */
-    $pdf->SetAuthor($_SESSION["my_user_id"]);
+    $pdf->SetAuthor($_SESSION["my_user_id"], TRUE);
     $pdf->setPrintDate(new DateTime());
 
     getParameter(); /* check authorization, get the org ID from the $_GET */
@@ -171,7 +185,7 @@ function printOrgData()
 
             global $abbreviated_name, $customer_notice, $customer_contact, $admin_contact, $active_ind, $user_id;
             $pdf->setOrganizationName($row["org_name"]);
-            $pdf->SetTitle("Movement Match - " . $row["org_name"]);
+            $pdf->SetTitle("Movement Match - " . $row["org_name"], TRUE);
             $pdf->AddPage();
 
             $pdf->SetLineWidth(0.5);
@@ -476,7 +490,6 @@ function printQuestionsWithResponses($qr)
                     $pdf->SetTextColor(255, 0, 0); /* Red Text */
                     $pdf->SetFont('Zapfdingbats','',12);
                     $pdf->Write(8, "6 "); /* The #6 is the X mark in the zapfdingbats font */
-                    $pdf->setWarningFootnote();
 
                     $pdf->SetFont('Arial','B',11);
                     $pdf->SetTextColor(150); /* Gray Text */
