@@ -70,19 +70,12 @@ function dumpResults()
     
     while ($row = $stmt->fetch(PDO::FETCH_ASSOC))
     {
-        echo "<tr>\n";
-        echo "<td>";
-        echo htmlentities($row["person_name"]);
-        echo "</td>\n<td>";
-        echo htmlentities($row["email"]);
-        echo "</td>\n<td>";
-        echo ($row["admin_user_ind"] ? "Yes" : "No");
-        echo "</td>\n<td>";
-        echo ($row["active_ind"] ? "Yes" : "No");
-        echo "</td>\n<td><a href='user.php?user_id=";
-        echo $row["user_id"];
-        echo "' class='btn btn-default btn-lg'>Edit</a></td>\n</tr>\n";
- 
+        printf("<tr>\n<td>%s</td>\n", htmlentities($row["person_name"]));
+        printf("<td>%s</td>", htmlentities($row["email"]));
+        printf("<td>%s</td>",($row["admin_user_ind"] ? "Yes" : "No"));
+        printf("<td>%s</td>",($row["active_ind"] ? "Yes" : "No"));
+        printf("<td><a href='user.php?user_id=%u' class='btn btn-default btn-lg'>", $row["user_id"]);
+        printf("<span class='glyphicon glyphicon-pencil'></span> Edit</a></td>\n</tr>\n");
     }
     
     $stmt->closeCursor();
