@@ -4,7 +4,7 @@
       <img src="img/mmlogo.png" alt="Movement Match Logo" width="55" height="55" ></img>
     </div>
     <div class="navbar-header">
-      <p class="navbar-brand">&nbsp;Movement Match</p>
+      <p class="navbar-brand">&nbsp;Movement Match&nbsp;<?php echo LOCALITY_NAME;?></p>
     </div>
     <ul class="nav navbar-nav">
     
