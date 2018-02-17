@@ -90,7 +90,10 @@ catch (Exception $e)
 	    case "DUPLICATE_EMAIL_ERROR" : 
 	       $email_msg = "The email address entered was a duplicate.";
 	    break;
-	    case "USER_NOT_LOGGED_IN_ERROR":
+	    case "LOCK_WAIT_TIMEOUT" : 
+	       $general_error_message = "A transient system error prevented the data from being saved. Retrying is recommended.";
+	    break;
+        case "USER_NOT_LOGGED_IN_ERROR":
 	       header("Location: login.php?errmsg=USER_NOT_LOGGED_IN_ERROR");
 	       exit();
         break;
@@ -336,6 +339,11 @@ function performUpdate()
                 throw new Exception("DUPLICATE_EMAIL_ERROR");
             }
         }
+        elseif (($e->getCode() == "HY000") && (strpos($e->getMessage(), "1205 Lock wait timeout exceeded") != FALSE))
+        {
+            /* this is a lock timeout, so display an error message to retry */
+            throw new Exception("LOCK_WAIT_TIMEOUT");
+        }
         else 
         {
             error_log("Database error during UPDATE query in org.php: " . $e->getMessage());
@@ -427,6 +435,11 @@ function performInsert()
             {
                 throw new Exception("DUPLICATE_EMAIL_ERROR");
             }
+        }
+        elseif (($e->getCode() == "HY000") && (strpos($e->getMessage(), "1205 Lock wait timeout exceeded") != FALSE))
+        {
+            /* this is a lock timeout, so display an error message to retry */
+            throw new Exception("LOCK_WAIT_TIMEOUT");
         }
         else 
         {
@@ -723,6 +736,13 @@ echo " class='btn btn-default btn-lg' ><span class='glyphicon glyphicon-ban-circ
 	echo "<div class='alert alert-success alert-dismissable' id='general_alert_msg' >\n";
 	echo "<a href='#' class='close' data-dismiss='alert' aria-label='close'>×</a>\n";
 	echo "$success_msg\n</div>";
+}
+elseif (isset($general_error_message))
+{
+	echo "<div class='alert alert-warning alert-dismissable' id='general_alert_msg' >\n";
+	echo "<a href='#' class='close' data-dismiss='alert' aria-label='close'>×</a>\n";
+	echo "$general_error_message\n</div>";
+    
 }
 ?>
 
