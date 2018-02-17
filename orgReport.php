@@ -504,7 +504,7 @@ function printQuestionsWithResponses($qr)
             $rcount+= ceil(count($question) / 2);
         }
 
-        if (($pdf->GetY() + 10 + $rcount * 10) > 262)
+        if ((($pdf->GetY() + 10 + $rcount * 10) > 262) && $pdf->GetY() > 21)
         {
             $pdf->AddPage();
         }
