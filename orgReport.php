@@ -9,7 +9,6 @@ class PDF extends FPDF
 {
     protected $m_org_name;
     protected $m_print_date;
-    protected $m_footnote = FALSE;
 
     function setOrganizationName($p_orgname)
     {
@@ -21,10 +20,6 @@ class PDF extends FPDF
         $this->m_print_date = strftime("%Y-%m-%d %H:%M:%S %Z" , $p_print_date_time);
     }
 
-    function setWarningFootnote()
-    {
-        $this->m_footnote = TRUE;
-    }
 
     // Page header
     function Header()
@@ -60,12 +55,13 @@ class PDF extends FPDF
     // Page footer
     function Footer()
     {
-        // Position at 1.5 cm from bottom
-        $this->SetY(-15);
+        // Position at bottom
+        $this->SetY(-12);
         // Arial italic 8
         $this->SetFont('Arial','I',8);
-        $this->SetX(0); /* 1.5 cm from right of page */
-        $this->Cell(0, 5, $this->m_print_date, 0, 0, 'C');
+	// print date
+        $this->SetX(160);
+        $this->Cell(40, 6, $this->m_print_date, 0, 0, 'R');
         // Page number
 	$this->SetY(-18);
         $this->SetX(160);
@@ -92,6 +88,7 @@ class PDF extends FPDF
 	$this->MultiCell(45, 6, "  Indicates this choice was available but not chosen");
 
 
+
 	$this->SetY(-18);
 	$this->SetTextColor(255, 0, 0);
 	$this->SetFont('Zapfdingbats', '', 8);
@@ -105,18 +102,6 @@ class PDF extends FPDF
 	/* draw a border around the legend */
 	$this->Rect(10, 260, 195, 15);
 
-        /* Show the footnote if necessary */
-        if ($this->m_footnote == TRUE)
-        {
-            $this->SetTextColor(255, 0, 0);
-            $this->SetFont('Zapfdingbats', '', 8);
-            $this->SetX(9);
-            $this->Write(5, "6");
-            $this->SetFont('Arial', 'I', 8);
-            $this->SetTextColor(0); /*back to black text */
-            $this->MultiCell(45, 5, " Indicates no response has been selected for this choice");
-            $this->m_footnote = FALSE;
-        }
     }
 }
 
@@ -504,6 +489,8 @@ function printQuestionsWithResponses($qr)
             $rcount+= ceil(count($question) / 2);
         }
 
+	/* check for enough room, except if we are at the top of the page */
+
         if ((($pdf->GetY() + 10 + $rcount * 10) > 262) && $pdf->GetY() > 21)
         {
             $pdf->AddPage();
@@ -556,7 +543,6 @@ function printQuestionsWithResponses($qr)
                     $pdf->SetTextColor(255, 0, 0); /* Red Text */
                     $pdf->SetFont('Zapfdingbats','',12);
                     $pdf->Write(8, "6 "); /* The #6 is the X mark in the zapfdingbats font */
-                    $pdf->setWarningFootnote();
 
                     $pdf->SetFont('Arial','B',11);
                     $pdf->SetTextColor(150); /* Gray Text */
