@@ -47,8 +47,11 @@ function testToken()
 	//echo "<!-- getemail = " . $_GET["email"] . " --> \n";
 
     $user_id = filter_var($_GET["user_id"], FILTER_VALIDATE_INT);
-    $email = filter_var($_GET["email"], FILTER_SANITIZE_EMAIL);
-	$dateint = filter_var($_GET["date"], FILTER_VALIDATE_INT);
+	$email = filter_var($_GET["email"], FILTER_SANITIZE_EMAIL);
+	/* date should be a fixed 10 characters, so trim it */
+	/* might help with some possible weirdness at the end of the url */
+	/* inserted by certain email interfaces */
+	$dateint = filter_var(substr($_GET["date"], 0, 10), FILTER_VALIDATE_INT);
 
 	/* echo "<!-- email = " . $email . " --> \n"; */
 	/* echo "<!-- user_id = " . $user_id . " --> \n"; */
@@ -82,7 +85,7 @@ function testToken()
 	/* echo "<!-- input = " . $input . " --> \n"; */
 	/* echo "<!-- token = " . $token . " --> \n"; */
 	/* echo "<!-- gettoken = " . $_GET["token"] . " --> \n"; */
-
+	/* token should always be exactly 22 digits */
     if ($token == $_GET["token"])
     {
 	    initializeDb();
