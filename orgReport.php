@@ -490,6 +490,7 @@ function printQuestionsWithResponses($qr)
         }
 
 	/* check for enough room, except if we are at the top of the page */
+
         if ((($pdf->GetY() + 10 + $rcount * 10) > 262) && $pdf->GetY() > 21)
         {
             $pdf->AddPage();
