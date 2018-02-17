@@ -9,11 +9,15 @@ global $dbh;
 
     try 
     {
+        /* this seems useful because mysql returns dates in local time */
+        date_default_timezone_set(DEFAULT_TIMEZONE); /* pulled from secrets.php for localization */
+
         if (!isset($dbh))
         {
             $dbh = new PDO(DATABASE_DSN , DATABASE_USER, DATABASE_PASSWORD,
 				array(PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION));
         }
+
     }
     catch (PDOException $e)
     {

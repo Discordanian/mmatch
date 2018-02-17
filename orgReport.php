@@ -15,9 +15,9 @@ class PDF extends FPDF
         $this->m_org_name = $p_orgname;
     }
 
-    function setPrintDate($p_print_date)
+    function setPrintDate($p_print_date_time)
     {
-        $this->m_print_date = $p_print_date->format("Y-m-d H:i:s e");
+        $this->m_print_date = strftime("%Y-%m-%d %H:%M:%S %Z" , $p_print_date_time);
     }
 
 
@@ -75,13 +75,18 @@ class PDF extends FPDF
 	$this->Write(6, "4");
 	$this->SetFont('Arial', 'I', 8);
 	$this->SetTextColor(0); /*back to black text */
-	$this->MultiCell(45, 6, " Indicates this choice has been selected by the user");
+	$this->SetX(10);
+	$this->MultiCell(45, 6, "  Indicates this choice has been selected by the user");
 
 	$this->SetY(-18);
 	$this->SetX(60);
-	$this->SetFont('Arial', 'I', 8);
+	$this->SetFont('Zapfdingbats', '', 8);
 	$this->SetTextColor(120); /*gray text */
-	$this->MultiCell(45, 6, " Indicates this choice was available but not chosen");
+	$this->Write(6, "o");
+	$this->SetFont('Arial', 'I', 8);
+	$this->SetX(60);
+	$this->MultiCell(45, 6, "  Indicates this choice was available but not chosen");
+
 
 
 	$this->SetY(-18);
@@ -91,7 +96,8 @@ class PDF extends FPDF
 	$this->Write(6, "6");
 	$this->SetFont('Arial', 'I', 8);
 	$this->SetTextColor(0); /*back to black text */
-	$this->MultiCell(45, 6, " Indicates this choice was not available at the time of selection");
+	$this->SetX(110);
+	$this->MultiCell(45, 6, "  Indicates this choice was not available at the time of selection");
 
 	/* draw a border around the legend */
 	$this->Rect(10, 260, 195, 15);
@@ -112,7 +118,7 @@ try
 
     /* just put the user ID into the author metadata */
     $pdf->SetAuthor($_SESSION["my_user_id"], TRUE);
-    $pdf->setPrintDate(new DateTime());
+    $pdf->setPrintDate(time()); /* set current date/time */
 
     getParameter(); /* check authorization, get the org ID from the $_GET */
 
@@ -177,15 +183,15 @@ function printOrgData()
 
         $stmt->execute();
 
-        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        $row = $stmt->fetch(PDO::FETCH_OBJ);
 
 
         if (isset($row))
         {
 
             global $abbreviated_name, $customer_notice, $customer_contact, $admin_contact, $active_ind, $user_id;
-            $pdf->setOrganizationName($row["org_name"]);
-            $pdf->SetTitle("Movement Match - " . $row["org_name"], TRUE);
+            $pdf->setOrganizationName($row->org_name);
+            $pdf->SetTitle("Movement Match - " . $row->org_name, TRUE);
             $pdf->AddPage();
 
             $pdf->SetLineWidth(0.5);
@@ -196,68 +202,113 @@ function printOrgData()
             $pdf->SetFont('Arial','B',12);
             $pdf->Cell(45, 10, "User ID: ", "TL", 0);
             $pdf->SetFont('Arial', '', 12);
-            $pdf->Cell(0, 10, $row["user_id"], "TR", 1);
+            $pdf->Cell(0, 10, $row->user_id, "TR", 1);
 
             $pdf->SetFont('Arial','B',12);
             $pdf->Cell(45, 10, "Name: ", "L", 0);
             $pdf->SetFont('Arial', '', 12);
-            $pdf->Cell(0, 10, $row["person_name"], "R", 1);
+            $pdf->Cell(0, 10, $row->person_name, "R", 1);
             
-            $email_is_verified = $row["email_is_verified"];
-
             $pdf->SetFont('Arial','B',12);
             $pdf->Cell(45, 10, "Email Address: ", "BL", 0);
 
             $pdf->SetFont('Arial', '', 12);
-            $pdf->Cell(0, 10, $row["email"], "BR", 1);
-            
+            $pdf->Cell(0, 10, $row->email, "BR", 0);
+            $saveX = $pdf->GetStringWidth($row->email) + 58;
 
-            $pdf->Ln(10);
+            /* make a fake "verified" check mark */
+            if ($row->email_is_verified == TRUE)
+            {
+                $pdf->SetFont('zapfdingbats', 'B', 26);
+                $pdf->Ln(1);
+                //$pdf->SetX(190);
+                /* gonna use a little cheat here to get a little circle */
+                $pdf->SetX($saveX);
+                $pdf->SetTextColor(100, 100, 255); /* blue */
+                $pdf->Cell(6, 6, "Y", 0, 0, "C"); /* the Y character is a starburst in this font */
+                $pdf->Ln(1);
+                $pdf->SetX($saveX + 1.25);
+                /* now draw the check mark inside the circle */
+                $pdf->SetFontSize(11);
+                $pdf->SetTextColor(255, 255, 255); /* white */
+                $pdf->SetFillColor(100, 100, 255); /* blue */
+                $pdf->Cell(3.5, 3.5, "4", 0, 0, "C", TRUE); /* The C character is the check mark */
+                /* move up slightly to display the informational text */
+                $pdf->Ln(-2);
+                $pdf->SetX($saveX + 5);
+                $pdf->SetFont('Arial', '', 8);
+                $pdf->SetTextColor(0); /* back to black */
+                $pdf->Cell(25, 10, "(Email is verified)");
+            }
+            else
+            {
+                $pdf->SetFontSize(8);
+                $pdf->SetX($saveX);
+                $pdf->Cell(25, 10, "(Email is not verified)");
+            }
+
+            $pdf->SetTextColor(0); /* back to black */
+            $pdf->Ln(20);
             $pdf->SetFont('Arial','B',13);
             $pdf->SetFillColor(200, 220, 255);
             $pdf->Cell(196, 10, "Organization Info", 1, 1, "C", TRUE);
 
             $pdf->SetFont('Arial','B',12);
-            $pdf->Cell(45, 10, "Organization ID: ", "TL", 0);
+            $pdf->Cell(45, 10, "Organization ID: ", 0, 0);
             $pdf->SetFont('Arial', '', 12);
-            $pdf->Cell(0, 10, $row["orgid"], "TR", 1);
+            $pdf->Cell(20, 10, $row->orgid, 0, 0);
 
+            $pdf->SetFont('Arial','B',12);
+            $pdf->SetX(115);
+            $pdf->Write(10, "Status: ");
+            $pdf->SetFont('Arial', '', 12);
+            $pdf->Write(10, ($row->active_ind ? "Active" : "Inactive"));
+
+            $pdf->Ln(10);
             $pdf->SetFont('Arial','B',12);
             $pdf->Cell(45, 10, "Name: ", 0, 0);
             $pdf->SetFont('Arial', '', 12);
-            $pdf->Cell(0, 10, $row["org_name"], 0, 1);
+            $pdf->Cell(0, 10, $row->org_name, 0, 1);
             
             $pdf->SetFont('Arial','B',12);
             $pdf->Cell(45, 10, "Abbreviation: ", 0, 0);
             $pdf->SetFont('Arial', '', 12);
-            $pdf->Cell(0, 10, $row["abbreviated_name"], 0, 1);
+            $pdf->Cell(0, 10, $row->abbreviated_name, 0, 0);
 
+            $pdf->SetFont('Arial','B',12);
+            $pdf->SetX(115);
+            $pdf->Write(10, "Date of Update: ");
+            $pdf->SetFont('Arial', '', 12);
+            /* because mysql returns the date automatically in the local time zone of the server */
+            $pdf->Write(10, strftime("%Y-%m-%d %H:%M:%S %Z", $row->update_timestamp));
+
+            $pdf->Ln(10);
             $pdf->SetFont('Arial','B',12);
             $pdf->Cell(45, 10, "Web Site: ", 0, 0);
             $pdf->SetFont('Arial', '', 12);
-            $pdf->Cell(0, 10, $row["org_website"], 0, 1, "L", FALSE, $row["org_website"]);
+            $pdf->Cell(0, 10, $row->org_website, 0, 1, "L", FALSE, $row->org_website);
 
             $pdf->SetFont('Arial','B',12);
             $pdf->Cell(45, 10, "URL for Donations: ", 0, 0);
             $pdf->SetFont('Arial', '', 12);
-            $pdf->Cell(0, 10, $row["money_url"], 0, 1, "L", FALSE, $row["money_url"]);
+            $pdf->Cell(0, 10, $row->money_url, 0, 1, "L", FALSE, $row->money_url);
 
             $pdf->SetFont('Arial','B',12);
             $pdf->Cell(45, 10, "Customer Notice: ", 0, 0);
             $pdf->SetFont('Arial', '', 12);
-            $pdf->Write(10, $row["customer_notice"]);
+            $pdf->Write(10, $row->customer_notice);
             $pdf->Ln(10);
             
             $pdf->SetFont('Arial','B',12);
             $pdf->Cell(45, 10, "Public Contact Info: ", 0, 0);
             $pdf->SetFont('Arial', '', 12);
-            $pdf->Write(10, $row["customer_contact"]);
+            $pdf->Write(10, $row->customer_contact);
             $pdf->Ln(10);
             
             $pdf->SetFont('Arial','B',12);
             $pdf->Cell(45, 10, "Private Contact Info: ", 0, 0);
             $pdf->SetFont('Arial', '', 12);
-            $pdf->Write(10, $row["admin_contact"]);
+            $pdf->Write(10, $row->admin_contact);
             /* complete the border around the details section */
             $pdf->Rect(10, 90, 196, $pdf->GetY() - 80);
 
@@ -271,14 +322,14 @@ function printOrgData()
             $pdf->Cell(196, 10, "Mission Statement", 1, 1, "C", TRUE);
 
             $pdf->SetFont('Arial', '', 12);
-            $pdf->Write(8, $row["mission"]);
+            $pdf->Write(8, $row->mission);
             $pdf->Ln(10);
             /* draw a border around the mission statement */
             $pdf->Rect(10,50,196, $pdf->GetY() - 50);
             
-            $user_id = $row["user_id"];
+            $user_id = $row->user_id;
             
-            $active_ind = $row["active_ind"];
+            $active_ind = $row->active_ind;
         }
         else
         {
@@ -501,6 +552,10 @@ function printQuestionsWithResponses($qr)
                 else /* the value is present but it's FALSE so gray it out */
                 {
                     $pdf->SetTextColor(150); /* Gray */
+                    $pdf->SetFont('Zapfdingbats','',12);
+                    $pdf->Write(8, "o "); /* The o is the unchecked box in the zapfdingbats font */
+
+                    $pdf->SetFont('Arial','B',11);
                     $pdf->Cell(96, 8, $choice["choice_text"]);
                 }
 
