@@ -14,8 +14,17 @@ var logger = function(e) {
 var hrefWebsite =  function() {
 	orgs.forEach(function(org) {
 		var url = "";
+		if(org.customer_contact) {
+			// We have /something/ in customer_contact
+			var volunteer = org.customer_contact;
+			if (volunteer.toUpperCase().indexOf("HTTP") !== -1) {
+				url = "Volunteer: <a href=\""+volunteer+"\" target='_blank' rel='noopener'>"+volunteer+"</a><br />";
+			} else {
+				url = "Volunteer Contact: <em>"+volunteer+"</em><br />";
+			}
+		}
 		if (org.money_url) { 
-		url = "Donate: <a href=\""+org.money_url+"\" target='_blank' rel='noopener'>"+org.money_url+"</a><br />";
+		url += "Donate: <a href=\""+org.money_url+"\" target='_blank' rel='noopener'>"+org.money_url+"</a><br />";
 		}
 		if (org.org_website) { 
 		url += "Info: <a href=\""+org.org_website+"\" target='_blank' rel='noopener'>"+org.org_website+"</a>";
