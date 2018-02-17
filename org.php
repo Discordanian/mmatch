@@ -134,6 +134,10 @@ catch (Exception $e)
 	       $org_name_msg = "The organization name entered was a duplicate.";
 	       $goto_page = -1;
 	    break;
+	    case "LOCK_WAIT_TIMEOUT" : 
+	       $general_error_message = "A transient system error prevented the data from being saved. Retrying is recommended.";
+	       $goto_page = 0;
+	    break;
 	    case "USER_NOT_LOGGED_IN_ERROR":
 	       header("Location: login.php?errmsg=USER_NOT_LOGGED_IN_ERROR");
 	       exit();
@@ -440,6 +444,11 @@ function updateUser()
                 throw new Exception("DUPLICATE_EMAIL_ERROR");
             }
         }
+        elseif (($e->getCode() == "HY000") && (strpos($e->getMessage(), "1205 Lock wait timeout exceeded") != FALSE))
+        {
+            /* this is a lock timeout, so display an error message to retry */
+            throw new Exception("LOCK_WAIT_TIMEOUT");
+        }
         else 
         {
             error_log("Database error during UPDATE query in org.php: " . $e->getMessage());
@@ -548,6 +557,11 @@ function performUpdate()
             {
                 throw new Exception("DUPLICATE_ORG_NAME_ERROR");
             }
+        }
+        elseif (($e->getCode() == "HY000") && (strpos($e->getMessage(), "1205 Lock wait timeout exceeded") != FALSE))
+        {
+            /* this is a lock timeout, so display an error message to retry */
+            throw new Exception("LOCK_WAIT_TIMEOUT");
         }
         else 
         {
@@ -660,6 +674,11 @@ function performInsert()
             {
                 throw new Exception("DUPLICATE_ORG_NAME_ERROR");
             }
+        }
+        elseif (($e->getCode() == "HY000") && (strpos($e->getMessage(), "1205 Lock wait timeout exceeded") != FALSE))
+        {
+            /* this is a lock timeout, so display an error message to retry */
+            throw new Exception("LOCK_WAIT_TIMEOUT");
         }
         else 
         {
@@ -1184,13 +1203,13 @@ function updateQuestionnaireData()
     catch (PDOException $e)
     {
         //$dbh->rollBack();
-        error_log("Database error during questionnaire INSERT query in org.php: " . $e->getMessage());
+        error_log("Database error during questionnaire UPDATE/INSERT query in org.php: " . $e->getMessage());
         throw new Exception("An unknown error was encountered (28). Please attempt to reauthenticate.");
 		exit();
     }
     catch(Exception $e)
     {
-        error_log("Error during database questionnaire INSERT query in org.php: " . $e->getMessage());
+        error_log("Error during database questionnaire UPDATE/INSERT query in org.php: " . $e->getMessage());
 		/* We most likely got here from the SQL error above, so just bubble up the exception */
         throw new Exception("An unknown error was encountered (29). Please attempt to reauthenticate.");
 		exit();
@@ -1364,7 +1383,7 @@ function getUserInfo()
 <html lang="en" >
 <head>
     <meta charset="UTF-8">
-    <title>Movement Match - Organization</title>
+    <title>Movement Match - <?php echo LOCALITY_NAME; ?> - Organization</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
 	<link rel="stylesheet prefetch" 
@@ -1545,9 +1564,9 @@ function getUserInfo()
         <div class="col-xs-7" >
             <select multiple name="zip_list[]" id="zip_list" class="form-control" > <!-- Must include the brackets in the name to force browser to send an array -->
 <?php
-            echo "<!-- \n";
-            var_dump($zip_array);
-            echo " --> \n";
+            /* echo "<!-- \n"; */
+            /* var_dump($zip_array); */
+            /* echo " --> \n"; */
                     if (count($zip_array) > 0)
                     {
                         foreach($zip_array as $zipnum => $cityState)
@@ -1590,17 +1609,32 @@ function getUserInfo()
 ?>
 
 <button id="save_data" type="submit" class="btn btn-default btn-lg"><span class="glyphicon glyphicon-floppy-disk"></span> Save data</button>
-<a href='orgReport.php?orgid=<?php echo $orgid; ?>' class="btn btn-default btn-lg" target='_blank' id="printButton"><span class="glyphicon glyphicon-print"></span> Print</a>
+
+<?php if ($action == "O") {  /* on inserts, the print button must be disabled because can't print what doesn't exist yet */ ?>
+    <a href='#' class="btn btn-default btn-lg" disabled="disabled" id="printButton"><span class="glyphicon glyphicon-print"></span> Print</a>
+<?php } else {  ?>
+    <a href='orgReport.php?orgid=<?php echo $orgid; ?>' class="btn btn-default btn-lg" target='_blank' id="printButton"><span class="glyphicon glyphicon-print"></span> Print</a>
+<?php } ?>
+
+<a href='orgList.php?user_id=<?php echo $_SESSION["my_user_id"]; ?>' class="btn btn-default btn-lg" ><span class="glyphicon glyphicon-ban-circle"></span> Cancel</a>
 
 
 </form>
 
 <?php require('include/footer.php'); ?>
-<?php if (isset($success_msg))
+<?php 
+if (isset($success_msg))
 {
 	echo "<div class='alert alert-success alert-dismissable' id='general_alert_msg' >\n";
 	echo "<a href='#' class='close' data-dismiss='alert' aria-label='close'>×</a>\n";
 	echo "$success_msg\n</div>";
+}
+elseif (isset($general_error_message))
+{
+	echo "<div class='alert alert-warning alert-dismissable' id='general_alert_msg' >\n";
+	echo "<a href='#' class='close' data-dismiss='alert' aria-label='close'>×</a>\n";
+	echo "$general_error_message\n</div>";
+    
 }
 ?>
 

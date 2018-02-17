@@ -605,7 +605,7 @@ function buildEmailVerificationUrl()
 <html lang="en" >
 <head>
     <meta charset="UTF-8">
-    <title>Movement Match - User Profile</title>
+    <title>Movement Match - <?php echo LOCALITY_NAME; ?> - User Profile</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
 	<link rel="stylesheet prefetch" 
@@ -699,7 +699,18 @@ function buildEmailVerificationUrl()
     </div> <!-- form-group -->
 
 
-<button id="save_data" type="submit" class="btn btn-default btn-lg">Save data</button>
+<button id="save_data" type="submit" class="btn btn-default btn-lg"><span class="glyphicon glyphicon-floppy-disk"></span> Save data</button>
+<?php 
+if ($_SESSION["admin_user_ind"] == TRUE)
+{
+    echo "<a href='userList.php'"; 
+}
+else
+{
+    printf("<a href='orgList.php?orgid=%s'", $_SESSION["my_user_id"]); 
+}
+echo " class='btn btn-default btn-lg' ><span class='glyphicon glyphicon-ban-circle'></span> Cancel</a>\n";
+?>
 
 
 
