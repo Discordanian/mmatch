@@ -1590,6 +1590,7 @@ function getUserInfo()
 ?>
 
 <button id="save_data" type="submit" class="btn btn-default btn-lg"><span class="glyphicon glyphicon-floppy-disk"></span> Save data</button>
+<a href='orgReport.php?orgid=<?php echo $orgid; ?>' class="btn btn-default btn-lg" target='_blank' id="printButton"><span class="glyphicon glyphicon-print"></span> Print</a>
 
 
 </form>

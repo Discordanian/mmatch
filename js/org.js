@@ -51,6 +51,8 @@ $(function(){
     $("div").click(resetInactivityTimer);
     $(":input").focus(resetInactivityTimer);
     
+    $(":input").change(disablePrint);
+
 	var rules = "<p>Password must be at least 8 characters long and must contain 3 of the following 4 categories:</p>" +
 		"<ol><li>Upper case alphabet characters</li><li>Lower case alphabet characters</li>" +
 		"<li>Numeric digits</li><li>Special (non-alphabet) characters</li></ol>";
@@ -434,4 +436,20 @@ function addhttp()
     {
         $(this).val("");
     }
+}
+
+function disablePrint()
+{
+    /* disable the print button */
+    $("#printButton").attr("disabled", "disabled");
+    /* but the previous only makes it appear disabled */
+    /* must also preventDefault so that clicking does nothing */
+    $("#printButton").click(function (e) {
+        e.preventDefault();
+    });
+
+    /* and then display a tooltip so that the user knows what's up */
+    $("#printButton").attr("data-toggle", "tooltip");
+    $("#printButton").attr("title", "Record must be saved before it can be printed.");
+    
 }
