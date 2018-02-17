@@ -720,7 +720,7 @@ if ($_SESSION["admin_user_ind"] == TRUE)
 }
 else
 {
-    printf("<a href='orgList.php?orgid=%s'", $_SESSION["my_user_id"]); 
+    printf("<a href='orgList.php?user_id=%s'", $_SESSION["my_user_id"]); 
 }
 echo " class='btn btn-default btn-lg' ><span class='glyphicon glyphicon-ban-circle'></span> Cancel</a>\n";
 ?>
