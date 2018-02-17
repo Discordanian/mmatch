@@ -1589,7 +1589,7 @@ function getUserInfo()
     }
 ?>
 
-<button id="save_data" type="submit" class="btn btn-default btn-lg">Save data</button>
+<button id="save_data" type="submit" class="btn btn-default btn-lg"><span class="glyphicon glyphicon-floppy-disk"></span> Save data</button>
 
 
 </form>
