@@ -40,12 +40,11 @@ class PDF extends FPDF
         $this->Cell(33);
 
         /* figure out what size to make the text and still fit */
-        $size = 15;
-        do
+        $size = 14;
+        while ($this->GetStringWidth($this->m_org_name) > 145)
         {
-            $size--;
-            $this->SetFontSize($size);
-        } while ($this->GetStringWidth($this->m_org_name) > 145);
+            $this->SetFontSize(--$size);
+        }
 
         $this->Cell(150,10,$this->m_org_name,"BLR",0,'C');
         $this->Ln(20);
@@ -527,14 +526,20 @@ function printQuestionsWithResponses($qr)
 
                 $pdf->SetFont('Arial','',11);
                 $pdf->SetX(($i % 2) * 90 + 15); 
+                $size = 11;
 
                 if ($choice["selected"] == TRUE)
                 {
                     $pdf->SetFont('Zapfdingbats','',12);
                     $pdf->Write(8, "4 "); /* The #4 is the check mark in the zapfdingbats font */
 
-                    $pdf->SetFont('Arial','',11);
+                    $pdf->SetFont('Arial','',$size);
                     $pdf->SetTextColor(0); /* Black */
+                    /* make sure it can fit */
+                    while ($pdf->GetStringWidth($choice["choice_text"]) > 89)
+                    {
+                        $pdf->SetFontSize(--$size);
+                    }
                     $pdf->Cell(96, 8, $choice["choice_text"]);
 
                 }
@@ -546,7 +551,11 @@ function printQuestionsWithResponses($qr)
 
                     $pdf->SetFont('Arial','B',11);
                     $pdf->SetTextColor(150); /* Gray Text */
-                    //$pdf->SetFillColor(255, 120, 120); /* red/pink background */
+                    /* make sure it can fit */
+                    while ($pdf->GetStringWidth($choice["choice_text"]) > 89)
+                    {
+                        $pdf->SetFontSize(--$size);
+                    }
                     $pdf->Cell(96, 8, $choice["choice_text"]);
     
                 }
@@ -557,6 +566,11 @@ function printQuestionsWithResponses($qr)
                     $pdf->Write(8, "o "); /* The o is the unchecked box in the zapfdingbats font */
 
                     $pdf->SetFont('Arial','B',11);
+                    /* make sure it can fit */
+                    while ($pdf->GetStringWidth($choice["choice_text"]) > 89)
+                    {
+                        $pdf->SetFontSize(--$size);
+                    }
                     $pdf->Cell(96, 8, $choice["choice_text"]);
                 }
 
