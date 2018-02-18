@@ -7,6 +7,8 @@ $csp = "Content-Security-Policy: default-src 'none'; " .
     "connect-src 'self'; img-src 'self'; " .
     "font-src https://cdnjs.cloudflare.com https://fonts.gstatic.com; " .
     "script-src 'self' 'nonce-{$csp_nonce}'  https://cdnjs.cloudflare.com https://ajax.googleapis.com; " .
-    "style-src 'self' https://cdnjs.cloudflare.com https://ajax.googleapis.com https://fonts.googleapis.com;";
-
+    "style-src 'self' https://cdnjs.cloudflare.com https://ajax.googleapis.com https://fonts.googleapis.com " .
+    "'sha256-UiXlt9djFx1o7crFtCH7sUqquV6B2BX9ozY9jqs43JE=' 'sha256-UiXlt9djFx1o7crFtCH7sUqquV6B2BX9ozY9jqs43JE=' " .
+    "'sha256-t6oewASd7J1vBg5mQtX4hl8bg8FeegYFM3scKLIhYUc=' 'sha256-47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU='; ";
+/* the last 2 lines above are a hack to allow inline styles such as "style='width:100%'" but need a better more scalable solution */
 header($csp);
