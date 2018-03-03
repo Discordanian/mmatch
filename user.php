@@ -842,7 +842,7 @@ function outputOrganizationList()
  <div class="panel panel-default">
   <div class="panel-heading">
    <h4 class="panel-title">
-    <a data-toggle="collapse" href="#adopt"><span class="glyphicon glyphicon-plus"></span>Add organization(s) this user is related to:</a>
+    <a data-toggle="collapse" href="#adopt"><span class="glyphicon glyphicon-plus"></span> Add organization(s) this user is related to:</a>
    </h4>
   </div> <!-- panel-heading -->
 
