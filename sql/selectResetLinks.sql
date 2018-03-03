@@ -23,7 +23,7 @@ BEGIN
 	CONCAT('https://', v_server_name, '/passwordReset.php?email=', REPLACE(app_user.email, '@', '%40'), '&token=',
 	LEFT(SHA2(CONCAT(v_server_name, REPLACE(app_user.email, '@', '%40'),v_date_text, app_user.user_id,'passwordReset.php', v_secret_salt), 256), 22),
 	'&user_id=', app_user.user_id, '&date=', v_date_text) AS link 
-	FROM app_user;
+	FROM app_user WHERE active_ind = 1;
 END
 $$
 

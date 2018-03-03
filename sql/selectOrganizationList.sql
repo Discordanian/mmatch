@@ -4,11 +4,11 @@ DELIMITER $$
 CREATE PROCEDURE selectOrganizationList(p_user_id INT(10) UNSIGNED)
 BEGIN
 	IF p_user_id IS NULL THEN
-		SELECT orgid, org_name, abbreviated_name 
+		SELECT orgid, org_name, abbreviated_name, user_id 
 		FROM org 
 		ORDER BY org_name; 
 	ELSE		
-		SELECT orgid, org_name, abbreviated_name 
+		SELECT orgid, org_name, abbreviated_name, user_id 
 		FROM org 
 		WHERE org.user_id = p_user_id
 		ORDER BY org_name; 
