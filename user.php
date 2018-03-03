@@ -24,6 +24,7 @@ my_session_start();
 try
 {
 	initializeDb();
+    populateOrgListArray();
 	
 	if (isset($_POST["action"]))
 	{
@@ -37,13 +38,15 @@ try
 		} elseif ($_POST["action"] != "U") /* adding a new user */
 		{
 			/* #3 */
-			performInsert();
+            performInsert();
+            saveOrgChanges();
 			displayDbData();
 		}
 		elseif ($_POST["action"] == "U") /* updating a user */
 		{
 			/* #5 */
 			performUpdate();
+            saveOrgChanges();
 			displayDbData();
 		}
 	}
@@ -58,7 +61,7 @@ try
 		}
 
 		
-		displayDbData();
+        displayDbData();
 	}
 	else
 	{
@@ -130,7 +133,7 @@ function checkCsrfToken()
 
 	if (!array_key_exists("csrf_expdate", $_POST) || !array_key_exists("nonce", $_POST))
 	{
-		error_log("POST parameters missing in org.php. Possible tampering detected.");
+		error_log("POST parameters missing in user.php. Possible tampering detected.");
 		throw new Exception("An unknown error occurred (1). Please attempt to authenticate again.");
 		exit(); /* this should not be run, but just in case, we do not want to continue */
 	}
@@ -141,7 +144,7 @@ function checkCsrfToken()
 	//echo "<!-- DEBUG Check Token = $token -->\n";
     if (hash("sha256", $token) != $_POST["nonce"])
     {
-		error_log("csrf token mismatch in org.php. Possible tampering detected.");
+		error_log("csrf token mismatch in user.php. Possible tampering detected.");
 		throw new Exception("An unknown error occurred (2). Please attempt to authenticate again.");
 		exit(); /* this should not be run, but just in case, we do not want to continue */
     }
@@ -150,7 +153,7 @@ function checkCsrfToken()
 	
 	if ($dateint == FALSE)
 	{
-		error_log("expdate does not follow proper format in org.php. Possible tampering detected.");
+		error_log("expdate does not follow proper format in user.php. Possible tampering detected.");
 		throw new Exception("An unknown error occurred (3). Please attempt to authenticate again.");
 		exit(); /* this should not be run, but just in case, we do not want to continue */
 	}
@@ -161,7 +164,7 @@ function checkCsrfToken()
 		
 	if ($expdate < $today)
 	{
-		error_log("CSRF token expired in org.php");
+		error_log("CSRF token expired in user.php");
 		throw new Exception("An unknown error occurred (4). Please attempt to authenticate again.");
 		exit(); /* this should not be run, but just in case, we do not want to continue */
 		
@@ -536,13 +539,13 @@ function displayDbData()
     }
     catch (PDOException $e)
     {
-        error_log("Database error during SELECT query in org.php: " . $e->getMessage());
+        error_log("Database error during SELECT query in user.php: " . $e->getMessage());
         throw new Exception("An unknown error was encountered (20). Please attempt to reauthenticate.");
 		exit();
     }
     catch(Exception $e)
     {
-        error_log("Error during database SELECT query in org.php: " . $e->getMessage());
+        error_log("Error during database SELECT query in user.php: " . $e->getMessage());
 		/* We most likely got here from the SQL error above, so just bubble up the exception */
         throw new Exception("An unknown error was encountered (21). Please attempt to reauthenticate.");
 		exit();
@@ -612,6 +615,128 @@ function buildEmailVerificationUrl()
 }
 
 
+function saveOrgChanges()
+{
+
+    /* this array is not needed if the user is not an admin, so forget about it */
+    if ($_SESSION["admin_user_ind"] == FALSE)
+    {
+        return;
+    }
+
+    /* check to make sure something was selected, if not, there is nothing that can be done */
+    if (!array_key_exists("orglist", $_POST))
+    {
+        return;
+    }
+
+    if (!isset($_POST["orglist"]))
+    {
+        return;
+    }
+
+    /* one of the interesting things about this interface is that you can only TAKE */
+    /* control of an org, you cannot GIVE control of an org */
+    /* so the only transaction that needs to happen now is to set the user_id for all selected orgs */
+    try 
+    {
+
+        global $dbh, $user_id, $orgList;
+
+        $org_array = filter_var_array($_POST["orglist"], FILTER_SANITIZE_NUMBER_INT);
+
+        $stmt = $dbh->prepare("CALL updateOrganizationUser(:user_id, :orgs);");
+        /* filter the array to ensure it only contains ints */
+        $orgs = json_encode($org_array);
+
+        echo "<!-- saveOrgChanges \n";
+        var_dump($orgs);
+        echo "\n --> \n";
+    
+        $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
+        $stmt->bindValue(':orgs', $orgs, PDO::PARAM_STR);
+
+        $stmt->execute();
+
+    }    
+    catch (PDOException $e)
+    {
+        error_log("Database error during UPDATE query in user.php: " . $e->getMessage());
+        throw new Exception("An unknown error was encountered (20). Please attempt to reauthenticate.");
+		exit();
+    }
+    catch(Exception $e)
+    {
+        error_log("Error during database UPDATE query in user.php: " . $e->getMessage());
+		/* We most likely got here from the SQL error above, so just bubble up the exception */
+        throw new Exception("An unknown error was encountered (21). Please attempt to reauthenticate.");
+		exit();
+    }
+
+    
+}
+
+function populateOrgListArray()
+{
+    /* this array is not needed if the user is not an admin, so forget about it */
+    if ($_SESSION["admin_user_ind"] == FALSE)
+    {
+        return;
+    }
+
+    try 
+    {
+
+        global $dbh, $orgList;
+
+        $stmt = $dbh->prepare("CALL selectOrganizationList(NULL);");
+
+        $stmt->execute();
+        $orgList = $stmt->fetchAll(PDO::FETCH_OBJ);
+
+        $stmt->closeCursor();
+
+    }    
+    catch (PDOException $e)
+    {
+        error_log("Database error during SELECT query in user.php: " . $e->getMessage());
+        throw new Exception("An unknown error was encountered (20). Please attempt to reauthenticate.");
+		exit();
+    }
+    catch(Exception $e)
+    {
+        error_log("Error during database SELECT query in user.php: " . $e->getMessage());
+		/* We most likely got here from the SQL error above, so just bubble up the exception */
+        throw new Exception("An unknown error was encountered (21). Please attempt to reauthenticate.");
+		exit();
+    }
+
+}
+
+function outputOrganizationList()
+{
+    try 
+    {
+
+        global $orgList, $user_id;
+
+
+        foreach ($orgList as $index => $org)
+        {
+            printf("\t\t<option id='%u' value='%u' %s >%s</option>\n", $org->orgid, $org->orgid, 
+                ($org->user_id == $user_id ? "selected" : ""), htmlentities($org->org_name));
+
+        }
+
+    }    
+    catch(Exception $e)
+    {
+        error_log("Error during outputOrganizationList in user.php: " . $e->getMessage());
+		/* We most likely got here from the SQL error above, so just bubble up the exception */
+        throw new Exception("An unknown error was encountered (21). Please attempt to reauthenticate.");
+		exit();
+    }
+}
 
 ?>
 <!DOCTYPE html>
@@ -711,6 +836,29 @@ function buildEmailVerificationUrl()
         <div class="col-xs-1" ><input class="" type="checkbox" id="active_ind" name="active_ind" <?php echo ($active_ind == TRUE ? "checked" : ""); ?> /></div>
     </div> <!-- form-group -->
 
+<?php if ($_SESSION["admin_user_ind"] == TRUE) { ?>
+
+<div class="panel-group">
+ <div class="panel panel-default">
+  <div class="panel-heading">
+   <h4 class="panel-title">
+    <a data-toggle="collapse" href="#adopt"><span class="glyphicon glyphicon-plus"></span>Add organization(s) this user is related to:</a>
+   </h4>
+  </div> <!-- panel-heading -->
+
+<div id="adopt" class="panel-collapse collapse" >
+<div class="panel-body">    
+    <div class="form-group">
+        <label for="orglist">Which organization(s) are administered by this user?</label>
+        <select multiple class="form-control question selectpicker" name="orglist[]" id="orglist" >
+<?php outputOrganizationList(); ?>
+        </select> 
+    </div> <!-- form-group -->
+    </div> <!-- panel-body -->
+    </div> <!-- page -->
+    </div> <!-- panel-default -->
+    </div> <!-- panel-group -->    
+<?php } /* end if */ ?>
 
 <button id="save_data" type="submit" class="btn btn-default btn-lg"><span class="glyphicon glyphicon-floppy-disk"></span> Save data</button>
 <?php 
