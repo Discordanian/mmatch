@@ -73,7 +73,8 @@ function getZipCodeData($get_zipcode, $get_range_miles)
 			    $k++;
 
 		        $question->q_id = $row["question_id"];
-		        $question->text = $row["customer_question_text"];
+				$question->text = $row["customer_question_text"];
+				$question->group_order = $row["group_order"];
 		        $question->answers = $choices;
 		        
 		        $questions[$j] = $question;
