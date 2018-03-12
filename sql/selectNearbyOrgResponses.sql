@@ -1,34 +1,10 @@
--- MySQL dump 10.13  Distrib 5.7.18, for Linux (x86_64)
---
--- Host: localhost    Database: mmaz
--- ------------------------------------------------------
--- Server version	5.7.18-log
+DROP PROCEDURE IF EXISTS selectNearbyOrgResponses;
 
-/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
-/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
-/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
-/*!40101 SET NAMES utf8 */;
-/*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;
-/*!40103 SET TIME_ZONE='+00:00' */;
-/*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;
-/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
-/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
-/*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
+DELIMITER $$
 
-/*!50003 DROP PROCEDURE IF EXISTS `selectNearbyOrgResponses` */;
-/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
-/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
-/*!50003 SET @saved_col_connection = @@collation_connection */ ;
-/*!50003 SET character_set_client  = utf8 */ ;
-/*!50003 SET character_set_results = utf8 */ ;
-/*!50003 SET collation_connection  = utf8_general_ci */ ;
-/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
-/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION' */ ;
-DELIMITER ;;
-CREATE PROCEDURE `selectNearbyOrgResponses`(zipcode INT, max_range FLOAT)
+CREATE  PROCEDURE selectNearbyOrgResponses (zipcode INT, max_range FLOAT)
 BEGIN
   
-SET @sql = CONCAT('
 /* To display questions to customers */
 /* Includes
 -	question group, a heading
@@ -62,7 +38,10 @@ org.orgid, org.org_name, org.customer_notice, dist.distance, org_website, org.mi
 	org.money_url, org.customer_contact, org.abbreviated_name,
 	C.group_text, C.question_id, C.customer_question_text, C.choice_id, C.choice_text, 
 	ORGR.org_response_id, 
-    ORGR.selected AS selected
+    ORGR.selected AS selected,
+    C.page_num AS group_order, 
+    C.Q_ORDER,
+    C.CHOICE_ORDER
 
 FROM /*get the orgnaizations in range */
     	(SELECT org.orgid, 
@@ -70,10 +49,10 @@ FROM /*get the orgnaizations in range */
 		FROM org 
 		INNER JOIN org_zip_code ozc ON org.orgid = ozc.org_id
 		INNER JOIN shared_db.postal_code_ref pcr2 ON pcr2.postal_code = ozc.zip_code
-		INNER JOIN shared_db.postal_code_ref pcr1 ON pcr1.postal_code = ',zipcode,'
+		INNER JOIN shared_db.postal_code_ref pcr1 ON pcr1.postal_code = zipcode
         WHERE org.active_ind = 1 AND org.admin_active_ind = 1
 		GROUP BY org.orgid
-		HAVING distance <= ',max_range,'
+		HAVING distance <= max_range
 		) dist
 
 INNER JOIN org
@@ -95,7 +74,7 @@ INNER JOIN
             C1.choice_id,
 			C1.choice_text,
 				CASE
-					WHEN Q.randomize_order = \'Y\' THEN RAND()
+					WHEN Q.randomize_order = 'Y' THEN RAND()
 					ELSE C1.sort_order
 				END AS CHOICE_ORDER
 		FROM
@@ -104,18 +83,14 @@ INNER JOIN
 			ON (Q.question_id = C1.question_id)
 		INNER JOIN question_group AS QG 
 			ON (Q.question_group_id = QG.group_id)
-		WHERE Q.active_flag <> \'N\'
+		WHERE Q.active_flag <> 'N'
 		) AS C 
 		ON (C.choice_id = ORGR.choice_id)
-ORDER BY org.orgid, org.org_name, dist.distance, C.question_id, C.choice_id
-'
-        );
-    
-    PREPARE stmt FROM @sql;
-	EXECUTE stmt;
-	DEALLOCATE PREPARE stmt;
-END ;;
+ORDER BY org.orgid, org.org_name, dist.distance, C.page_num, C.question_id, C.choice_id;
+
+END
+$$
+
 DELIMITER ;
 
 GRANT EXECUTE ON PROCEDURE selectNearbyOrgResponses TO movemusr@localhost;
-
