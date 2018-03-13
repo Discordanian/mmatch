@@ -86,7 +86,7 @@ INNER JOIN
 		WHERE Q.active_flag <> 'N'
 		) AS C 
 		ON (C.choice_id = ORGR.choice_id)
-ORDER BY org.orgid, org.org_name, dist.distance, C.page_num, C.question_id, C.choice_id;
+ORDER BY org.orgid, org.org_name, dist.distance, C.page_num, C.Q_ORDER, C.CHOICE_ORDER;
 
 END
 $$
