@@ -62,7 +62,7 @@ var mm = {
         var html = "";
         var len = orgs.filter(mm.filterResults).forEach(function(o) {
             html += "<div class=\"panel panel-default\">";
-            html += "<div class=\"panel-heading\">"+o.org_name+"</div>"; // Panel Heading will be org name
+            html += "<div class=\"panel-heading text-center\"><strong>"+o.org_name+"</strong></div>"; // Panel Heading will be org name
             html +="<div class=\"panel-body\">";
             html +="<div class=\"col-sm-6\"><em>Mission:</em> " + o.mission + "</div>";
             html +="<div class=\"col-sm-6\">" + o.org_website + "</div>";
