@@ -49,16 +49,28 @@ var mm = {
     },
     displayResults: function() {
         if (mm.resultsVisible) {
-            $("#table_results").bootstrapTable(
-                "load",
-                orgs.filter(mm.filterResults)
-            );
+            // $("#table_results").bootstrapTable( "load", orgs.filter(mm.filterResults));
+            mm.renderOrgs();
             $("#results").removeClass("hidden").addClass("visible");
 	    document.getElementById('toggle').innerHTML = "Hide Organizations";
         } else {
             $("#results").removeClass("visible").addClass("hidden");
 	    document.getElementById('toggle').innerHTML = "Show Organizations";
         }
+    },
+    renderOrgs: function() {
+        var html = "";
+        var len = orgs.filter(mm.filterResults).forEach(function(o) {
+            html += "<div class=\"panel panel-default\">";
+            html += "<div class=\"panel-heading\">"+o.org_name+"</div>"; // Panel Heading will be org name
+            html +="<div class=\"panel-body\">";
+            html +="<div class=\"col-sm-6\"><em>Mission:</em> " + o.mission + "</div>";
+            html +="<div class=\"col-sm-6\">" + o.org_website + "</div>";
+            html +="</div>"; // close panel body
+            html +="</div>"; // close panel
+        });
+
+        document.getElementById('orgresults').innerHTML = html;
     },
     showNoOrgs: function() {
         $("#no_orgs").removeClass("hidden").addClass("visible");
@@ -175,10 +187,8 @@ $(function() {
         orgs[j] = x;        
     }    
     $("#toggle").click(function(e) {
-        $("#table_results").bootstrapTable(
-            "load",
-            orgs.filter(mm.filterResults)
-        );
+        // $("#table_results").bootstrapTable( "load", orgs.filter(mm.filterResults));
+        mm.renderOrgs();
         e.preventDefault(); // prevent the default anchor functionality
         mm.toggle();
         mm.displayResults();

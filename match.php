@@ -107,22 +107,8 @@ $mconfig['questionid'] = questionIDs($mconfig['questions'], $mconfig['answers'])
 <div id="results" class="container hidden">
   <h2>You may be interested in these</h2>
   <p>We believe that these organizations are the best match for your interests.</p>
-  <table data-toggle="table" id="table_results" class="table">
-    <thead>
-      <tr>
-        <th data-field="org_name">Organization</th>
-        <th data-field="mission">Mission Statement</th>
-        <th data-field="org_website">Website</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td>Nothing</td>
-        <td>Sometihng went Wrong</td>
-        <td>Try reloading a new Zip and Distance</td>
-      </tr>
-    </tbody>
-  </table>
+    <div id="orgresults">
+    </div>
 </div>
 <div class="alert alert-danger hidden" id="no_orgs">
     <strong>No Organizations matched the combination of zipcode and distance</strong>
