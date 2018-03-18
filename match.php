@@ -39,6 +39,7 @@ catch(Exception $e) {
 $mconfig['jsondata'] = json_decode($mconfig['jsonraw'], true);
 $mconfig['questions'] = getQuestions($mconfig['jsondata']);
 $mconfig['answers'] = getAnswers($mconfig['jsondata']);
+$mconfig['groups'] = getGroups($mconfig['jsondata']);
 
 // TODO Bounce if we don't have a zip or a distance
 
@@ -87,7 +88,7 @@ $mconfig['answers'] = getAnswers($mconfig['jsondata']);
 
     <!-- /Limited Multiple Select -->
 <?php
-echo dropDowns($mconfig['questions'], $mconfig['answers']); ?>
+echo dropDowns($mconfig['questions'], $mconfig['answers'], $mconfig['groups']); ?>
 <?php
 $mconfig['questionid'] = questionIDs($mconfig['questions'], $mconfig['answers']); ?>
 
@@ -148,7 +149,8 @@ $mconfig['questionid'] = questionIDs($mconfig['questions'], $mconfig['answers'])
 <?php
 echo "<script type='text/javascript' nonce='{$csp_nonce}'>\n";
 echo "var orgs = {$mconfig['jsonraw']};\n"; 
-echo "var qids = " . json_encode($mconfig['questionid']) . ";\n"; ?>
+echo "var qids = " . json_encode($mconfig['questionid']) . ";\n"; 
+echo "var groups = " . json_encode($mconfig['groups']) . ";\n"; ?>
 </script>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.0/jquery.min.js" 
 		integrity="sha384-nrOSfDHtoPMzJHjVTdCopGqIqeYETSXhZDFyniQ8ZHcVy08QesyHcnOUpMpqnmWq" 

@@ -15,6 +15,25 @@ function getQuestions($json)
     return $retval;
 }
 
+function getGroups($json)
+{
+    $retval = array();
+    foreach($json as $org) {
+        foreach($org['questions'] as $q) {
+            $index = $q['group_order'];
+	    $q_array = array();
+            array_push($q_array, $q['q_id']);
+            
+        if(!isset($retval[$index])) {
+        $retval[$index] = array();
+        }
+            $retval[$index] = array_unique(array_merge($q_array, $retval[$index]));
+        } // foreach question
+    } // foreach org
+
+    return $retval;
+}
+
 // Return a dedeuped list of answers to populate drop downs
 
 function getAnswers($json)
@@ -33,11 +52,11 @@ function getAnswers($json)
     return $retval;
 }
 
-// Pass it the questions and the answers
+// Pass it the questions, answers and the groups
 // returns string
 // Skips questions that have no added value.  IE:  Has less than 2 options
 
-function dropDowns($q, $a)
+function dropDowns($q, $a, $g)
 {
     $counter = 0;
     $retval = "<div class=\"container\">";
