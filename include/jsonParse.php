@@ -61,7 +61,7 @@ function openCollapsible($groupid) {
 <div class="panel-group">
     <div class="panel panel-default">
         <div class="panel-heading">
-            <h4 class="panel-title"><a data-toggle="collapse" href="#$collapseid">Group $groupid</a></h4>
+            <h4 class="panel-title"><a data-toggle="collapse" href="#$collapseid">Question Group</a></h4>
         </div>
     <div id="$collapseid" class="panel-collapse">
 CSSHELL;
