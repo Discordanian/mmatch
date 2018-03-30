@@ -1,3 +1,5 @@
+'use strict';
+
 $(document).ready(function(){
 
 
@@ -18,7 +20,9 @@ $(document).ready(function(){
     $("input#password").blur(function(){
         $(this).val($(this).val().trim());
     });
-    
+
+    /* refresh the page after ~30 minutes, otherwise they will receive a CSRF expired error */
+    setTimeout(refreshPage, 1799000);
 
 });
 
@@ -82,5 +86,10 @@ function isValidEmailAddress(emailAddress)
     return emailAddress.length > 0 && pattern.test(emailAddress);
 }
 
+function refreshPage()
+{
 
+    window.location.replace(window.location);
+
+}
 
