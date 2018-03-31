@@ -110,26 +110,28 @@ $mconfig['questionid'] = questionIDs($mconfig['questions'], $mconfig['answers'])
     <div id="orgresults">
     </div>
 </div>
-<div class="alert alert-danger hidden" id="no_orgs">
-    <strong>No Organizations matched the combination of zipcode and distance</strong>
-</div>
-<div class="alert alert-danger hidden" id="all_filtered">
-    <strong>All Organizations have been filtered out.  No Organizations match the combination of zipcode,distance and choice of answers selected</strong>
-</div>
-<div class="alert alert-info" id="disclaimer">
-<p>Choices are not comprehensive. You may not find what you are looking for. If you do not see what you want, it is because none of the organizations in your area created that choice you are looking for. Skip any question that does not help you to match to an activist organization.</p>
-</div>
-<div class="container border" id="footer">
-<a href="index.php" class="btn btn-info" role="button">Pick a New ZipCode or Distance</a>
-</div>
-<div class="container border hidden" id="debug">
-<pre>
-<?php
+<div class="container" id="feedback">
+    <div class="alert alert-danger hidden" id="no_orgs">
+        <strong>No Organizations matched the combination of zipcode and distance</strong>
+    </div>
+    <div class="alert alert-danger hidden" id="all_filtered">
+        <strong>All Organizations have been filtered out.  No Organizations match the combination of zipcode,distance and choice of answers selected</strong>
+    </div>
+    <div class="alert alert-info" id="disclaimer">
+    <p>Choices are not comprehensive. You may not find what you are looking for. If you do not see what you want, it is because none of the organizations in your area created that choice you are looking for. Skip any question that does not help you to match to an activist organization.</p>
+    </div>
+    <div class="container border" id="footer">
+    <a href="index.php" class="btn btn-info" role="button">Pick a New ZipCode or Distance</a>
+    </div>
+    <div class="container border hidden" id="debug">
+    <pre>
+    <?php
 
-// print_r($mconfig);
+    // print_r($mconfig);
 
-?>
-</pre>
+    ?>
+    </pre>
+    </div>
 </div>
 <!-- /Results Table -->
 <?php
