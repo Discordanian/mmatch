@@ -70,17 +70,16 @@ $mconfig['groupTs'] = getGroupText($mconfig['jsondata']);
   <h1>Movement Match</h1></center>
 
 <!-- Wrapping Form and Progres Bar in Continer TOP -->
-<div class="container">
-
-  <!-- Progress Bar -->
+<div id="main" class="container">
+<!-- 
   <div class="progress">
     <div id="progcomplete" class="progress-bar progress-bar-success" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width:0%">Filtered
-
     </div>
     <div id="progremain" class="progress-bar progress-bar-warning" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width:100%">
       Remaining
     </div>
   </div>
+-->
   <!-- /End of Progress Bar -->
 
   <!-- Form Start  -->

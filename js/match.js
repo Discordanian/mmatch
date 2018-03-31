@@ -23,10 +23,10 @@ var hrefWebsite =  function() {
 				url = "Volunteer Contact: <em>"+volunteer+"</em><br />";
 			}
 		}
-		if (org.money_url) { 
+		if (org.money_url) {
 		url += "Donate: <a href=\""+org.money_url+"\" target='_blank' rel='noopener'>"+org.money_url+"</a><br />";
 		}
-		if (org.org_website) { 
+		if (org.org_website) {
 		url += "Info: <a href=\""+org.org_website+"\" target='_blank' rel='noopener'>"+org.org_website+"</a>";
 		}
 		org.org_website = url;
@@ -84,7 +84,7 @@ var mm = {
     hideAllFiltered: function() {
         $("#all_filtered").removeClass("visible").addClass("hidden");
 	document.getElementById('toggle').innerHTML = "Show Organizations";
-    }, 
+    },
     filterResults: function(x) {
         var retval = true;
         /*
@@ -165,12 +165,12 @@ var mm = {
             mm.complete +
             "]"
         );
-        $("#progcomplete")
-            .css("width", mm.complete + "%")
-            .attr("aria-valuenow", mm.complete);
-        $("#progremain")
-            .css("width", 100 - mm.complete + "%")
-            .attr("aria-valuenow", 100 - mm.complete);
+        // $("#progcomplete")
+        //     .css("width", mm.complete + "%")
+        //     .attr("aria-valuenow", mm.complete);
+        // $("#progremain")
+        //     .css("width", 100 - mm.complete + "%")
+        //     .attr("aria-valuenow", 100 - mm.complete);
 
 
     }
@@ -184,8 +184,8 @@ $(function() {
 	j = Math.floor(Math.random() * (i+1));
         x = orgs[i];
         orgs[i] = orgs[j];
-        orgs[j] = x;        
-    }    
+        orgs[j] = x;
+    }
     $("#toggle").click(function(e) {
         // $("#table_results").bootstrapTable( "load", orgs.filter(mm.filterResults));
         mm.renderOrgs();
