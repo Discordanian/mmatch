@@ -15,7 +15,7 @@ function getQuestions($json)
     return $retval;
 }
 
-function getGroups($json)
+function getGroupQuestions($json)
 {
     $retval = array();
     foreach($json as $org) {
@@ -30,6 +30,21 @@ function getGroups($json)
             // merge arrays, de-dupe the merged array, then sort
             $retval[$index] = array_unique(array_merge($q_array, $retval[$index]));
             sort($retval[$index]);
+        } // foreach question
+    } // foreach org
+
+    return $retval;
+}
+
+function getGroupText($json)
+{
+    $retval = array();
+    foreach($json as $org) {
+        foreach($org['questions'] as $q) {
+            $index = $q['group_order'];
+            $text  = $q['group_text'];
+            
+            $retval[$index] = $text;
         } // foreach question
     } // foreach org
 
@@ -55,13 +70,13 @@ function getAnswers($json)
 }
 
 // openCollapsible creates all the opening divs for a collapsible panel in html/css
-function openCollapsible($groupid) {
+function openCollapsible($groupid,$text) {
     $collapseid = "collapse_".$groupid;
     $retval = <<<CSSHELL
 <div class="panel-group">
     <div class="panel panel-default">
         <div class="panel-heading">
-            <h4 class="panel-title"><a data-toggle="collapse" href="#$collapseid">Question Group</a></h4>
+            <h4 class="panel-title"><a data-toggle="collapse" href="#$collapseid">$text</a></h4>
         </div>
     <div id="$collapseid" class="panel-collapse">
 CSSHELL;
@@ -85,13 +100,14 @@ CSSHELL;
 // returns string
 // Skips questions that have no added value.  IE:  Has less than 2 options
 
-function dropDowns($q, $a, $g)
+function dropDowns($q, $a, $g, $gt)
 {
     $retval = "<div id=\"dropdowns\">\n";
     foreach(array_keys($g) as $gid) {
         $counter = 0;
+        $text = $gt[$gid];
         $questions = $g[$gid];
-        $retval .= openCollapsible($gid);
+        $retval .= openCollapsible($gid,$text);
 
         $retval .= "<div class=\"container\">";
         $leftside = "<div class=\"col-sm-6\">\n";
@@ -147,6 +163,6 @@ function questionIDs($q, $a)
         } // end answers > 1
     } // foreach
     return $retval;
-} //dropDowns
+} //questionIDs
 
 ?>

@@ -39,7 +39,8 @@ catch(Exception $e) {
 $mconfig['jsondata'] = json_decode($mconfig['jsonraw'], true);
 $mconfig['questions'] = getQuestions($mconfig['jsondata']);
 $mconfig['answers'] = getAnswers($mconfig['jsondata']);
-$mconfig['groups'] = getGroups($mconfig['jsondata']);
+$mconfig['groupQs'] = getGroupQuestions($mconfig['jsondata']);
+$mconfig['groupTs'] = getGroupText($mconfig['jsondata']);
 
 // TODO Bounce if we don't have a zip or a distance
 
@@ -88,7 +89,7 @@ $mconfig['groups'] = getGroups($mconfig['jsondata']);
 
     <!-- /Limited Multiple Select -->
 <?php
-echo dropDowns($mconfig['questions'], $mconfig['answers'], $mconfig['groups']); ?>
+echo dropDowns($mconfig['questions'], $mconfig['answers'], $mconfig['groupQs'], $mconfig['groupTs']); ?>
 <?php
 $mconfig['questionid'] = questionIDs($mconfig['questions'], $mconfig['answers']); ?>
 
@@ -136,7 +137,8 @@ $mconfig['questionid'] = questionIDs($mconfig['questions'], $mconfig['answers'])
 echo "<script type='text/javascript' nonce='{$csp_nonce}'>\n";
 echo "var orgs = {$mconfig['jsonraw']};\n"; 
 echo "var qids = " . json_encode($mconfig['questionid']) . ";\n"; 
-echo "var groups = " . json_encode($mconfig['groups']) . ";\n"; 
+echo "var groupQs = " . json_encode($mconfig['groupQs']) . ";\n"; 
+echo "var groupTs = " . json_encode($mconfig['groupTs']) . ";\n"; 
 echo "var questions = " . json_encode($mconfig['questions']) . ";\n"; 
 echo "var answers = " . json_encode($mconfig['answers']) . ";\n"; ?>
 </script>
