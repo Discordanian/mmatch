@@ -48,17 +48,15 @@ $mconfig['groupTs'] = getGroupText($mconfig['jsondata']);
 <!DOCTYPE html>
 <html >
 <head>
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' *.bootstrapcdn.com *.cloudflare.com;  img-src https://*;">  
   <meta charset="UTF-8">
   <title>Movement Match</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   
-    <link rel="stylesheet prefetch" 
-        href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/css/bootstrap.min.css" 
-        integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" 
-        crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.1.0/css/bootstrap.min.css" />
 <link rel='stylesheet prefetch' href='https://fonts.googleapis.com/css?family=Lato:300,400,700,300italic,400italic,700italic'>
-<link rel='stylesheet prefetch' href='https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.2/css/bootstrap-select.css'>
-<link rel='stylesheet prefetch' href='https://cdnjs.cloudflare.com/ajax/libs/bootstrap-table/1.11.1/bootstrap-table.css'>
+<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.13.0/css/bootstrap-select.min.css" />
+
 
       <link rel="stylesheet" href="css/style.css">
 
@@ -66,8 +64,7 @@ $mconfig['groupTs'] = getGroupText($mconfig['jsondata']);
 </head>
 
 <body>
-  <center>
-  <h1>Movement Match</h1></center>
+  <h1 class='text-center'>Movement Match</h1>
 
 <!-- Wrapping Form and Progres Bar in Continer TOP -->
 <div id="main" class="container">
@@ -143,17 +140,12 @@ echo "var groupTs = " . json_encode($mconfig['groupTs']) . ";\n";
 echo "var questions = " . json_encode($mconfig['questions']) . ";\n"; 
 echo "var answers = " . json_encode($mconfig['answers']) . ";\n"; ?>
 </script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.0/jquery.min.js" 
-        integrity="sha384-nrOSfDHtoPMzJHjVTdCopGqIqeYETSXhZDFyniQ8ZHcVy08QesyHcnOUpMpqnmWq" 
-        crossorigin="anonymous"></script>        
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.0/jquery-ui.min.js" 
-        integrity="sha384-C/LoS0Y+QiLvc/pkrxB48hGurivhosqjvaTeRH7YLTf2a6Ecg7yMdQqTD3bdFmMO" 
-        crossorigin="anonymous"></script>    
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js" 
-        integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" 
-        crossorigin="anonymous"></script>
-<script src='https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.2/js/bootstrap-select.min.js'></script>
-<script src='https://cdnjs.cloudflare.com/ajax/libs/bootstrap-table/1.11.1/bootstrap-table.min.js'></script>
+<!-- JQuery, Popper, Bootstrap, Match -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.slim.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.1.0/js/bootstrap.bundle.min.js"></script>
+
+
 <script src="js/match.js"></script>
 
 </body>
