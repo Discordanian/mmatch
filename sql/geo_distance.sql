@@ -1,15 +1,21 @@
 DROP FUNCTION IF EXISTS geo_distance;
 
 DELIMITER $$
-CREATE FUNCTION geo_distance (lat1 double, long1 double, lat2 double, long2 double)
+CREATE FUNCTION geo_distance (lat1 DOUBLE, lon1 DOUBLE, lat2 DOUBLE, lon2 DOUBLE)
 RETURNS double DETERMINISTIC
 BEGIN
-	DECLARE pt1 POINT;
-	DECLARE pt2 POINT;
+/* Based on Haversine formula and adapted from code on:
+https://stackoverflow.com/questions/27928/calculate-distance-between-two-latitude-longitude-points-haversine-formula */
 	DECLARE dist DOUBLE;
-	SET pt1 = POINT(long1, lat1);
-	SET pt2 = POINT(long2, lat2);
-	SET dist = ST_Distance_Sphere(pt1, pt2)/1000;
+	DECLARE dLon DOUBLE;
+	DECLARE dLat DOUBLE;
+	DECLARE a DOUBLE;
+	DECLARE c DOUBLE;
+	SET dLat = RADIANS(lat2 - lat1);
+	SET dLon = RADIANS(lon2 - lon1);
+	SET a = POW(SIN(dLat / 2), 2) + (COS(RADIANS(lat1)) * COS(RADIANS(lat2))) * POW(SIN(dLon / 2), 2);
+	SET c = 2 * ATAN2(SQRT(a), SQRT(1-a));
+	SET dist = 6370.985 * c;
 	RETURN dist;
 END
 $$
