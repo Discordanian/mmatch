@@ -48,13 +48,12 @@ $mconfig['groupTs'] = getGroupText($mconfig['jsondata']);
 <!DOCTYPE html>
 <html >
 <head>
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self' *.bootstrapcdn.com *.cloudflare.com;  img-src https://*;">  
+  <!-- <meta http-equiv="Content-Security-Policy" content="default-src 'self' *.bootstrapcdn.com *.cloudflare.com;  img-src https://*;">   -->
   <meta charset="UTF-8">
   <title>Movement Match</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.1.0/css/bootstrap.min.css" />
-<link rel='stylesheet prefetch' href='https://fonts.googleapis.com/css?family=Lato:300,400,700,300italic,400italic,700italic'>
 <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.13.0/css/bootstrap-select.min.css" />
 
 
@@ -68,15 +67,6 @@ $mconfig['groupTs'] = getGroupText($mconfig['jsondata']);
 
 <!-- Wrapping Form and Progres Bar in Continer TOP -->
 <div id="main" class="container">
-<!-- 
-  <div class="progress">
-    <div id="progcomplete" class="progress-bar progress-bar-success" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width:0%">Filtered
-    </div>
-    <div id="progremain" class="progress-bar progress-bar-warning" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width:100%">
-      Remaining
-    </div>
-  </div>
--->
   <!-- /End of Progress Bar -->
 
   <!-- Form Start  -->
@@ -144,6 +134,7 @@ echo "var answers = " . json_encode($mconfig['answers']) . ";\n"; ?>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.slim.min.js"></script>
 <script src="//cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.1.0/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.13.0/js/bootstrap-select.bundle.min.js"></script>
 
 
 <script src="js/match.js"></script>
