@@ -165,4 +165,23 @@ function questionIDs($q, $a)
     return $retval;
 } //questionIDs
 
+// Dummy Function to be replaced with real one with values from DB
+// TODO: Hit database
+function question1options() {
+    $retval = <<<EOS
+    <option>Wealth distribution and economic systems.</option>
+    <option>The food supply.</option>
+    <option>Americans' mutual respect for people who look different (e.g. color of skin).</option>
+    <option>Voting and elections.</option>
+    <option>Educational opportunities.</option>
+    <option>Systems of taxation.</option>
+    <option>The natural environment.</option>
+    <option>Transportation.</option>
+    <option>Housing.</option>
+    <option>Healthcare.</option>
+    <option>Policing, Prisons, and the Courts.</option>
+EOS;
+    return $retval;
+}
+
 ?>
