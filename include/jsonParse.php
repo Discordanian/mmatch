@@ -184,4 +184,208 @@ EOS;
     return $retval;
 }
 
+// Parse actual question array
+function carouselQuestions() {
+    $retval =<<<EOS
+              <!-- carouselQuestions START {{{ -->
+              <!-- Slide one -->
+              <div class="carousel-item active">
+                <p>Describe the types of issues you are focused on.</p>
+                <form>
+                  <div class="form-group row align-items-center">
+                    <label for="" class="col-form-label col-sm-6">I want to work on these systems:</label>
+                    <div class="col-sm-6">
+                      <select class="form-control" id="">
+                        <option>Test 1</option>
+                        <option>2</option>
+                        <option>3</option>
+                        <option>4</option>
+                        <option>5</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="form-group row align-items-center">
+                    <label for="" class="col-form-label col-sm-6">I'd like to support organziations that who foster these policies:</label>
+                      <div class="col-sm-6">
+                        <select class="form-control" id="">
+                        <option>1</option>
+                        <option>2</option>
+                        <option>3</option>
+                        <option>4</option>
+                        <option>5</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="form-group row align-items-center">
+                    <label for="" class="col-form-label col-sm-6">I'd like to support organizations that work to lift the oppression from these groups:</label>
+                    <div class="col-sm-6">
+                      <select class="form-control" id="">
+                        <option>1</option>
+                        <option>2</option>
+                        <option>3</option>
+                        <option>4</option>
+                        <option>5</option>
+                      </select>
+                    </div>
+                  </div>
+                </form>
+              </div>
+              <!-- Slide two -->
+              <div class="carousel-item">
+                <p>Tell us information about the organization</p>
+                <form>
+                  <div class="form-group row align-items-center">
+                    <label for="" class="col-form-label col-sm-6">Regarding the scope of an organization, I would prefer:</label>
+                    <div class="col-sm-6">
+                      <select class="form-control" id="">
+                        <option>1</option>
+                        <option>2</option>
+                        <option>3</option>
+                        <option>4</option>
+                        <option>5</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="form-group row align-items-center">
+                    <label for="" class="col-form-label col-sm-6">Regarding the maturity of an organization, I would prefer a:</label>
+                      <div class="col-sm-6">
+                        <select class="form-control" id="">
+                        <option>1</option>
+                        <option>2</option>
+                        <option>3</option>
+                        <option>4</option>
+                        <option>5</option>
+                      </select>
+                    </div>
+                  </div>
+                </form>
+              </div>
+              <!-- Slide three -->
+              <div class="carousel-item">
+                <p>Do your beliefs line up to those of the organization?</p>
+                <form>
+                  <div class="form-group row align-items-center">
+                    <label for="" class="col-form-label col-sm-6">I believe that sustainable change comes from:</label>
+                    <div class="col-sm-6">
+                      <select class="form-control" id="">
+                        <option>1</option>
+                        <option>2</option>
+                        <option>3</option>
+                        <option>4</option>
+                        <option>5</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="form-group row align-items-center">
+                    <label for="" class="col-form-label col-sm-6">I believe change is possible</label>
+                      <div class="col-sm-6">
+                        <select class="form-control" id="">
+                        <option>1</option>
+                        <option>2</option>
+                        <option>3</option>
+                        <option>4</option>
+                        <option>5</option>
+                      </select>
+                    </div>
+                  </div>
+                </form>
+              </div>
+              <!-- Slide four -->
+              <div class="carousel-item">
+                <p>Questions about what a volunteer would be doing:</p>
+                <form>
+                  <div class="form-group row align-items-center">
+                    <label for="" class="col-form-label col-sm-6">I will best contribute by:</label>
+                    <div class="col-sm-6">
+                      <select class="form-control" id="">
+                        <option>1</option>
+                        <option>2</option>
+                        <option>3</option>
+                        <option>4</option>
+                        <option>5</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="form-group row align-items-center">
+                    <label for="" class="col-form-label col-sm-6">I plan to devote a few hours:</label>
+                      <div class="col-sm-6">
+                      <select class="form-control" id="">
+                        <option>1</option>
+                        <option>2</option>
+                        <option>3</option>
+                        <option>4</option>
+                        <option>5</option>
+                        </select>
+                    </div>
+                  </div>
+                  <div class="form-group row align-items-center">
+                    <label for="" class="col-form-label col-sm-6">Do you want to use a particular skill?</label>
+                    <div class="col-sm-6">
+                      <select class="form-control" id="">
+                        <option>1</option>
+                        <option>2</option>
+                        <option>3</option>
+                        <option>4</option>
+                        <option>5</option>
+                      </select> 
+                    </div>
+                  </div>
+                  <div class="form-group row align-items-center">
+                    <label for="" class="col-form-label col-sm-6">I am willing to effect change by:</label>
+                    <div class="col-sm-6">
+                      <select class="form-control" id="">
+                        <option>1</option>
+                        <option>2</option>
+                        <option>3</option>
+                        <option>4</option>
+                        <option>5</option>
+                      </select> 
+                    </div>
+                  </div>
+                </form>
+              </div>
+              <!-- Slide five -->
+              <div class="carousel-item">
+                <p>Questions about the kind of organization you would like to work in:</p>
+                <form>
+                  <div class="form-group row align-items-center">
+                    <label for="" class="col-form-label col-sm-6">Some organizations charge dues to their membership. Would you consider:</label>
+                    <div class="col-sm-6">
+                      <select class="form-control" id="">
+                        <option>1</option>
+                        <option>2</option>
+                        <option>3</option>
+                        <option>4</option>
+                        <option>5</option>
+                      </select>
+                    </div>
+                  </div>
+                </form>
+              </div>
+              <!-- Slide six -->
+              <div class="carousel-item">
+                <p>Questions about the organizations membership and how you relate to it:</p>
+                <form>
+                  <div class="form-group row align-items-center">
+                    <label for="" class="col-form-label col-sm-6">Select one of these ages that apply to you:</label>
+                    <div class="col-sm-6">
+                      <select class="form-control" id="">
+                        <option>1</option>
+                        <option>2</option>
+                        <option>3</option>
+                        <option>4</option>
+                        <option>5</option>
+                      </select>
+                    </div>
+                  </div>
+                </form>
+              </div>
+              <!-- carouselQuestions END }}} -->
+
+EOS;
+    return $retval;
+
+
+}
+
 ?>

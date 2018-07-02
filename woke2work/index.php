@@ -45,8 +45,8 @@
             <div class="form-group form-inline row no-gutters justify-content-center">
               <div class="col-sm-12 col-md-5">
               <div class="row justify-content-center">
-                <label for="zip" class="col-sm-12 col-md-auto col-form-label">Your zip code</label>
-                <input type="text" class="form-control col-sm-12 col-md-4" id="zip" name="zip" placeholder="63010">
+                <label for="zipcode" class="col-sm-12 col-md-auto col-form-label">Your zip code</label>
+                <input type="text" class="form-control col-sm-12 col-md-4" id="zipcode" name="zipcode" placeholder="63010">
               </div>
               </div>
               <div class="col-sm-12 col-md-7">
