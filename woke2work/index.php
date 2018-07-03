@@ -1,5 +1,53 @@
 <!DOCTYPE html>
-<?php require_once('../include/jsonParse.php'); ?>
+<?php 
+// require_once('include/csp.php');
+require_once ('../include/inisets.php');
+require_once ('../include/returnOrgsForZipcodeFunction.php');
+require_once ('../include/jsonParse.php');
+//
+ // Parses PHP json objects for management
+// session_start();
+// "Global" to the page
+
+$mconfig = array(
+    "zipcode" => "63104",
+    "distance" => "20"
+);
+
+function validateGetData()
+{
+    global $mconfig;
+    if (isset($_GET['zipcode']) && isset($_GET["distance"])) {
+        $mconfig['zipcode'] = FILTER_VAR($_GET["zipcode"], FILTER_SANITIZE_ENCODED); // Zips can start with a 0
+        $mconfig['distance'] = FILTER_VAR($_GET["distance"], FILTER_VALIDATE_INT);
+    }
+    else {
+
+        // Bounce to index.html
+
+    }
+}
+
+validateGetData();
+try {
+    $mconfig['jsonraw'] = getZipCodeData($mconfig['zipcode'], $mconfig['distance']);
+}
+
+catch(Exception $e) {
+    $mconfig['jsonraw'] = "[]";
+}
+
+$mconfig['jsondata'] = json_decode($mconfig['jsonraw'], true);
+$mconfig['questions'] = getQuestions($mconfig['jsondata']);
+$mconfig['answers'] = getAnswers($mconfig['jsondata']);
+$mconfig['groupQs'] = getGroupQuestions($mconfig['jsondata']);
+$mconfig['groupTs'] = getGroupText($mconfig['jsondata']);
+
+// TODO Bounce if we don't have a zip or a distance
+
+
+
+?>
 <html>
   <head>
     
@@ -37,7 +85,7 @@
                 <select class="form-control" id="question_1" name="Q1">
                     <?php
                         // Function returns string
-                        echo question1options();
+                        echo question1options($mconfig['questions'], $mconfig['answers'], $mconfig['groupQs'], $mconfig['groupTs']);
                     ?>
                 </select>
               </div>
@@ -159,4 +207,12 @@
     <script type="text/javascript" src="js/woke2work.js"></script>
 
   </body>
+<?php
+echo "<script type='text/javascript' nonce='{$csp_nonce}'>\n";
+echo "var orgs = {$mconfig['jsonraw']};\n"; 
+echo "var qids = " . json_encode($mconfig['questionid']) . ";\n"; 
+echo "var groupQs = " . json_encode($mconfig['groupQs']) . ";\n"; 
+echo "var groupTs = " . json_encode($mconfig['groupTs']) . ";\n"; 
+echo "var questions = " . json_encode($mconfig['questions']) . ";\n"; 
+echo "var answers = " . json_encode($mconfig['answers']) . ";\n"; ?>
 </html>

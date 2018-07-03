@@ -167,7 +167,25 @@ function questionIDs($q, $a)
 
 // Dummy Function to be replaced with real one with values from DB
 // TODO: Hit database
-function question1options() {
+function question1options($q, $a, $g, $gt) {
+    $retval = "";
+    $done = false;
+    foreach(array_keys($g) as $gid) {
+        if (!$done) {
+        $questions = $g[$gid];
+            foreach($questions as $key) {
+                if(!$done) {
+                    $done = true; // as soon as we are in first group and first question
+                    foreach($a[$key] as $answer) {
+                        $retval.= "\n\t<option>$answer</option>\n";
+                    } // foreach answer
+                } // if !$done questions
+            } // foreach
+        } // if !$done groups
+    } // foreach
+
+/*
+
     $retval = <<<EOS
     <option>Wealth distribution and economic systems.</option>
     <option>The food supply.</option>
@@ -181,6 +199,7 @@ function question1options() {
     <option>Healthcare.</option>
     <option>Policing, Prisons, and the Courts.</option>
 EOS;
+ */
     return $retval;
 }
 
