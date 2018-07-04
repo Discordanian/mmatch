@@ -100,6 +100,7 @@ CSSHELL;
 // returns string
 // Skips questions that have no added value.  IE:  Has less than 2 options
 
+// Questions, Answers, GroupQuestions, GroupText
 function dropDowns($q, $a, $g, $gt)
 {
     $retval = "<div id=\"dropdowns\">\n";
@@ -200,7 +201,52 @@ function question1options($q, $a, $g, $gt) {
 }
 
 // Parse actual question array W2W
-function carouselQuestions() {
+// Questions, Answers, GroupQuestions, GroupText
+function carouselQuestions($q, $a, $g, $gt) {
+    $retval = "";
+    $first = true;
+
+    foreach(array_keys($g) as $gid) {
+        $questions = $g[$gid];
+
+        $retval.="\n\t\t<!-- Slide # $gid -->\n";
+
+        if($first) {
+            $retval.="\t\t<div class=\"carousel-item active\">\n";
+            $first=false;
+        } else {
+            $retval.="\t\t<div class=\"carousel-item\">\n";
+        }
+        $groupText = $gt[$gid];
+
+        $retval.="\t\t <p>$groupText</p>\n\t\t <form>\n";
+        // For each Question in this Slide
+        foreach($questions as $key) {
+            $questionText = $q[$key];
+            $divid="question_$key";
+            $retval.="\t\t  <div class=\"form-group row align-items-center\">\n";
+            $retval.="\t\t    <label for=\"\" class=\"col-form-label col-sm-6\">$questionText</label>\n";
+            $retval.="\t\t    <div class=\"col-sm-6\">\n";
+            $retval.="\t\t    <select class=\"form-control\" id=\"$divid\">\n";
+            $retval.="\t\t     <option>_ALL_</option>\n";
+
+                foreach($a[$key] as $answer) {
+                    $retval.= "\t\t     <option>$answer</option>\n";
+                } // foreach $answer
+            $retval.="\t\t   </select>\n";
+            $retval.="\t\t  </div>\n";
+            $retval.="\t\t </div>\n";
+        } // foreach $question
+        $retval.="\t\t</form>\n";
+        $retval.="\t\t</div>\n";
+    } // foreach $gid -- End Slide
+
+    return $retval;
+
+
+
+
+    /*
     $retval =<<<EOS
               <!-- carouselQuestions START {{{ -->
               <!-- Slide one -->
@@ -399,7 +445,7 @@ function carouselQuestions() {
 
 EOS;
     return $retval;
-
+*/
 
 }
 

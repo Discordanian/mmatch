@@ -9,9 +9,10 @@ require_once ('../include/jsonParse.php');
 // session_start();
 // "Global" to the page
 
+// TODO Assume defaults for no zip/distance as the W2W style implies defaults
 $mconfig = array(
     "zipcode" => "63104",
-    "distance" => "20"
+    "distance" => "15"
 );
 
 function validateGetData()
@@ -37,13 +38,12 @@ catch(Exception $e) {
     $mconfig['jsonraw'] = "[]";
 }
 
-$mconfig['jsondata'] = json_decode($mconfig['jsonraw'], true);
+$mconfig['jsondata']  = json_decode($mconfig['jsonraw'], true);
 $mconfig['questions'] = getQuestions($mconfig['jsondata']);
-$mconfig['answers'] = getAnswers($mconfig['jsondata']);
-$mconfig['groupQs'] = getGroupQuestions($mconfig['jsondata']);
-$mconfig['groupTs'] = getGroupText($mconfig['jsondata']);
+$mconfig['answers']   = getAnswers($mconfig['jsondata']);
+$mconfig['groupQs']   = getGroupQuestions($mconfig['jsondata']);
+$mconfig['groupTs']   = getGroupText($mconfig['jsondata']);
 
-// TODO Bounce if we don't have a zip or a distance
 
 
 
@@ -300,4 +300,18 @@ $mconfig['groupTs'] = getGroupText($mconfig['jsondata']);
     });
 
   </script>
+<?php
+echo "\n\n";
+echo "<script type='text/javascript' nonce='{$csp_nonce}'>\n";
+echo "var orgs = {$mconfig['jsonraw']};\n"; 
+echo "\n\n";
+echo "var qids = " . json_encode($mconfig['questionid']) . ";\n"; 
+echo "\n\n";
+echo "var groupQs = " . json_encode($mconfig['groupQs']) . ";\n"; 
+echo "\n\n";
+echo "var groupTs = " . json_encode($mconfig['groupTs']) . ";\n"; 
+echo "\n\n";
+echo "var questions = " . json_encode($mconfig['questions']) . ";\n"; 
+echo "\n\n";
+echo "var answers = " . json_encode($mconfig['answers']) . ";\n"; ?>
 </html>
