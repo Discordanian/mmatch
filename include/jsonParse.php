@@ -149,7 +149,6 @@ QUESTION;
 } //dropDowns
 
 // Return relevant question IDs for the DOM in an array
-
 function questionIDs($q, $a)
 {
     $retval = array();
@@ -165,8 +164,21 @@ function questionIDs($q, $a)
     return $retval;
 } //questionIDs
 
-// Dummy Function to be replaced with real one with values from DB
-// TODO: Hit database
+// Return Text for 'Core' Question W2W
+function question1Text($q)
+{
+    $retval = "";
+    $done = false;
+    foreach(array_keys($q) as $key) {
+        if(!$done) {
+            $done = true;
+            $retval = $q[$key];
+        }
+    } // foreach
+    return $retval;
+} //questionIDs
+
+// Return option list for 'Core' question
 function question1options($q, $a, $g, $gt) {
     $retval = "";
     $done = false;
@@ -184,26 +196,10 @@ function question1options($q, $a, $g, $gt) {
         } // if !$done groups
     } // foreach
 
-/*
-
-    $retval = <<<EOS
-    <option>Wealth distribution and economic systems.</option>
-    <option>The food supply.</option>
-    <option>Americans' mutual respect for people who look different (e.g. color of skin).</option>
-    <option>Voting and elections.</option>
-    <option>Educational opportunities.</option>
-    <option>Systems of taxation.</option>
-    <option>The natural environment.</option>
-    <option>Transportation.</option>
-    <option>Housing.</option>
-    <option>Healthcare.</option>
-    <option>Policing, Prisons, and the Courts.</option>
-EOS;
- */
     return $retval;
 }
 
-// Parse actual question array
+// Parse actual question array W2W
 function carouselQuestions() {
     $retval =<<<EOS
               <!-- carouselQuestions START {{{ -->

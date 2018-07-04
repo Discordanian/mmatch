@@ -80,7 +80,7 @@ $mconfig['groupTs'] = getGroupText($mconfig['jsondata']);
           <h6>Find a progressive org near you</h6>
           <form action="match.php" method="GET">
             <div class="form-group row no-gutters justify-content-center">
-              <label for="Q1" class="col-sm-12 col-md-auto col-form-label text-sm-center">What are you interested in working on?</label>
+            <label for="Q1" class="col-sm-12 col-md-auto col-form-label text-sm-center"><!-- What are you interested in working on?--><?php echo question1Text($mconfig['questions']); ?></label>
               <div class="col-sm-12 col-md-6 col-xl-7">
                 <select class="form-control" id="question_1" name="Q1">
                     <?php
