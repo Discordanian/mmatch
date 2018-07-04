@@ -81,7 +81,7 @@ $mconfig['groupTs']   = getGroupText($mconfig['jsondata']);
                 <!-- The second column set to col-sm to allow for there to not be an image if need be -->
               <div class='row no-gutters align-items-top result'>
                 <div class="col-md-3 col-xl-2 org-logo">
-                  <img src="http://via.placeholder.com/140x90">
+                  <img src="img/140x90.png">
                 </div>
                 <div class="col-sm">
                   <h5>This is a test title</h5>
@@ -91,7 +91,7 @@ $mconfig['groupTs']   = getGroupText($mconfig['jsondata']);
               </div> 
               <div class='row no-gutters align-items-top result'>
                 <div class="col-md-3 col-xl-2 org-logo">
-                  <img src="http://via.placeholder.com/140x90">
+                  <img src="img/140x90.png">
                 </div>
                 <div class="col-sm">
                   <h5>This is a test title</h5>

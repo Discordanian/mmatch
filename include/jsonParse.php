@@ -228,7 +228,7 @@ function carouselQuestions($q, $a, $g, $gt) {
             $retval.="\t\t    <label for=\"\" class=\"col-form-label col-sm-6\">$questionText</label>\n";
             $retval.="\t\t    <div class=\"col-sm-6\">\n";
             $retval.="\t\t    <select class=\"form-control\" id=\"$divid\">\n";
-            $retval.="\t\t     <option>_ALL_</option>\n";
+            $retval.="\t\t     <option>(no selection made)</option>\n";
 
                 foreach($a[$key] as $answer) {
                     $retval.= "\t\t     <option>$answer</option>\n";
