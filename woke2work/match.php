@@ -76,7 +76,7 @@ $mconfig['groupTs']   = getGroupText($mconfig['jsondata']);
           </div>
           <div class="row no-gutters result-wrapper">
             <div class="col">
-              <p class="result-callout">You match <span>__</span> out of <span>__</span> organizations</p>
+              <p class="result-callout">You match <span id="numerator">__</span> out of <span id="denominator">__</span> organizations</p>
               <!-- These will be repeated based on results -->
                 <!-- The second column set to col-sm to allow for there to not be an image if need be -->
               <div class='row no-gutters align-items-top result'>
@@ -233,8 +233,8 @@ $mconfig['groupTs']   = getGroupText($mconfig['jsondata']);
     <script src="https://code.jquery.com/jquery-3.1.1.min.js" integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8=" crossorigin="anonymous"></script>
     <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js" integrity="sha256-VazP97ZCwtekAsvgPBSUwPFKdrwD3unUfSGVYrahUqU=" crossorigin="anonymous"></script>
     <script src="node_modules/bootstrap/dist/js/bootstrap.min.js"></script>
+    <!-- <script type="text/javascript" src="js/woke2work.js"></script> -->
     <script type="text/javascript" src="js/index.js"></script>
-    <script type="text/javascript" src="js/woke2work.js"></script>
   </body>
 
 
@@ -313,5 +313,6 @@ echo "var groupTs = " . json_encode($mconfig['groupTs']) . ";\n";
 echo "\n\n";
 echo "var questions = " . json_encode($mconfig['questions']) . ";\n"; 
 echo "\n\n";
-echo "var answers = " . json_encode($mconfig['answers']) . ";\n"; ?>
+echo "var answers = " . json_encode($mconfig['answers']) . ";\n"; 
+echo "\n\n</script>\n"; ?>
 </html>
