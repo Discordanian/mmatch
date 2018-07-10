@@ -98,12 +98,19 @@ var w2w = {
         w2w.renderOrgs();
     }, // updateProgress
     init: function() {
+
         this.updateProgress();
         var fcs = document.getElementsByClassName("form-control");
 
         for (var i = 0; i < fcs.length; i++) {
             fcs[i].addEventListener('change', this.updateProgress, false);
         }
+
+        if(q1 !== "" ) {
+            document.getElementById("question_39").value = q1;
+        }
+
+        this.updateProgress();
 
     } // init
 
