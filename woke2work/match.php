@@ -19,8 +19,9 @@ function validateGetData()
 {
     global $mconfig;
     if (isset($_GET['zipcode']) && isset($_GET["distance"])) {
-        $mconfig['zipcode'] = FILTER_VAR($_GET["zipcode"], FILTER_SANITIZE_ENCODED); // Zips can start with a 0
-        $mconfig['distance'] = FILTER_VAR($_GET["distance"], FILTER_VALIDATE_INT);
+        $mconfig['zipcode']  = empty(FILTER_VAR($_GET["zipcode"], FILTER_SANITIZE_ENCODED))? "63104": FILTER_VAR($_GET["zipcode"], FILTER_SANITIZE_ENCODED); // Zips can start with a 0
+        $mconfig['distance'] = empty(FILTER_VAR($_GET["distance"], FILTER_VALIDATE_INT))? "15": FILTER_VAR($_GET["distance"], FILTER_VALIDATE_INT);
+        $mconfig['Q1']       = empty($_GET["Q1"])? "(no selection made)": $_GET["Q1"];
     }
     else {
 
@@ -316,5 +317,7 @@ echo "\n\n";
 echo "var questions = " . json_encode($mconfig['questions']) . ";\n"; 
 echo "\n\n";
 echo "var answers = " . json_encode($mconfig['answers']) . ";\n"; 
+echo "\n\n";
+echo "var q1 = " . json_encode($mconfig['Q1']) . ";\n"; 
 echo "\n\n</script>\n"; ?>
 </html>

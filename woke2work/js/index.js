@@ -204,6 +204,8 @@ $(function () {
 
   /********************************  Start this party!  *******************************/
   init();
-  w2w.init(); // Call org display logic
+  if(typeof(w2w) != "undefined") {
+    w2w.init(); // Call org display logic
+  }
 
 });

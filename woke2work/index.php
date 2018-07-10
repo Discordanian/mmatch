@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <?php 
+// index.php
 // require_once('include/csp.php');
 require_once ('../include/inisets.php');
 require_once ('../include/returnOrgsForZipcodeFunction.php');
@@ -18,8 +19,9 @@ function validateGetData()
 {
     global $mconfig;
     if (isset($_GET['zipcode']) && isset($_GET["distance"])) {
-        $mconfig['zipcode'] = FILTER_VAR($_GET["zipcode"], FILTER_SANITIZE_ENCODED); // Zips can start with a 0
-        $mconfig['distance'] = FILTER_VAR($_GET["distance"], FILTER_VALIDATE_INT);
+        $mconfig['zipcode']  = empty(FILTER_VAR($_GET["zipcode"], FILTER_SANITIZE_ENCODED))? "63104": FILTER_VAR($_GET["zipcode"], FILTER_SANITIZE_ENCODED); // Zips can start with a 0
+        $mconfig['distance'] = empty(FILTER_VAR($_GET["distance"], FILTER_VALIDATE_INT))? "15": FILTER_VAR($_GET["distance"], FILTER_VALIDATE_INT);
+        $mconfig['Q1']       = empty($_GET["Q1"])? "(no selection made)": $_GET["Q1"];
     }
     else {
 
@@ -204,7 +206,7 @@ $mconfig['groupTs'] = getGroupText($mconfig['jsondata']);
     <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js" integrity="sha256-VazP97ZCwtekAsvgPBSUwPFKdrwD3unUfSGVYrahUqU=" crossorigin="anonymous"></script>
     <script src="node_modules/bootstrap/dist/js/bootstrap.min.js"></script>
     <script type="text/javascript" src="js/index.js"></script>
-    <script type="text/javascript" src="js/woke2work.js"></script>
+    <!-- <script type="text/javascript" src="js/woke2work.js"></script> -->
 
   </body>
 <?php
