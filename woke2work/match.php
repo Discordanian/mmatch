@@ -79,6 +79,7 @@ $mconfig['groupTs']   = getGroupText($mconfig['jsondata']);
               <p class="result-callout">You match <span id="numerator">__</span> out of <span id="denominator">__</span> organizations</p>
               <!-- These will be repeated based on results -->
                 <!-- The second column set to col-sm to allow for there to not be an image if need be -->
+              <div id="orgresults">
               <div class='row no-gutters align-items-top result'>
                 <div class="col-md-3 col-xl-2 org-logo">
                   <img src="img/140x90.png">
@@ -106,6 +107,7 @@ $mconfig['groupTs']   = getGroupText($mconfig['jsondata']);
                   <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. </p>
                 </div>
               </div>
+             </div> <!-- orgresults -->
 
             </div>
           </div>

@@ -27,8 +27,21 @@ var w2w = {
             });
     }, // hrefWebsite
     renderOrgs: function() {
-        var html = "";
+        var html = "<!-- Woke2Work Orgs -->";
         var len = orgs.filter(w2w.filterResults).forEach(function(o) {
+
+              html+="<div class='row no-gutters align-items-top result'>\n";
+              html+="<div class='col-md-3 col-xl-2 org-logo'>\n";
+              html+="<img src='img/140x90.png'>\n";
+              html+="</div>\n";
+              html+="<div class='col-sm'>\n";
+              html+="<h5>"+o.org_name+"</h5>\n";
+              html+="<a href=\""+o.org_website+"\">"+o.org_website+"</a>\n";
+              html+="<p>"+o.mission+"</p>\n";
+              html+="</div>\n";
+              html+="</div>\n";
+
+/*
             html += "<div class=\"panel panel-default\">";
             html += "<div class=\"panel-heading text-center\"><strong>"+o.org_name+"</strong></div>"; // Panel Heading will be org name
             html +="<div class=\"panel-body\">";
@@ -36,6 +49,7 @@ var w2w = {
             html +="<div class=\"col-sm-6\">" + o.org_website + "</div>";
             html +="</div>"; // close panel body
             html +="</div>"; // close panel
+*/
         });
 
         document.getElementById('orgresults').innerHTML = html;
@@ -81,6 +95,7 @@ var w2w = {
 
         document.getElementById("numerator").innerHTML = selected;
         document.getElementById("denominator").innerHTML = total;
+        w2w.renderOrgs();
     }, // updateProgress
     init: function() {
         this.updateProgress();
@@ -88,7 +103,6 @@ var w2w = {
 
         for (var i = 0; i < fcs.length; i++) {
             fcs[i].addEventListener('change', this.updateProgress, false);
-
         }
 
     } // init

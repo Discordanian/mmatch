@@ -31,8 +31,8 @@ $(function () {
         num = "0" + num;
       }
 
-      images.push( { 
-        "rnd": 0, 
+      images.push( {
+        "rnd": 0,
         "img":"url(img/OrgPhoto_"+num+".jpg)"
       } );
 
@@ -70,7 +70,7 @@ $(function () {
 
   }
 
-  //  Function to properly set up an image and cylce to the next "image" card  
+  //  Function to properly set up an image and cylce to the next "image" card
   function setImage($card){
 
     $card.css("background", images[img].img)
@@ -187,9 +187,9 @@ $(function () {
         var $top = $( $this.find('.top_layer')[0] );
         setImage($top);
 
-        frames.push( { 
+        frames.push( {
           "rnd": 0,
-          "frame":$top 
+          "frame":$top
         } );
 
       } else {
@@ -199,10 +199,11 @@ $(function () {
     });
     shuffle(frames);
     frm = 0;
-    
+
   }
 
   /********************************  Start this party!  *******************************/
   init();
+  w2w.init(); // Call org display logic
 
 });
