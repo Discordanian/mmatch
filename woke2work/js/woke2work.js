@@ -4,7 +4,7 @@
 var w2w = {
     getKey : function(x) {
         return x.split("_")[1];
-    },
+    }, // getKey
     hrefWebsite: function() {
         orgs.forEach(function(org) {
             var url = "";
@@ -25,7 +25,7 @@ var w2w = {
             }
             org.org_website = url;
             });
-    },
+    }, // hrefWebsite
     renderOrgs: function() {
         var html = "";
         var len = orgs.filter(w2w.filterResults).forEach(function(o) {
@@ -39,12 +39,12 @@ var w2w = {
         });
 
         document.getElementById('orgresults').innerHTML = html;
-    },
+    }, // renderOrgs
     filterResults: function(x) {
         var retval = true;
         qids.forEach(function(q) {
             var k = '#' + q;
-            var key = getKey(q);
+            var key = q.split("_")[1]; // Return string after underscore
             var selectedA = $(k).val();
 
             // skip the parse if we already failed OR if nothing was selected for the question
@@ -53,14 +53,18 @@ var w2w = {
                     if (orgq.q_id === key) {
                         var orgAnswers = orgq.answers;
                         var answerMatches = false;
+                        if (orgAnswers.indexOf(selectedA) > -1) {
+                            answerMatches = true;
+                        }
+                        /*
                         selectedA.forEach(function(a) {
                             // See if answer 'a' is in the array for this org.
                             // KAS - I know that indexOf has problems with undefined and NaN but hope that we don't hit that.
                             if (orgAnswers.indexOf(a) > -1) {
                                 answerMatches = true;
-                                logger("Match for answer " + x.org_name + " " + key);
                             }
                         });
+                        */
                         retval = answerMatches;
                     } // if the org has an answer for the given question
 
@@ -70,22 +74,23 @@ var w2w = {
         }); // forEach qids
 
         return retval;
-    },
+    }, //filterResults
     updateProgress: function() {
         var selected = orgs.filter(w2w.filterResults).length;
         var total = orgs.length;
 
         document.getElementById("numerator").innerHTML = selected;
         document.getElementById("denominator").innerHTML = total;
-    },
+    }, // updateProgress
     init: function() {
-        updateProgress();
-        $(".selectpicker").change(function(e) {
-            //e.preventDefault(); // prevent the default anchor functionality
-            //e.default();
+        this.updateProgress();
+        var fcs = document.getElementsByClassName("form-control");
 
-            w2w.updateProgress();
-        });
-    }
+        for (var i = 0; i < fcs.length; i++) {
+            fcs[i].addEventListener('change', this.updateProgress, false);
+
+        }
+
+    } // init
 
 };
