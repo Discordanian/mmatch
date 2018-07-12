@@ -1,77 +1,220 @@
-<?php // require_once('include/csp.php'); ?>
-<?php require_once ('include/inisets.php');?>
-<?php require_once('include/secrets.php'); ?>
 <!DOCTYPE html>
-<html >
-<head>
-  <meta charset="UTF-8">
-  <title>Movement Match</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  
-	<link rel="stylesheet prefetch" 
-		href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/css/bootstrap.min.css" 
-		integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" 
-		crossorigin="anonymous">        
-	<link rel="stylesheet prefetch" 
-		href="https://fonts.googleapis.com/css?family=Lato:300,400,700,300italic,400italic,700italic" 
-		crossorigin="anonymous">
-<!--        <link rel='stylesheet prefetch' 
-	href='https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.2/css/bootstrap-select.css'> -->
-<!--        <link rel='stylesheet prefetch' 
-	href='https://cdnjs.cloudflare.com/ajax/libs/bootstrap-table/1.11.1/bootstrap-table.css'> --> 
+<?php 
+// index.php
+// require_once('include/csp.php');
+require_once ('./include/inisets.php');
+require_once ('./include/returnOrgsForZipcodeFunction.php');
+require_once ('./include/jsonParse.php');
+//
+ // Parses PHP json objects for management
+// session_start();
+// "Global" to the page
 
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.0/jquery.min.js" 
-		integrity="sha384-nrOSfDHtoPMzJHjVTdCopGqIqeYETSXhZDFyniQ8ZHcVy08QesyHcnOUpMpqnmWq" 
-		crossorigin="anonymous"></script>        
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.0/jquery-ui.min.js" 
-		integrity="sha384-C/LoS0Y+QiLvc/pkrxB48hGurivhosqjvaTeRH7YLTf2a6Ecg7yMdQqTD3bdFmMO" 
-		crossorigin="anonymous"></script>	
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js" 
-		integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" 
-		crossorigin="anonymous"></script>
-<!--        <script src='https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.2/js/bootstrap-select.min.js'></script> -->
-<!--        <script src='https://cdnjs.cloudflare.com/ajax/libs/bootstrap-table/1.11.1/bootstrap-table.min.js'></script> -->
+$mconfig = array(
+    "zipcode" => "63104",
+    "distance" => "20"
+);
 
-        <link rel="stylesheet" href="css/style.css">
+function validateGetData()
+{
+    global $mconfig;
+    if (isset($_GET['zipcode']) && isset($_GET["distance"])) {
+        $mconfig['zipcode']  = empty(FILTER_VAR($_GET["zipcode"], FILTER_SANITIZE_ENCODED))? "63104": FILTER_VAR($_GET["zipcode"], FILTER_SANITIZE_ENCODED); // Zips can start with a 0
+        $mconfig['distance'] = empty(FILTER_VAR($_GET["distance"], FILTER_VALIDATE_INT))? "15": FILTER_VAR($_GET["distance"], FILTER_VALIDATE_INT);
+        $mconfig['Q1']       = empty($_GET["Q1"])? "(no selection made)": $_GET["Q1"];
+    }
+    else {
 
-</head>
+        // Bounce to index.html
 
-<body>
-  <center>
-    <h1>Movement Match</h1>
-  </center>
+    }
+}
 
-<!-- TODO Shouldn't span entire page, but looks good on mobile so leaving it for now. -->
-<!-- Wrapping Form and Progress Bar in Container TOP -->
-<div class="container">
+validateGetData();
+try {
+    $mconfig['jsonraw'] = getZipCodeData($mconfig['zipcode'], $mconfig['distance']);
+}
 
+catch(Exception $e) {
+    $mconfig['jsonraw'] = "[]";
+}
 
-  <!-- Form Start  -->
-<form action="match.php" method="get">
-<div class="form-group row">
-  <p><small class="text-muted">This allows you to search for organizations based on locality.</small></p>
-  <label for="zipcode" class="col-xs-4 col-form-label">Enter Zip Code</label>
-  <div class="col-xs-4">
-    <input class="form-control" type="text" value="<?php echo DEFAULT_ZIP ?>" maxlength="5" name="zipcode" id="zipcode">
-  </div>
-</div><!-- form-group row zipcode -->
-<div class="form-group row">
-  <label for="distance" class="col-xs-4 col-form-label">Search Radius (in Miles)</label>
-  <div class="col-xs-4">
-    <input class="form-control" type="number" value="<?php echo DEFAULT_RANGE ?>" min="0" max="99999" id="distance" name="distance">
-  </div>
-</div><!-- form-group row distance -->
+$mconfig['jsondata'] = json_decode($mconfig['jsonraw'], true);
+$mconfig['questions'] = getQuestions($mconfig['jsondata']);
+$mconfig['answers'] = getAnswers($mconfig['jsondata']);
+$mconfig['groupQs'] = getGroupQuestions($mconfig['jsondata']);
+$mconfig['groupTs'] = getGroupText($mconfig['jsondata']);
 
-<input id="submit" type="submit" label="Next" value="Next" class="btn btn-primary">
-</form>
-  <!-- /End of Form  -->
-
-<?php require('include/footer.php'); ?>
-
-</div><!-- /Container TOP -->
+// TODO Bounce if we don't have a zip or a distance
 
 
-	<!-- Not using any of these in this form BUT it will load them to cache in advance of the next page -->
 
-</body>
+?>
+<html>
+  <head>
+    
+    <link rel="stylesheet" type="text/css" href="css/styles.css"/>
+
+  </head>
+  <body>
+    <div class="scroll-wrapper">
+
+      <div class="grid-bg container-fluid" data-zww_grid="341x256"></div>
+
+      <div class="top-grid"></div>
+      <!-- Floating content -->
+      <div class="col-md-10 col-lg-8 floating-box">
+        <div class="logo-wrapper">
+          <a href="#"></a>
+        </div>
+        <div class="row no-gutters title">
+          <div class="col">
+            <h2>Woke<span>2</span>Work</h2>
+            <h2>St Louis</h2>
+            <p>Connecting people to organizations to further build the strength of the progressive movement</p>
+            <a class="hashtag" href="#">#jointhemovement</a>
+          </div>
+        </div>
+        
+        <!-- form -->
+        <div class="row form-wrap no-gutters">
+          <div class="col col-lg-11 col-xl-9">
+          <h6>Find a progressive org near you</h6>
+          <form action="match.php" method="GET">
+            <div class="form-group row no-gutters justify-content-center">
+            <label for="Q1" class="col-sm-12 col-md-auto col-form-label text-sm-center"><!-- What are you interested in working on?--><?php echo question1Text($mconfig['questions']); ?></label>
+              <div class="col-sm-12 col-md-6 col-xl-7">
+                <select class="form-control" id="question_1" name="Q1">
+                    <?php
+                        // Function returns string
+                        echo question1options($mconfig['questions'], $mconfig['answers'], $mconfig['groupQs'], $mconfig['groupTs']);
+                    ?>
+                </select>
+              </div>
+            </div>
+            <div class="form-group form-inline row no-gutters justify-content-center">
+              <div class="col-sm-12 col-md-5">
+              <div class="row justify-content-center">
+                <label for="zipcode" class="col-sm-12 col-md-auto col-form-label">Your zip code</label>
+                <input type="text" class="form-control col-sm-12 col-md-4" id="zipcode" name="zipcode" placeholder="63010">
+              </div>
+              </div>
+              <div class="col-sm-12 col-md-7">
+                <div class="row justify-content-sm-center">
+                  <label for="distance" class="col-sm-12 col-md-auto col-form-label">Search within (miles)</label>
+                  <input type="text" name="distance" class="form-control col-sm-12 col-md-4" id="distance" placeholder="15 Miles">
+                </div>
+              </div>
+            </div>
+            <div class="form-group row justify-content-center">
+              <div class="col-sm-auto button-holder">
+                <button type="submit" class="btn mb-2 hvr-rectangle-out">Match Me</button>
+              </div>
+            </div>
+          </form>
+          </div>
+        </div>
+        <!-- Form end -->
+        <!-- Modal Links -->
+        <div class="link-wrapper">
+          <a href="#" class="modal-link" data-toggle="modal" data-target="#about">About</a>
+          <a href="#" class="modal-link" data-toggle="modal" data-target="#privacy">Privacy Policy</a>
+          <a href="#" class="modal-link" data-toggle="modal" data-target="#contact">Contact</a>
+        </div>
+        <!-- Modal Links End -->
+      </div>
+      <div class="bottom-grid"></div>
+    </div>
+
+    <!-- end sm up -->
+
+
+
+
+
+<!-- Modals -->
+
+    <!-- About Modal -->
+    <div class="modal fade" id="about" tabindex="-1" role="dialog" aria-labelledby="basicModal" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered ">
+        <div class="modal-content">
+          <div class="zap-modal-head">
+            <h4>About Movement Match</h4>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              X
+            </button>
+          </div>
+          <div class="modal-body">
+            <h5>OUR VISION</h5>
+            <p>A world in which some stride towards a utopia for all.</p>
+            <h5>OUR MISSION</h5>
+            <p>To answer the question, “What can I do to realize a better world for all?”</p>
+            <h5>ABOUT YOU</h5>
+            <p>You wish for a better world for all; even if that means your status is lessened.</p>
+            <p>You value yourself and will only give of yourself if it is not not wasted.</p>
+            <p>You can patiently, urgently focus and persist.</p>
+            <p>You want to fix the problem at the source.</p>
+            <p>If that is you, then we would like to make you aware of some organizations that might interest you.</p>
+            <p><span>Us? The best use of our skills is to bring you this free directory. We believe we are meaningfully contributing to a global utopia, however you might envision that.</span></p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- About End -->
+    <!-- Privacy Policy -->
+    <div class="modal fade" id="privacy" tabindex="-1" role="dialog" aria-labelledby="basicModal" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered ">
+        <div class="modal-content">
+          <div class="zap-modal-head">
+            <h4>Privacy Policy</h4>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              X
+            </button>
+          </div>
+          <div class="modal-body">
+            <h5>This is our privacy Policy. It's simple:</h5>
+            <p><span>We do not collect any personal identifying information,</span> so you don't have to trust us.</p>
+            <p>None of the answers you give on the questionnaire ever leave your computer or device.</p>
+            <p>What we do see: The zip code and possibly location information may be shared with us, which are used to narrow down the list of organizations to those which are physically nearby. Also, every web site you use needs to use your IP address in order to interact with you, and we capture your IP address in our logs.</p>
+            <p>We do not have any trackers, ads, bugs, frames, or these types of things that modern web sites use to unmask their users' identities.</p>
+            <h5 class="callout">That's it.</h5>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- privacy end -->
+    <!-- Contact -->
+    <div class="modal fade" id="contact" tabindex="-1" role="dialog" aria-labelledby="basicModal" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered ">
+        <div class="modal-content">
+          <div class="zap-modal-head">
+            <h4>Contact Us</h4>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              X
+            </button>
+          </div>
+          <div class="modal-body">
+            <p>Email: <a href="mailto:quequegg@gmail.com" target='_blank'>quequegg@gmail.com</a></p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Contact end -->
+<!-- Modals -->
+    
+    <script src="https://code.jquery.com/jquery-3.1.1.min.js" integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8=" crossorigin="anonymous"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js" integrity="sha256-VazP97ZCwtekAsvgPBSUwPFKdrwD3unUfSGVYrahUqU=" crossorigin="anonymous"></script>
+    <script src="node_modules/bootstrap/dist/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="js/index.js"></script>
+    <!-- <script type="text/javascript" src="js/woke2work.js"></script> -->
+
+  </body>
+<?php
+echo "<script type='text/javascript' nonce='{$csp_nonce}'>\n";
+echo "var orgs = {$mconfig['jsonraw']};\n"; 
+echo "var qids = " . json_encode($mconfig['questionid']) . ";\n"; 
+echo "var groupQs = " . json_encode($mconfig['groupQs']) . ";\n"; 
+echo "var groupTs = " . json_encode($mconfig['groupTs']) . ";\n"; 
+echo "var questions = " . json_encode($mconfig['questions']) . ";\n"; 
+echo "var answers = " . json_encode($mconfig['answers']) . ";\n"; ?>
 </html>
