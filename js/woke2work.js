@@ -31,25 +31,18 @@ var w2w = {
         var len = orgs.filter(w2w.filterResults).forEach(function(o) {
 
               html+="<div class='row no-gutters align-items-top result'>\n";
+              /*
+               * TODO:  If we get logos for orgs we can display them here.
               html+="<div class='col-md-3 col-xl-2 org-logo'>\n";
               html+="<img src='img/140x90.png'>\n";
               html+="</div>\n";
+              */
               html+="<div class='col-sm'>\n";
               html+="<h5>"+o.org_name+"</h5>\n";
               html+="<a href=\""+o.org_website+"\">"+o.org_website+"</a>\n";
               html+="<p>"+o.mission+"</p>\n";
               html+="</div>\n";
               html+="</div>\n";
-
-/*
-            html += "<div class=\"panel panel-default\">";
-            html += "<div class=\"panel-heading text-center\"><strong>"+o.org_name+"</strong></div>"; // Panel Heading will be org name
-            html +="<div class=\"panel-body\">";
-            html +="<div class=\"col-sm-6\"><em>Mission:</em> " + o.mission + "</div>";
-            html +="<div class=\"col-sm-6\">" + o.org_website + "</div>";
-            html +="</div>"; // close panel body
-            html +="</div>"; // close panel
-*/
         });
 
         document.getElementById('orgresults').innerHTML = html;
