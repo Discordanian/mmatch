@@ -20,7 +20,7 @@ function validateGetData()
     global $mconfig;
     if (isset($_GET['zipcode']) && isset($_GET["distance"])) {
         $mconfig['zipcode']  = empty(FILTER_VAR($_GET["zipcode"], FILTER_SANITIZE_ENCODED))? "63104": FILTER_VAR($_GET["zipcode"], FILTER_SANITIZE_ENCODED); // Zips can start with a 0
-        $mconfig['distance'] = empty(FILTER_VAR($_GET["distance"], FILTER_VALIDATE_INT))? "15": FILTER_VAR($_GET["distance"], FILTER_VALIDATE_INT);
+        $mconfig['distance'] = empty(FILTER_VAR($_GET["distance"], FILTER_VALIDATE_INT))? "20": FILTER_VAR($_GET["distance"], FILTER_VALIDATE_INT);
         $mconfig['Q1']       = empty($_GET["Q1"])? "(no selection made)": $_GET["Q1"];
     }
     else {
@@ -102,7 +102,7 @@ $mconfig['groupTs'] = getGroupText($mconfig['jsondata']);
               <div class="col-sm-12 col-md-7">
                 <div class="row justify-content-sm-center">
                   <label for="distance" class="col-sm-12 col-md-auto col-form-label">Search within (miles)</label>
-                  <input type="text" name="distance" class="form-control col-sm-12 col-md-4" id="distance" placeholder="15 Miles">
+                  <input type="text" name="distance" class="form-control col-sm-12 col-md-4" id="distance" placeholder="20 Miles">
                 </div>
               </div>
             </div>
@@ -194,7 +194,7 @@ $mconfig['groupTs'] = getGroupText($mconfig['jsondata']);
             </button>
           </div>
           <div class="modal-body">
-            <p>Email: <a href="mailto:quequegg@gmail.com" target='_blank'>quequegg@gmail.com</a></p>
+            <p>Email: <a href="mailto:howismydriving@woke2work.org" target='_blank'>howismydriving@woke2work.org</a></p>
           </div>
         </div>
       </div>

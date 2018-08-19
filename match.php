@@ -11,7 +11,7 @@ require_once ('./include/returnOrgsForZipcodeFunction.php');
 // TODO Assume defaults for no zip/distance as the W2W style implies defaults
 $mconfig = array(
     "zipcode" => "63104",
-    "distance" => "15"
+    "distance" => "20"
 );
 
 function validateGetData()
@@ -19,7 +19,7 @@ function validateGetData()
     global $mconfig;
     if (isset($_GET['zipcode']) && isset($_GET["distance"])) {
         $mconfig['zipcode']  = empty(FILTER_VAR($_GET["zipcode"], FILTER_SANITIZE_ENCODED))? "63104": FILTER_VAR($_GET["zipcode"], FILTER_SANITIZE_ENCODED); // Zips can start with a 0
-        $mconfig['distance'] = empty(FILTER_VAR($_GET["distance"], FILTER_VALIDATE_INT))? "15": FILTER_VAR($_GET["distance"], FILTER_VALIDATE_INT);
+        $mconfig['distance'] = empty(FILTER_VAR($_GET["distance"], FILTER_VALIDATE_INT))? "20": FILTER_VAR($_GET["distance"], FILTER_VALIDATE_INT);
         $mconfig['Q1']       = empty($_GET["Q1"])? "(no selection made)": $_GET["Q1"];
     }
     else {
@@ -225,7 +225,7 @@ $mconfig['groupTs']   = getGroupText($mconfig['jsondata']);
             </button>
           </div>
           <div class="modal-body">
-            <p>Email: <a href="mailto:quequegg@gmail.com" target='_blank'>quequegg@gmail.com</a></p>
+            <p>Email: <a href="mailto:howismydriving@woke2work.org" target='_blank'>howismydriving@woke2work.org</a></p>
           </div>
         </div>
       </div>
