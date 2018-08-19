@@ -156,7 +156,7 @@ $mconfig['groupTs']   = getGroupText($mconfig['jsondata']);
           </div>
           <div class="slide-button-hldr">
             <a href="#form-carousel" data-slide="next" class="hvr-rectangle-out">More Questions</a>
-            <a href="#" class="hvr-rectangle-out" >Match Me</a>
+            <!-- <a href="#" class="hvr-rectangle-out" id="match_me" >Match Me</a> -->
           </div>
 
         </div>
