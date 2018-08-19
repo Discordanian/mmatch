@@ -23,6 +23,10 @@ $(function(){
 
     $("#org_website").blur(addhttp);
     $("#money_url").blur(addhttp);
+    $("#logo_file_upload").focus(onUploadFocus);
+    $("#logo_file_upload").blur(onUploadBlur);
+    $("#logo_file_upload").change(onUploadChange);
+    
     
 	$("#zip_select").click(select_zip);
 
@@ -59,6 +63,7 @@ $(function(){
 		
 	$("#password1").tooltip({title: rules, html: "true", placement: "auto top", trigger: "focus"});
 	$("#password2").tooltip({title: rules, html: "true", placement: "auto top", trigger: "focus"});
+
 
 });
 
@@ -452,4 +457,36 @@ function disablePrint()
     $("#printButton").attr("data-toggle", "tooltip");
     $("#printButton").attr("title", "Record must be saved before it can be printed.");
     
+}
+
+function onUploadFocus()
+{
+	//$(this).parentNode.addClass("focus"); 
+}
+
+function onUploadBlur()
+{
+	//$(this).parentNode.removeClass("focus"); 
+
+}
+
+function onUploadChange()
+{
+/* Use the ideas presented here to customize the look of the file upload button */
+/* https://tympanus.net/codrops/2015/09/15/styling-customizing-file-inputs-smart-way/ */
+/* so the actual upload button is invisible, our customized button is the one shown */
+
+    var fileName = '';
+
+    if( this.files && this.files.length > 1 )
+        fileName = ( this.getAttribute( 'data-multiple-caption' ) || '' ).replace( '{count}', this.files.length );
+    else if( this.files[0].name)
+        fileName = this.files[0].name.split( '\\' ).pop();
+
+    if( fileName.length > 0 )
+        $("#logo_file_upload_txt").html("File selected for upload: " + fileName);
+    else
+        $("#logo_file_upload_txt").html("");
+
+
 }

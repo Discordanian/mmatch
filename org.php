@@ -1413,7 +1413,7 @@ function getUserInfo()
 </div>
 </center>
 
-<form method="POST" action="org.php" id="org_save_form" autocomplete="off" >
+<form method="POST" action="org.php" id="org_save_form" autocomplete="off" enctype="multipart/form-data" >
 <input type="hidden" id="nonce" name="nonce" value="<?php echo $csrf_nonce; ?>" />
 <input type="hidden" id="csrf_expdate" name="csrf_expdate" value="<?php echo $csrf_expdate->format('U'); ?>" />
 <input type="hidden" id="action" name="action" value="<?php echo $action; ?>" />
@@ -1558,8 +1558,8 @@ function getUserInfo()
         <div class="col-xs-3" >
             <input class="form-control" type="number" id="zip_entry" maxlength="5" name="zip_entry" /></div>
         <div class="col-xs-2" >
-            <button class="btn btn-default" id="zip_select" type="button" alt="Select a zip code" >Add</button>
-            <button class="btn btn-default" id="zip_unselect" type="button" alt="Unselect a zip code">Remove</button>
+            <button class="btn btn-default" id="zip_select" type="button" alt="Select a zip code" ><span class="glyphicon glyphicon-plus-sign"></span> Add</button>
+            <button class="btn btn-default" id="zip_unselect" type="button" alt="Remove a zip code from the selection"><span class="glyphicon glyphicon-remove-sign"></span> Remove</button>
         </div>
         <div class="col-xs-7" >
             <select multiple name="zip_list[]" id="zip_list" class="form-control" > <!-- Must include the brackets in the name to force browser to send an array -->
@@ -1590,6 +1590,18 @@ function getUserInfo()
         </div>
     </div> <!-- form-group -->
 
+<!-- Use the ideas presented here to customize the look of the file upload button -->
+<!-- https://tympanus.net/codrops/2015/09/15/styling-customizing-file-inputs-smart-way/ -->
+<!-- so the actual upload button is invisible, our customized button is the one shown -->
+    <div class="form-group row">
+        <div class="col-xs-3" >
+        <label>Organization Logo:</label>
+        <img maxwidth=140 maxheight=90 src="img/140x90.png" /> </div>
+        <div class="col-xs-2" >
+        <label id="logo_file_upload_btn" for="logo_file_upload" class="btn btn-default" ><span class="glyphicon glyphicon-upload"></span> Upload new logo file</label>
+        <input class="inputfile" type="file" id="logo_file_upload" maxlength="255" name="logo_file_upload" /> </div>
+        <div class="col-xs-7" ><span id="logo_file_upload_txt" class="info"></span></div>
+    </div> <!-- form-group -->
 
 
 
