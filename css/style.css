@@ -34,3 +34,25 @@ input:focus:invalid {
     top: 45%;
     left: 45%;
 }
+
+.inputfile {
+	width: 0.1px;
+	height: 0.1px;
+	opacity: 0;
+	overflow: hidden;
+	position: absolute;
+	z-index: -1;
+}
+
+#xxxlogo_file_upload {
+    font-size: 1.25em;
+    font-weight: 700;
+    color: white;
+    background-color: blue;
+    display: inline-block;
+}
+
+#xxxlogo_file_upload:focus ,
+#xxxlogo_file_upload:hover {
+    background-color: blueviolet;
+}
