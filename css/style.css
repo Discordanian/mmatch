@@ -35,6 +35,10 @@ input:focus:invalid {
     left: 45%;
 }
 
+/* Use the ideas presented here to customize the look of the file upload button */
+/* https://tympanus.net/codrops/2015/09/15/styling-customizing-file-inputs-smart-way/ */
+/* so the actual upload button is invisible, our customized button is the one shown */
+
 .inputfile {
 	width: 0.1px;
 	height: 0.1px;
@@ -42,17 +46,4 @@ input:focus:invalid {
 	overflow: hidden;
 	position: absolute;
 	z-index: -1;
-}
-
-#xxxlogo_file_upload {
-    font-size: 1.25em;
-    font-weight: 700;
-    color: white;
-    background-color: blue;
-    display: inline-block;
-}
-
-#xxxlogo_file_upload:focus ,
-#xxxlogo_file_upload:hover {
-    background-color: blueviolet;
 }

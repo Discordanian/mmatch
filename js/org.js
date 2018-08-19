@@ -472,6 +472,10 @@ function onUploadBlur()
 
 function onUploadChange()
 {
+/* Use the ideas presented here to customize the look of the file upload button */
+/* https://tympanus.net/codrops/2015/09/15/styling-customizing-file-inputs-smart-way/ */
+/* so the actual upload button is invisible, our customized button is the one shown */
+
     var fileName = '';
 
     if( this.files && this.files.length > 1 )
