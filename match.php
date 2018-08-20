@@ -134,7 +134,7 @@ $mconfig['groupTs']   = getGroupText($mconfig['jsondata']);
       
       <div id="slide-panel" class="slide-panel collapse" data-parent="fixed-bottom">
 
-        <h6><span>_/4</span> How do you want to get involved</h6>
+        <h6><!-- <span>_/4</span> -->How do you want to get involved</h6>
         <!-- Question slider -->        
         <div id="form-carousel" class="carousel slide" data-interval="false" data-ride="carousel">
           <div class="carousel-inner">
@@ -182,7 +182,7 @@ $mconfig['groupTs']   = getGroupText($mconfig['jsondata']);
               <li><p><span>We need to fight complacency and normalization.</span> We need ways for people to be ready for a long fight. How can this amazing mass of newly energized people build sustained, deeper engagement?</p></li>
               <li><p><span>We don't need to start from scratch.</span> How can we support all of the amazing organizations who have already been on the front lines, building this movement?</p></li>
             </ul>
-            <p><a class="hashtag" href="#">#JoinTheMovement</a> was born from these questions.</p>
+            <p><a class="hashtag" href="https://twitter.com/woke2work">@woke2work</a> was born from these questions.</p>
             <p>One thing we know for sure is that there are many groups and organizations that are ready to provide the training, community, and accountability that we’ll need to stay strong for the work ahead.</p>
             <p>Our goal is to connect more people to existing activist powerhouses to further build the strength of our movement and fight isolation, alienation, and complacency.</p>
             <p><span class="callout">People are imperfect. Organizations are imperfect. Movements are imperfect.</span></p>

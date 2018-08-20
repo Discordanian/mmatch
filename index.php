@@ -72,7 +72,7 @@ $mconfig['groupTs'] = getGroupText($mconfig['jsondata']);
             <h2>Woke<span>2</span>Work</h2>
             <h2>St Louis</h2>
             <p>Connecting people to organizations to further build the strength of the progressive movement</p>
-            <a class="hashtag" href="#">#jointhemovement</a>
+            <a class="hashtag" href="https://twitter.com/woke2work">@woke2work</a>
           </div>
         </div>
         
