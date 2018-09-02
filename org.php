@@ -46,12 +46,13 @@ try
 			$goto_page = -1; /* show the identifier data instead of person data */
 			/* #3 */
 			updateUser();
-			performInsert();
+            performInsert();
 			buildEmptyArray();
 			translatePostIntoArray();
 			updateQuestionnaireData();
 			zipPostToArray();
 			zipArrayToDb();
+            insertLogo();
 			displayDbData();
 			populateArray();
 		}
@@ -59,13 +60,14 @@ try
 		{
 			/* #5 */
 			updateUser();
-			performUpdate();
+            performUpdate();
 			//buildEmptyArray();
 			populateArray();
 			translatePostIntoArray();
 			updateQuestionnaireData();
 			zipPostToArray();
 			zipArrayToDb();
+            insertLogo();
 			displayDbData();
 			//populateArray();
 		}
@@ -1311,6 +1313,69 @@ function zipArrayToDb()
 }
 
 
+function insertLogo()
+{
+    global $orgid, $dbh;
+
+
+    try
+    {
+
+        echo "<!-- vardump files logo_file_upload \n";
+        var_dump($_FILES["logo_file_upload"]);
+        echo "-->\n";
+        $tmpFileName = $_FILES["logo_file_upload"]["tmp_name"];
+        $fileSize = filesize($tmpFileName);
+        $mime_type = strtolower(mime_content_type($tmpFileName));
+
+        echo "<!-- mime_content_type \n $mime_type --> \n";    
+
+        /* check for existence of file upload data, if not just skip */
+        /* enforce a maximum file size of around 1 MB, this is just a logo file, should not be that large */
+        if ((strlen($tmpFileName) > 0) && ($fileSize > 0) && ($fileSize < 1000000) 
+        && ($mime_type == 'image/png' || $mime_type == 'image/jpeg' 
+        || $mime_type == 'image/bmp' || $mime_type == 'image/gif') )
+        /* only allow these 4 mime types to be uploaded */
+        /* but these are reported by the client, we must double check below before processing the file */
+        {
+
+
+            $fileHandle = fopen($tmpFileName, 'rb');
+            $fileData = fread($fileHandle, $fileSize);
+            $fileName = $_FILES["logo_file_upload"]["name"];
+            $stmt = $dbh->prepare("CALL insertImageBlob(:type, :orgid, :logoBlob, :mimeType, :size, :name);");
+            $stmt->bindValue(':type', 'org_logo', PDO::PARAM_STR);
+            $stmt->bindValue(':orgid', $orgid, PDO::PARAM_INT);
+            $stmt->bindValue(':logoBlob', $fileData, PDO::PARAM_LOB);
+            $stmt->bindValue(':mimeType', $mime_type, PDO::PARAM_STR);
+            $stmt->bindValue(':size', $fileSize, PDO::PARAM_INT);
+            $stmt->bindValue(':name', $fileName, PDO::PARAM_STR);
+                
+            $stmt->execute();
+
+            fclose($fileHandle);
+        }        
+
+        		
+        
+    }
+    catch (PDOException $e)
+    {
+        //$dbh->rollBack();
+        error_log("Database error during image blob INSERT query in org.php: " . $e->getMessage());
+        throw new Exception("An unknown error was encountered (33). Please attempt to reauthenticate.");
+		exit();
+    }
+    catch(Exception $e)
+    {
+        error_log("Error during database image blob INSERT query in org.php: " . $e->getMessage());
+		/* We most likely got here from the SQL error above, so just bubble up the exception */
+        throw new Exception("An unknown error was encountered (34). Please attempt to reauthenticate.");
+		exit();
+    }
+}
+
+
 
 function getUserInfo()
 {
@@ -1596,7 +1661,7 @@ function getUserInfo()
     <div class="form-group row">
         <div class="col-xs-3" >
         <label>Organization Logo:</label>
-        <img maxwidth=140 maxheight=90 src="img/140x90.png" /> </div>
+        <img width=140 height=90 src="getImageBlob.php?type=org_logo&id=<?php echo $orgid?>" /> </div>
         <div class="col-xs-2" >
         <label id="logo_file_upload_btn" for="logo_file_upload" class="btn btn-default" ><span class="glyphicon glyphicon-upload"></span> Upload new logo file</label>
         <input class="inputfile" type="file" id="logo_file_upload" maxlength="255" name="logo_file_upload" /> </div>
