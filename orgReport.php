@@ -9,6 +9,7 @@ class PDF extends FPDF
 {
     protected $m_org_name;
     protected $m_print_date;
+    protected $m_site_brand;
 
     function setOrganizationName($p_orgname)
     {
@@ -20,13 +21,25 @@ class PDF extends FPDF
         $this->m_print_date = strftime("%Y-%m-%d %H:%M:%S %Z" , $p_print_date_time);
     }
 
+    function setSiteBrand($p_site_brand)
+    {
+        $this->m_site_brand = $p_site_brand;
+    }
+
 
     // Page header
     function Header()
     {
 
         // Logo
-        $this->Image('img/mmlogo.jpg',10,6,30);
+        if ($this->m_site_brand == "Woke2Work") 
+        {
+            $this->Image('img/MovementMatch-logo.png',10,6,30);
+        }
+        else
+        {
+            $this->Image('img/mmlogo.jpg',10,6,30);
+        }
         // Arial bold 15
         $this->SetTextColor(0); /* Black */
         $this->SetLineWidth(0.5);
@@ -34,7 +47,7 @@ class PDF extends FPDF
         // Move to the right, far enough that the box will be centered
         $this->Cell(33);
         // Title
-        $this->Cell(150,10,'Movement Match - Organization Details',"TLR",0,'C');
+        $this->Cell(150,10,$this->m_site_brand . ' - Organization Details',"TLR",0,'C');
         // Line break
         $this->Ln(10);
         $this->Cell(33);
@@ -117,6 +130,7 @@ try
 
     /* just put the user ID into the author metadata */
     $pdf->SetAuthor($_SESSION["my_user_id"], TRUE);
+    $pdf->setSiteBrand($site_brand);
     $pdf->setPrintDate(time()); /* set current date/time */
 
     getParameter(); /* check authorization, get the org ID from the $_GET */
@@ -190,7 +204,7 @@ function printOrgData()
 
             global $abbreviated_name, $customer_notice, $customer_contact, $admin_contact, $active_ind, $user_id;
             $pdf->setOrganizationName($row->org_name);
-            $pdf->SetTitle("Movement Match - " . $row->org_name, TRUE);
+            $pdf->SetTitle($row->org_name, TRUE);
             $pdf->AddPage();
 
             $pdf->SetLineWidth(0.5);

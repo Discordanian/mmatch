@@ -183,7 +183,7 @@ function authenticate()
 <html lang="en" >
 <head>
     <meta charset="UTF-8">
-    <title>Movement Match - Password reset</title>
+    <title><?php echo $site_brand, "&nbsp-&nbsp;", LOCALITY_NAME; ?> - Password reset</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
 <?php 
 	if (isset($err_msg)) 
