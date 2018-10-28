@@ -1448,7 +1448,7 @@ function getUserInfo()
 <html lang="en" >
 <head>
     <meta charset="UTF-8">
-    <title>Movement Match - <?php echo LOCALITY_NAME; ?> - Organization</title>
+    <title><?php echo $site_brand, "&nbsp-&nbsp;", LOCALITY_NAME; ?> - Organization</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
 	<link rel="stylesheet prefetch" 

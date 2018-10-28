@@ -17,4 +17,12 @@ define("USER_NOT_LOGGED_IN_ERROR", "The user must log in to perform this functio
 define("ERROR_TOKEN_EXPIRED", "Date token expired");
 define("PARAMETER_TAMPERING", "An input error was encountered. Please log in.");
 
+if (substr_count(strtolower($_SERVER["HTTP_HOST"]), "woke2work") > 0) 
+{ 
+    $site_brand = "Woke2Work";
+}
+else
+{
+    $site_brand = "Movement Match";
+}
 

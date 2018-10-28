@@ -1,10 +1,14 @@
 <nav class="navbar navbar-default">
   <div class="container-fluid">
     <div class="navbar-header">
-      <img src="img/mmlogo.png" alt="Movement Match Logo" width="55" height="55" ></img>
+      <?php if ($site_brand == "Woke2Work") { ?> 
+        <img src="img/MovementMatch-logo.png" alt="Woke2Work Logo" width="55" height="55" ></img>
+      <?php } else { ?>
+        <img src="img/mmlogo.png" alt="Movement Match Logo" width="55" height="55" ></img>
+      <?php } ?>
     </div>
     <div class="navbar-header">
-      <p class="navbar-brand">&nbsp;Movement Match&nbsp;<?php echo LOCALITY_NAME;?></p>
+      <p class="navbar-brand">&nbsp;<?php echo $site_brand, "&nbsp;", LOCALITY_NAME;?></p>
     </div>
     <ul class="nav navbar-nav">
     

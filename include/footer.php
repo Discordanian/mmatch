@@ -1,7 +1,7 @@
 <script src="js/footer.js" ></script>
 
 <div id="footer-html" class="mm-footer-padding">
-    <a data-toggle="modal" href="#aboutModal" class="mm-footer-spacing">About Movement Match</a>
+    <a data-toggle="modal" href="#aboutModal" class="mm-footer-spacing">About Our Movement</a>
     <a data-toggle="modal" href="#privacyModal" class="mm-footer-spacing">Privacy Policy</a>
     <a data-toggle="modal" href="#contactModal" class="mm-footer-spacing">Contact Us</a>
     
@@ -9,7 +9,7 @@
         <div class="modal-dialog">
           <div class="modal-header mm-modal" >
             <button type="button" class="close" data-dismiss="modal">&times;</button>
-            <h4 class="modal-title">About Movement Match</h4>
+            <h4 class="modal-title">About Our Movement</h4>
           </div>
           <div class="modal-body mm-modal" >
             <h4>This project started as a small group trying to brainstorm about these issues: </h4>
